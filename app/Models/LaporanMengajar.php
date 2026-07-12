@@ -14,6 +14,7 @@ class LaporanMengajar extends Model
     protected $fillable = [
         'dosen_id',
         'sesi_daring_id',
+        'token_input',
         'durasi_menit',
         'total_gaji',
         'status_pembayaran',

@@ -93,7 +93,8 @@ class DosenTokenController extends Controller
         }
 
         // Token cocok — hitung gaji dan buat catatan log
-        DB::transaction(function () use ($sesi, $laporan, $dosenId) {
+        $tokenInput = strtoupper(trim($request->token_input));
+        DB::transaction(function () use ($sesi, $laporan, $dosenId, $tokenInput) {
             $dosen = $sesi->jadwal->dosen;
             $endTime = $sesi->end_time ?? Carbon::now();
 
@@ -110,6 +111,7 @@ class DosenTokenController extends Controller
 
             // Update laporan mengajar
             $laporan->update([
+                'token_input'        => $tokenInput,
                 'total_gaji'         => $totalGaji,
                 'status_pembayaran'  => 'valid',
                 'catatan_sistem'     => $catatanBaru,

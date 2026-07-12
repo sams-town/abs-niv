@@ -520,6 +520,15 @@ Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel
 // Route::post('/status-ptkp/{id}/update', [StatusPtkpController::class, 'update'])->middleware('admin');
 // Route::post('/status-ptkp/{id}/delete', [StatusPtkpController::class, 'delete'])->middleware('admin');
 
+// ===== VERIFIKASI TOKEN DARING (ADMIN) =====
+use App\Http\Controllers\AdminTokenVerifikasiController;
+Route::prefix('admin/token-verifikasi')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+    Route::get('/', [AdminTokenVerifikasiController::class, 'index']);
+    Route::post('/approve/{id}', [AdminTokenVerifikasiController::class, 'approve']);
+    Route::post('/reject/{id}', [AdminTokenVerifikasiController::class, 'reject']);
+    Route::post('/regenerate-token/{sesiId}', [AdminTokenVerifikasiController::class, 'regenerateToken']);
+});
+
 Route::get('/reset', function () {
     Artisan::call('optimize');
     Artisan::call('config:cache');

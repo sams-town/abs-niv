@@ -211,6 +211,12 @@
                           <a class="sidebar-link sidebar-title link-nav {{ Request::is('jadwal*') ? 'active' : '' }}" href="{{ url('/jadwal') }}"><i data-feather="calendar"> </i><span>Jadwal & Sesi Daring</span></a>
                       </li>
 
+                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd'))
+                        <li class="sidebar-list">
+                            <a class="sidebar-link sidebar-title link-nav {{ Request::is('admin/token-verifikasi*') ? 'active' : '' }}" href="{{ url('/admin/token-verifikasi') }}"><i data-feather="shield"> </i><span>Verifikasi Token</span></a>
+                        </li>
+                      @endif
+
                       @if (auth()->user()->hasRole('admin'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/role') }}"><i data-feather="airplay"> </i><span>Role</span></a>
