@@ -529,6 +529,20 @@ Route::prefix('admin/token-verifikasi')->middleware(['auth', 'role:admin|hrd'])-
     Route::post('/regenerate-token/{sesiId}', [AdminTokenVerifikasiController::class, 'regenerateToken']);
 });
 
+// ===== PAYROLL DOSEN =====
+Route::get('/payroll/dosen', function () {
+    return view('payroll.dosen', ['title' => 'Payroll Dosen']);
+})->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
+
+// ===== SLIP GAJI =====
+Route::get('/slip-gaji/dosen', function () {
+    return view('slip-gaji.dosen', ['title' => 'Slip Gaji Dosen']);
+})->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
+
+Route::get('/slip-gaji/karyawan', function () {
+    return view('slip-gaji.karyawan', ['title' => 'Slip Gaji Karyawan']);
+})->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
+
 Route::get('/reset', function () {
     Artisan::call('optimize');
     Artisan::call('config:cache');

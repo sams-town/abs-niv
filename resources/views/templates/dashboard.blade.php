@@ -200,9 +200,6 @@
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('dosen*') ? 'active' : '' }}" href="{{ url('/dosen') }}"><i data-feather="book-open"> </i><span>Data Dosen</span></a>
                         </li>
                         <li class="sidebar-list">
-                            <a class="sidebar-link sidebar-title link-nav {{ Request::is('skema-honorarium*') ? 'active' : '' }}" href="{{ url('/skema-honorarium') }}"><i data-feather="credit-card"> </i><span>Skema Honorarium</span></a>
-                        </li>
-                        <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('mata-kuliah*') ? 'active' : '' }}" href="{{ url('/mata-kuliah') }}"><i data-feather="book"> </i><span>Mata Kuliah</span></a>
                         </li>
                       @endif
@@ -317,10 +314,23 @@
                         <a class="sidebar-link sidebar-title link-nav" href="{{ url('/inventory') }}"><i data-feather="git-merge"> </i><span>Inventory</span></a>
                       </li> --}}
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance') || auth()->user()->hasRole('regional_manager'))
-                        <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="dollar-sign"></i><span>Keuangan</span></a>
+                      {{-- ===== PENGGAJIAN ===== --}}
+                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance'))
+                        <li class="sidebar-list"><a class="sidebar-link sidebar-title {{ Request::is('skema-honorarium*') || Request::is('payroll*') || Request::is('laporan-mengajar*') ? 'active' : '' }}" href="javascript:void(0)"><i data-feather="dollar-sign"></i><span>Penggajian</span></a>
                             <ul class="sidebar-submenu">
-                            <li><a href="{{ url('/payroll') }}">Payroll</a></li>
+                              <li><a class="{{ Request::is('skema-honorarium*') ? 'active' : '' }}" href="{{ url('/skema-honorarium') }}"><i data-feather="settings"></i> Tarif Mengajar</a></li>
+                              <li><a class="{{ Request::is('payroll*') && !Request::is('payroll/dosen*') ? 'active' : '' }}" href="{{ url('/payroll') }}"><i data-feather="credit-card"></i> Proses Payroll</a></li>
+                              <li><a class="{{ Request::is('payroll/dosen*') ? 'active' : '' }}" href="{{ url('/payroll/dosen') }}"><i data-feather="book-open"></i> Payroll Dosen</a></li>
+                              <li><a class="{{ Request::is('slip-gaji/dosen*') ? 'active' : '' }}" href="{{ url('/slip-gaji/dosen') }}"><i data-feather="file-text"></i> Slip Gaji Dosen</a></li>
+                              <li><a class="{{ Request::is('slip-gaji/karyawan*') ? 'active' : '' }}" href="{{ url('/slip-gaji/karyawan') }}"><i data-feather="file"></i> Slip Gaji Karyawan</a></li>
+                            </ul>
+                        </li>
+                      @endif
+
+                      {{-- ===== KEUANGAN ===== --}}
+                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance') || auth()->user()->hasRole('regional_manager'))
+                        <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="briefcase"></i><span>Keuangan</span></a>
+                            <ul class="sidebar-submenu">
                             <li><a href="{{ url('/pajak') }}">Pajak</a></li>
                             <li><a href="{{ url('/kasbon') }}">Kasbon</a></li>
                             <li><a href="{{ url('/reimbursement') }}">Reimbursement</a></li>

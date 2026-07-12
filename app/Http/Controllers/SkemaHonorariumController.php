@@ -2,83 +2,117 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\MasterSkemaHonorarium;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SkemaHonorariumController extends Controller
 {
+    /**
+     * Tampilkan daftar konfigurasi tarif per dosen.
+     */
     public function index()
     {
-        $skemas = MasterSkemaHonorarium::orderBy('nama_skema', 'asc')->get();
+        $dosens = User::dosen()
+            ->where('status_aktif', true)
+            ->with('masterSkemaHonorarium')
+            ->orderBy('name')
+            ->get();
+
+        $skemas = MasterSkemaHonorarium::orderBy('nama_skema')->get();
+
         return view('skema_honorarium.index', [
-            'title' => 'Master Skema Honorarium',
-            'skemas' => $skemas
+            'title'  => 'Master Tarif Mengajar',
+            'dosens' => $dosens,
+            'skemas' => $skemas,
         ]);
     }
 
-    public function create()
-    {
-        return view('skema_honorarium.create', [
-            'title' => 'Tambah Skema Honorarium'
-        ]);
-    }
-
+    /**
+     * Simpan konfigurasi tarif untuk dosen tertentu.
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'nama_skema' => 'required|string|max:255',
-            'nominal_per_unit' => 'required',
-            'deskripsi' => 'nullable|string'
+            'dosen_id'          => 'required|exists:users,id',
+            'status_kepegawaian' => 'required|string',
+            'gaji_pokok'        => 'nullable|numeric|min:0',
+            'tunjangan'         => 'nullable|numeric|min:0',
+            'tarif_daring'      => 'nullable|numeric|min:0',
+            'tarif_luring'      => 'nullable|numeric|min:0',
+            'is_aktif'          => 'nullable',
         ]);
 
-        $nominal = $request->nominal_per_unit ? str_replace('.', '', $request->nominal_per_unit) : 0;
-        $nominal = str_replace(',', '', $nominal);
+        $dosen = User::findOrFail($request->dosen_id);
 
-        MasterSkemaHonorarium::create([
-            'nama_skema' => $request->nama_skema,
-            'nominal_per_unit' => $nominal,
-            'deskripsi' => $request->deskripsi
+        // Buat atau update skema khusus untuk dosen ini
+        $namaSKema = $request->status_kepegawaian . ' - ' . $dosen->name;
+        $tarif = $request->tarif_daring ?? $request->tarif_luring ?? 0;
+
+        $skema = MasterSkemaHonorarium::updateOrCreate(
+            ['nama_skema' => $namaSKema],
+            [
+                'nominal_per_unit' => $tarif,
+                'deskripsi' => 'Tarif Daring: Rp ' . number_format($request->tarif_daring ?? 0, 0, ',', '.')
+                             . ' | Tarif Luring: Rp ' . number_format($request->tarif_luring ?? 0, 0, ',', '.'),
+            ]
+        );
+
+        // Update user
+        $dosen->update([
+            'status_kepegawaian'         => $request->status_kepegawaian,
+            'nominal_honor'              => $request->tarif_daring ?? 0,
+            'master_skema_honorarium_id' => $skema->id,
         ]);
 
-        return redirect('/skema-honorarium')->with('success', 'Skema Honorarium Berhasil Ditambahkan');
+        return redirect('/skema-honorarium')->with('success', 'Konfigurasi tarif berhasil disimpan.');
     }
 
-    public function edit($id)
-    {
-        $skema = MasterSkemaHonorarium::findOrFail($id);
-        return view('skema_honorarium.edit', [
-            'title' => 'Edit Skema Honorarium',
-            'skema' => $skema
-        ]);
-    }
-
+    /**
+     * Update konfigurasi dosen (via modal edit).
+     */
     public function update(Request $request, $id)
     {
-        $skema = MasterSkemaHonorarium::findOrFail($id);
+        $dosen = User::findOrFail($id);
 
         $request->validate([
-            'nama_skema' => 'required|string|max:255',
-            'nominal_per_unit' => 'required',
-            'deskripsi' => 'nullable|string'
+            'status_kepegawaian' => 'required|string',
+            'gaji_pokok'        => 'nullable|numeric|min:0',
+            'tunjangan'         => 'nullable|numeric|min:0',
+            'tarif_daring'      => 'nullable|numeric|min:0',
+            'tarif_luring'      => 'nullable|numeric|min:0',
         ]);
 
-        $nominal = $request->nominal_per_unit ? str_replace('.', '', $request->nominal_per_unit) : 0;
-        $nominal = str_replace(',', '', $nominal);
+        $tarif = $request->tarif_daring ?? $request->tarif_luring ?? 0;
 
-        $skema->update([
-            'nama_skema' => $request->nama_skema,
-            'nominal_per_unit' => $nominal,
-            'deskripsi' => $request->deskripsi
+        if ($dosen->masterSkemaHonorarium) {
+            $dosen->masterSkemaHonorarium->update([
+                'nominal_per_unit' => $tarif,
+                'deskripsi' => 'Tarif Daring: Rp ' . number_format($request->tarif_daring ?? 0, 0, ',', '.')
+                             . ' | Tarif Luring: Rp ' . number_format($request->tarif_luring ?? 0, 0, ',', '.'),
+            ]);
+        }
+
+        $dosen->update([
+            'status_kepegawaian' => $request->status_kepegawaian,
+            'nominal_honor'      => $tarif,
         ]);
 
-        return redirect('/skema-honorarium')->with('success', 'Skema Honorarium Berhasil Diperbarui');
+        return redirect('/skema-honorarium')->with('success', 'Konfigurasi tarif berhasil diperbarui.');
     }
 
+    /**
+     * Legacy: untuk backward compat route resource.
+     */
+    public function create() { return redirect('/skema-honorarium'); }
+    public function edit($id) { return redirect('/skema-honorarium'); }
     public function destroy($id)
     {
-        $skema = MasterSkemaHonorarium::findOrFail($id);
-        $skema->delete();
-
-        return redirect('/skema-honorarium')->with('success', 'Skema Honorarium Berhasil Dihapus');
+        $dosen = User::find($id);
+        if ($dosen) {
+            $dosen->update(['master_skema_honorarium_id' => null, 'nominal_honor' => 0, 'status_kepegawaian' => null]);
+        }
+        return redirect('/skema-honorarium')->with('success', 'Konfigurasi tarif dihapus.');
     }
 }
