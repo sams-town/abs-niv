@@ -87,6 +87,14 @@
                             <button type="submit" id="search" class="btn" style="width:45px"><i class="fas fa-search"></i></button>
                         </div>
                     </div>
+                    @php
+                        $settings = App\Models\settings::first();
+                    @endphp
+                    @if($settings && $settings->template_slip_gaji)
+                    <div class="mt-3">
+                        <a href="{{ url('/storage/'.$settings->template_slip_gaji) }}" target="_blank" class="btn btn-sm btn-info text-white w-100 d-block text-center py-2" style="border-radius: 10px; background-color: #17a2b8; border: none;"><i class="fa fa-download mr-1"></i> Download Template Slip Gaji</a>
+                    </div>
+                    @endif
                 </form>
             </div>
         </div>

@@ -8,7 +8,15 @@
                         <h1 class="fw-bold mb-1" style="color: #1e293b;">Data Cuti Karyawan</h1>
                         <p class="text-muted mb-0">Review and manage employee leave requests and medical certificates.</p>
                     </div>
-                    <div>
+                    <div class="d-flex align-items-center">
+                        @php
+                            $settings = App\Models\settings::first();
+                        @endphp
+                        @if($settings && $settings->template_cuti)
+                            <a class="btn btn-lg btn-info text-white mr-2" style="border-radius: 50px; box-shadow: 0 4px 15px rgba(23,162,184,0.4);" href="{{ url('/storage/'.$settings->template_cuti) }}" target="_blank">
+                                <i class="fas fa-download me-2"></i>Template Cuti
+                            </a>
+                        @endif
                         <a class="btn btn-lg btn-primary text-white" style="border-radius: 50px; background: linear-gradient(135deg, #4f46e5, #7c3aed); box-shadow: 0 4px 15px rgba(79,70,229,0.4);" href="{{ url('/data-cuti/tambah') }}">
                             <i class="fas fa-plus me-2"></i>Tambah
                         </a>

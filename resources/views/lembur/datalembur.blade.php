@@ -7,7 +7,13 @@
                     <div class="col-md-6 mt-2 p-0 d-flex">
                         <h4>{{ $title }}</h4>
                     </div>
-                    <div class="col-md-6 p-0">
+                    <div class="col-md-6 p-0 text-right d-flex align-items-center justify-content-end">
+                        @php
+                            $settings = App\Models\settings::first();
+                        @endphp
+                        @if($settings && $settings->template_lembur)
+                            <a href="{{ url('/storage/'.$settings->template_lembur) }}" target="_blank" class="btn btn-info text-white"><i class="fa fa-download me-2"></i>Template Lembur</a>
+                        @endif
                     </div>
                 </div>
             </div>

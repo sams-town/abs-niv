@@ -90,6 +90,62 @@
                             @enderror
                         </div>
 
+                        <!-- Dokumen & Template Section -->
+                        <hr>
+                        <h4 class="mt-4 mb-3 text-warning font-weight-bold">Dokumen & Template <span class="badge rounded-pill bg-warning text-dark float-right" style="font-size: 11px;">TEMPLATE AKTIF</span></h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="template_cuti" class="form-label font-weight-bold">FORM CUTI <span class="badge bg-success float-right text-white" style="font-size: 9px;">TAMPIL</span></label>
+                                @if($data->template_cuti)
+                                    <div class="mb-2 p-2 border rounded bg-light d-flex align-items-center justify-content-between">
+                                        <span style="font-size: 11px; word-break: break-all; color: #555;"><i class="fa fa-file-excel text-success mr-2"></i>{{ basename($data->template_cuti) }}</span>
+                                        <a href="{{ url('/storage/'.$data->template_cuti) }}" target="_blank" class="btn btn-xs btn-info"><i class="fa fa-download"></i></a>
+                                    </div>
+                                @endif
+                                <input class="form-control @error('template_cuti') is-invalid @enderror" type="file" id="template_cuti" name="template_cuti">
+                                @error('template_cuti')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 form-group">
+                                <label for="template_lembur" class="form-label font-weight-bold">FORM LEMBUR <span class="badge bg-success float-right text-white" style="font-size: 9px;">TAMPIL</span></label>
+                                @if($data->template_lembur)
+                                    <div class="mb-2 p-2 border rounded bg-light d-flex align-items-center justify-content-between">
+                                        <span style="font-size: 11px; word-break: break-all; color: #555;"><i class="fa fa-file-excel text-success mr-2"></i>{{ basename($data->template_lembur) }}</span>
+                                        <a href="{{ url('/storage/'.$data->template_lembur) }}" target="_blank" class="btn btn-xs btn-info"><i class="fa fa-download"></i></a>
+                                    </div>
+                                @endif
+                                <input class="form-control @error('template_lembur') is-invalid @enderror" type="file" id="template_lembur" name="template_lembur">
+                                @error('template_lembur')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 form-group">
+                                <label for="template_slip_gaji" class="form-label font-weight-bold">SLIP GAJI <span class="badge bg-success float-right text-white" style="font-size: 9px;">TAMPIL</span></label>
+                                @if($data->template_slip_gaji)
+                                    <div class="mb-2 p-2 border rounded bg-light d-flex align-items-center justify-content-between">
+                                        <span style="font-size: 11px; word-break: break-all; color: #555;"><i class="fa fa-file-excel text-success mr-2"></i>{{ basename($data->template_slip_gaji) }}</span>
+                                        <a href="{{ url('/storage/'.$data->template_slip_gaji) }}" target="_blank" class="btn btn-xs btn-info"><i class="fa fa-download"></i></a>
+                                    </div>
+                                @endif
+                                <input class="form-control @error('template_slip_gaji') is-invalid @enderror" type="file" id="template_slip_gaji" name="template_slip_gaji">
+                                @error('template_slip_gaji')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                                @enderror
+                            </div>
+                        </div>
+
                     <button type="submit" class="btn btn-primary float-right">Submit</button>
                 </form>
             </div>

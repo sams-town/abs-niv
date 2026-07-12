@@ -7,7 +7,13 @@
                     <div class="col-md-6 mt-2 p-0 d-flex">
                         <h4>{{ $title }}</h4>
                     </div>
-                    <div class="col-md-6 p-0">
+                    <div class="col-md-6 p-0 text-right d-flex align-items-center justify-content-end">
+                        @php
+                            $settings = App\Models\settings::first();
+                        @endphp
+                        @if($settings && $settings->template_slip_gaji)
+                            <a href="{{ url('/storage/'.$settings->template_slip_gaji) }}" target="_blank" class="btn btn-info text-white mr-2"><i class="fa fa-download me-2"></i>Template Slip Gaji</a>
+                        @endif
                         <a href="{{ url('/rekap-data') }}" class="btn btn-primary">+ Tambah</a>
                     </div>
                 </div>

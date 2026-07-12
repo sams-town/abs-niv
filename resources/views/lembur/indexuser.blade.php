@@ -72,7 +72,14 @@
             <input type="hidden" name="userid" value="{{ auth()->user()->id }}">
             <button type="submit" class="btn btn-success">Lihat Lokasi Saya</button>
         </form>
+    @php
+        $settings = App\Models\settings::first();
+    @endphp
+    @if($settings && $settings->template_lembur)
+    <div class="tf-container mb-3">
+        <a href="{{ url('/storage/'.$settings->template_lembur) }}" target="_blank" class="btn btn-sm btn-info text-white w-100 d-block text-center py-2" style="border-radius: 10px; background-color: #17a2b8; border: none;"><i class="fa fa-download mr-1"></i> Download Template Form Lembur</a>
     </div>
+    @endif
 
     <div class="transfer-content">
         @if (!$lembur)

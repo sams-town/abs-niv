@@ -93,6 +93,16 @@
                     </div>
                     <input type="hidden" name="tanggal">
 
+                    @php
+                        $settings = App\Models\settings::first();
+                    @endphp
+                    @if($settings && $settings->template_cuti)
+                    <div class="group-input">
+                        <label>Unduh Formulir Cuti</label>
+                        <a href="{{ url('/storage/'.$settings->template_cuti) }}" target="_blank" class="btn btn-sm btn-info text-white w-100 d-block text-center py-2" style="border-radius: 10px; background-color: #17a2b8; border: none;"><i class="fa fa-download mr-1"></i> Download Template Form Cuti</a>
+                    </div>
+                    @endif
+
                     <div class="group-input">
                         <input type="file" name="foto_cuti" id="foto_cuti" class="form-control @error('foto_cuti') is-invalid @enderror">
                         @error('foto_cuti')
