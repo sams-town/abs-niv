@@ -221,6 +221,8 @@ Route::post('/data-cuti/proses-tambah', [CutiController::class, 'tambahAdminPros
 Route::delete('/data-cuti/delete/{id}', [CutiController::class, 'deleteAdmin'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
 Route::get('/data-cuti/edit/{id}', [CutiController::class, 'editAdmin'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
 Route::put('/data-cuti/edit-proses/{id}', [CutiController::class, 'editAdminProses'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
+Route::post('/data-cuti/approval-1/{id}', [CutiController::class, 'approvalLevel1'])->middleware('role:kepala_cabang|general_manager|admin|hrd');
+Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel2'])->middleware('role:admin|hrd|general_manager');
 Route::get('/my-profile', [KaryawanController::class, 'myProfile'])->middleware('auth');
 Route::put('/my-profile/update/{id}', [KaryawanController::class, 'myProfileUpdate'])->middleware('auth');
 Route::get('/my-profile/edit-password', [KaryawanController::class, 'editPassMyProfile'])->middleware('auth');
