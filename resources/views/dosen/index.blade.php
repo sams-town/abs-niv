@@ -63,14 +63,33 @@
                                         <span class="badge badge-secondary">Nonaktif</span>
                                     @endif
                                 </td>
-                                <td>
-                                    <a href="{{ url('/dosen/edit/'.$d->id) }}" class="btn btn-warning btn-xs"><i class="fas fa-edit"></i></a>
-                                    @if($d->status_aktif)
-                                    <form action="{{ url('/dosen/delete/'.$d->id) }}" method="POST" class="d-inline">
-                                        @csrf @method('DELETE')
-                                        <button class="btn btn-danger btn-xs" onclick="return confirm('Nonaktifkan dosen ini?')"><i class="fas fa-ban"></i></button>
-                                    </form>
-                                    @endif
+                                <td style="position: sticky; right: 0; background-color: rgb(235, 235, 235); z-index: 1;">
+                                    <ul class="action">
+                                        <li class="edit me-2"><a href="{{ url('/dosen/edit/'.$d->id) }}" title="Edit Dosen"><i class="icon-pencil-alt"></i></a></li>
+
+                                        <li class="me-2"><a href="{{ url('/pegawai/edit-password/'.$d->id) }}" title="Ganti Password"><i class="fa fa-solid fa-key" style="color: rgb(11, 18, 222)"></i></a></li>
+
+                                        <li class="me-2"> <a href="{{ url('/pegawai/shift/'.$d->id) }}" title="Input Shift Dosen"><i style="color:coral" class="fa fa-solid fa-clock"></i></a></li>
+
+                                        <li class="me-2"> <a href="{{ url('/pegawai/dinas-luar/'.$d->id) }}" title="Input Dinas Luar Dosen"><i style="color:rgb(43, 198, 203)" class="fa fa-solid fa-route"></i></a></li>
+
+                                        <li class="me-2"> <a href="{{ url('/pegawai/kontrak/'.$d->id) }}" title="Kontrak Kerja"><i data-feather="trending-up"> </i></a></li>
+
+                                        @if ($d->foto_face_recognition != null && $d->foto_face_recognition != "")
+                                            <li class="me-2"><a href="{{ url('/pegawai/face/'.$d->id) }}" title="Face Recognition Terdaftar (Klik untuk ganti)"><i style="color: green" class="fa fa-solid fa-camera"></i><i class="fa fa-solid fa-check" style="color: green; font-size: 10px; margin-left: 2px;"></i></a></li>
+                                        @else
+                                            <li class="me-2"><a href="{{ url('/pegawai/face/'.$d->id) }}" title="Face Recognition Belum Terdaftar"><i style="color: red" class="fa fa-solid fa-camera"></i><i class="fa fa-solid fa-times" style="color: red; font-size: 10px; margin-left: 2px;"></i></a></li>
+                                        @endif
+
+                                        @if($d->status_aktif)
+                                        <li class="delete">
+                                            <form action="{{ url('/dosen/delete/'.$d->id) }}" method="POST" class="d-inline">
+                                                @csrf @method('DELETE')
+                                                <button title="Nonaktifkan Dosen" class="border-0" style="background-color: transparent;" onclick="return confirm('Nonaktifkan dosen ini?')"><i class="icon-trash"></i></button>
+                                            </form>
+                                        </li>
+                                        @endif
+                                    </ul>
                                 </td>
                             </tr>
                             @empty
