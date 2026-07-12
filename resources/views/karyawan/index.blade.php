@@ -560,8 +560,10 @@
 
                                                     <li class="me-2"> <a href="{{ url('/pegawai/kontrak/'.$du->id) }}" title="Kontrak Kerja"><i data-feather="trending-up"> </i></a></li>
 
-                                                    @if ($du->foto_face_recognition == null || $du->foto_face_recognition == "")
-                                                        <li><a href="{{ url('/pegawai/face/'.$du->id) }}" title="Face Recognition"><i style="color: black" class="fa fa-solid fa-camera"></i></a></li>
+                                                    @if ($du->foto_face_recognition != null && $du->foto_face_recognition != "")
+                                                        <li class="me-2"><a href="{{ url('/pegawai/face/'.$du->id) }}" title="Face Recognition Terdaftar (Klik untuk ganti)"><i style="color: green" class="fa fa-solid fa-camera"></i><i class="fa fa-solid fa-check" style="color: green; font-size: 10px; margin-left: 2px;"></i></a></li>
+                                                    @else
+                                                        <li class="me-2"><a href="{{ url('/pegawai/face/'.$du->id) }}" title="Face Recognition Belum Terdaftar"><i style="color: red" class="fa fa-solid fa-camera"></i><i class="fa fa-solid fa-times" style="color: red; font-size: 10px; margin-left: 2px;"></i></a></li>
                                                     @endif
 
                                                     <li class="delete">
