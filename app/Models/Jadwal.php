@@ -28,4 +28,9 @@ class Jadwal extends Model
     {
         return $this->hasMany(SesiDaring::class, 'jadwal_id');
     }
+
+    public function mataKuliahRelasi()
+    {
+        return $this->belongsTo(\App\Models\MataKuliah::class, 'mata_kuliah', 'nama_mk');
+    }
 }

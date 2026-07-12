@@ -144,4 +144,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(LogMengajar::class, 'dosen_id');
     }
+
+    public function jadwals()
+    {
+        return $this->hasMany(\App\Models\Jadwal::class, 'dosen_id');
+    }
+
+    public function laporanMengajars()
+    {
+        return $this->hasMany(\App\Models\LaporanMengajar::class, 'dosen_id');
+    }
+
+    public function transaksiMengajars()
+    {
+        return $this->hasMany(\App\Models\TransaksiMengajar::class, 'dosen_id');
+    }
 }

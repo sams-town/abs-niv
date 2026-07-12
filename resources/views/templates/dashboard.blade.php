@@ -381,7 +381,7 @@
           <div class="container-fluid">
             <div class="row">
               <div class="col-md-6 p-0 footer-left">
-                <p class="mb-0">Copyright © 2023 Ricky. All rights reserved.</p>
+                <p class="mb-0">Copyright © 2026 SATRIA HRIS System. All rights reserved.</p>
               </div>
 
             </div>

@@ -67,7 +67,7 @@
                                         data-bs-toggle="modal" data-bs-target="#modalEditTarif">
                                         <i data-feather="edit-2" style="width:12px"></i> Edit
                                     </button>
-                                    <form action="{{ url('/skema-honorarium/'.$d->id) }}" method="POST" class="d-inline delete-form">
+                                    <form action="{{ url('/skema-honorarium/dosen/'.$d->id) }}" method="POST" class="d-inline delete-form">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px">
                                             <i data-feather="trash-2" style="width:12px"></i> Hapus
@@ -270,7 +270,7 @@ document.querySelectorAll('.btn-edit-tarif').forEach(function(btn) {
         document.getElementById('editNamaDosen').value = this.dataset.nama;
         document.getElementById('editStatus').value = this.dataset.status || '';
         document.getElementById('editNominal').value = this.dataset.nominal || 0;
-        document.getElementById('formEditTarif').action = '/skema-honorarium/' + id;
+        document.getElementById('formEditTarif').action = '/skema-honorarium/dosen/' + id;
     });
 });
 

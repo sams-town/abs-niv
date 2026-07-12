@@ -496,6 +496,8 @@ Route::prefix('mata-kuliah')->middleware(['auth', 'role:admin|hrd'])->group(func
 });
 
 Route::resource('/skema-honorarium', SkemaHonorariumController::class)->middleware(['auth', 'role:admin|hrd']);
+Route::put('/skema-honorarium/dosen/{id}', [SkemaHonorariumController::class, 'update'])->middleware(['auth', 'role:admin|hrd']);
+Route::delete('/skema-honorarium/dosen/{id}', [SkemaHonorariumController::class, 'destroy'])->middleware(['auth', 'role:admin|hrd']);
 Route::resource('/jadwal', JadwalController::class)->middleware(['auth']);
 
 // ===== MODUL SESI DARING =====
