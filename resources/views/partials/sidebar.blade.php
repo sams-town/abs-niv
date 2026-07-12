@@ -148,14 +148,7 @@
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a href="{{ url('/status-ptkp') }}" class="nav-link {{ Request::is('status-ptkp*') ? 'active' : '' }}">
-                                <i class="nav-icon fa fa-file-export"></i>
-                                <p>
-                                    Master Status PTKP
-                                </p>
-                            </a>
-                        </li>
+
 
                         <li class="nav-item">
                             <a href="{{ url('/skema-honorarium') }}" class="nav-link {{ Request::is('skema-honorarium*') ? 'active' : '' }}">

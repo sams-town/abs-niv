@@ -497,12 +497,12 @@ Route::post('/data-cuti/approval-1/{id}', [CutiController::class, 'approvalLevel
 Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel2'])->middleware(['auth', 'role:admin|hrd']);
 
 // ===== MODUL STATUS PTKP =====
-Route::get('/status-ptkp', [StatusPtkpController::class, 'index'])->middleware('admin');
-Route::get('/status-ptkp/tambah', [StatusPtkpController::class, 'tambah'])->middleware('admin');
-Route::post('/status-ptkp/tambah-proses', [StatusPtkpController::class, 'tambahProses'])->middleware('admin');
-Route::get('/status-ptkp/{id}/edit', [StatusPtkpController::class, 'edit'])->middleware('admin');
-Route::post('/status-ptkp/{id}/update', [StatusPtkpController::class, 'update'])->middleware('admin');
-Route::post('/status-ptkp/{id}/delete', [StatusPtkpController::class, 'delete'])->middleware('admin');
+// Route::get('/status-ptkp', [StatusPtkpController::class, 'index'])->middleware('admin');
+// Route::get('/status-ptkp/tambah', [StatusPtkpController::class, 'tambah'])->middleware('admin');
+// Route::post('/status-ptkp/tambah-proses', [StatusPtkpController::class, 'tambahProses'])->middleware('admin');
+// Route::get('/status-ptkp/{id}/edit', [StatusPtkpController::class, 'edit'])->middleware('admin');
+// Route::post('/status-ptkp/{id}/update', [StatusPtkpController::class, 'update'])->middleware('admin');
+// Route::post('/status-ptkp/{id}/delete', [StatusPtkpController::class, 'delete'])->middleware('admin');
 
 Route::get('/reset', function () {
     Artisan::call('optimize');

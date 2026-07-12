@@ -202,9 +202,6 @@
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('skema-honorarium*') ? 'active' : '' }}" href="{{ url('/skema-honorarium') }}"><i data-feather="credit-card"> </i><span>Skema Honorarium</span></a>
                         </li>
-                        <li class="sidebar-list">
-                            <a class="sidebar-link sidebar-title link-nav {{ Request::is('status-ptkp*') ? 'active' : '' }}" href="{{ url('/status-ptkp') }}"><i data-feather="file-text"> </i><span>Status PTKP</span></a>
-                        </li>
                       @endif
 
                       <li class="sidebar-list">
