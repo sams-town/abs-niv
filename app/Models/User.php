@@ -119,12 +119,18 @@ class User extends Authenticatable
 
     public function scopeDosen($query)
     {
-        return $query->where('tipe_user', 'dosen');
+        return $query->where('tipe_user', 'dosen')
+                     ->whereDoesntHave('roles', function ($q) {
+                         $q->where('name', 'Super Admin');
+                     });
     }
 
     public function scopePegawai($query)
     {
-        return $query->where('tipe_user', 'pegawai');
+        return $query->where('tipe_user', 'pegawai')
+                     ->whereDoesntHave('roles', function ($q) {
+                         $q->where('name', 'Super Admin');
+                     });
     }
 
     public function masterSkemaHonorarium()
