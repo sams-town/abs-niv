@@ -8,9 +8,11 @@
     <!-- Mobile Specific Metas -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
     <title>{{ $title }}</title>
-    <!-- Favicon and Touch Icons  -->
-    <link rel="shortcut icon" href="{{ url('/myhr/images/logo.png') }}" />
-    <link rel="apple-touch-icon-precomposed" href="{{ url('/myhr/images/logo.png') }}" />
+    @php
+        $settings = App\Models\settings::first();
+    @endphp
+    <link rel="shortcut icon" href="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/myhr/images/logo.png') }}" />
+    <link rel="apple-touch-icon-precomposed" href="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/myhr/images/logo.png') }}" />
     <!-- Font -->
     <link rel="stylesheet" href="{{ url('/myhr/fonts/fonts.css') }}" />
     <!-- Icons -->
