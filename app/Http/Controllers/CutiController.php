@@ -287,30 +287,37 @@ class CutiController extends Controller
         $data_user = User::findOrfail($id);
 
         $izin_cuti = $data_user->izin_cuti;
-        $izin_lainnya = $data_user->izin_lainnya;
         $izin_telat = $data_user->izin_telat;
         $izin_pulang_cepat = $data_user->izin_pulang_cepat;
 
         $data_cuti = array(
             [
-                'nama' => 'Cuti',
-                'nama_cuti' => 'Cuti ('.$izin_cuti.')'
+                'nama' => 'Cuti Tahunan',
+                'nama_cuti' => 'Cuti Tahunan ('.$izin_cuti.')'
             ],
             [
-                'nama' => 'Izin Masuk',
-                'nama_cuti' => 'Izin Masuk ('.$izin_lainnya.')'
+                'nama' => 'Cuti Keluarga Meninggal',
+                'nama_cuti' => 'Cuti Keluarga Meninggal'
             ],
             [
-                'nama' => 'Izin Telat',
-                'nama_cuti' => 'Izin Telat ('.$izin_telat.')'
+                'nama' => 'Cuti Menikah',
+                'nama_cuti' => 'Cuti Menikah'
+            ],
+            [
+                'nama' => 'Off Dengan Surat Dokter',
+                'nama_cuti' => 'Off Dengan Surat Dokter'
+            ],
+            [
+                'nama' => 'Lain-Lain (Unpaid Leave)',
+                'nama_cuti' => 'Lain-Lain (Unpaid Leave)'
+            ],
+            [
+                'nama' => 'Izin Datang Terlambat',
+                'nama_cuti' => 'Izin Datang Terlambat ('.$izin_telat.')'
             ],
             [
                 'nama' => 'Izin Pulang Cepat',
                 'nama_cuti' => 'Izin Pulang Cepat ('.$izin_pulang_cepat.')'
-            ],
-            [
-                'nama' => 'Sakit',
-                'nama_cuti' => 'Sakit'
             ]
         );
 
@@ -445,27 +452,23 @@ class CutiController extends Controller
         $mapping_shift = MappingShift::where('tanggal', $request['tanggal'])->where('user_id', $cuti->user_id)->first();
 
         if ($request["status_cuti"] == "Diterima") {
-            if($request["nama_cuti"] == "Cuti") {
+            if(strpos($request["nama_cuti"], "Cuti Tahunan") !== false) {
                 $user->update([
                     'izin_cuti' => $user->izin_cuti - 1
                 ]);
 
                 if ($mapping_shift) {
                     $mapping_shift->update([
-                        'status_absen' => $request["nama_cuti"]
+                        'status_absen' => 'Cuti Tahunan'
                     ]);
                 } else {
                     MappingShift::create([
                         'user_id' => $cuti->user_id,
                         'tanggal' => $cuti->tanggal,
-                        'status_absen' => $request["nama_cuti"]
+                        'status_absen' => 'Cuti Tahunan'
                     ]);
                 }
-            } else if($request["nama_cuti"] == "Izin Masuk") {
-                $user->update([
-                    'izin_lainnya' => $user->izin_lainnya - 1
-                ]);
-
+            } else if(in_array($request["nama_cuti"], ["Cuti Keluarga Meninggal", "Cuti Menikah", "Off Dengan Surat Dokter", "Lain-Lain (Unpaid Leave)"])) {
                 if ($mapping_shift) {
                     $mapping_shift->update([
                         'status_absen' => $request["nama_cuti"]
@@ -477,19 +480,7 @@ class CutiController extends Controller
                         'status_absen' => $request["nama_cuti"]
                     ]);
                 }
-            } else if($request["nama_cuti"] == "Sakit") {
-                if ($mapping_shift) {
-                    $mapping_shift->update([
-                        'status_absen' => $request["nama_cuti"]
-                    ]);
-                } else {
-                    MappingShift::create([
-                        'user_id' => $cuti->user_id,
-                        'tanggal' => $cuti->tanggal,
-                        'status_absen' => $request["nama_cuti"]
-                    ]);
-                }
-            } else if($request["nama_cuti"] == "Izin Telat") {
+            } else if(strpos($request["nama_cuti"], "Izin Datang Terlambat") !== false) {
                 if ($mapping_shift) {
                     $user->update([
                         'izin_telat' => $user->izin_telat - 1
@@ -501,14 +492,14 @@ class CutiController extends Controller
                         'long_absen' => $user->Lokasi->long_kantor,
                         'jarak_masuk' => 0,
                         'foto_jam_absen' => $cuti->foto_cuti,
-                        'status_absen' => $request["nama_cuti"],
+                        'status_absen' => 'Izin Datang Terlambat',
                     ]);
                 } else {
                     $cuti->update(['status_cuti' => 'Pending']);
                     Alert::error('Failed', 'Anda Belum Absen Masuk Pada Tanggal Tersebut');
                     return redirect('/data-cuti');
                 }
-            } else {
+            } else if(strpos($request["nama_cuti"], "Izin Pulang Cepat") !== false) {
                 if ($mapping_shift) {
                     $user->update([
                         'izin_pulang_cepat' => $user->izin_pulang_cepat - 1
@@ -521,7 +512,7 @@ class CutiController extends Controller
                         'pulang_cepat' => 0,
                         'jarak_pulang' => 0,
                         'foto_jam_pulang' => $cuti->foto_cuti,
-                        'status_absen' => $request["nama_cuti"],
+                        'status_absen' => 'Izin Pulang Cepat',
                     ]);
                 } else {
                     $cuti->update(['status_cuti' => 'Pending']);
@@ -666,30 +657,26 @@ class CutiController extends Controller
 
             // Logika debet saldo + update mapping_shifts (sama dengan editAdminProses)
             if ($karyawan) {
-                if ($cuti->nama_cuti == 'Cuti') {
+                if(strpos($cuti->nama_cuti, "Cuti Tahunan") !== false) {
                     $karyawan->update(['izin_cuti' => $karyawan->izin_cuti - 1]);
+                    $mapping_shift ? $mapping_shift->update(['status_absen' => 'Cuti Tahunan'])
+                        : MappingShift::create(['user_id' => $cuti->user_id, 'tanggal' => $cuti->tanggal, 'status_absen' => 'Cuti Tahunan']);
+                } elseif(in_array($cuti->nama_cuti, ["Cuti Keluarga Meninggal", "Cuti Menikah", "Off Dengan Surat Dokter", "Lain-Lain (Unpaid Leave)"])) {
                     $mapping_shift ? $mapping_shift->update(['status_absen' => $cuti->nama_cuti])
                         : MappingShift::create(['user_id' => $cuti->user_id, 'tanggal' => $cuti->tanggal, 'status_absen' => $cuti->nama_cuti]);
-                } elseif ($cuti->nama_cuti == 'Izin Masuk') {
-                    $karyawan->update(['izin_lainnya' => $karyawan->izin_lainnya - 1]);
-                    $mapping_shift ? $mapping_shift->update(['status_absen' => $cuti->nama_cuti])
-                        : MappingShift::create(['user_id' => $cuti->user_id, 'tanggal' => $cuti->tanggal, 'status_absen' => $cuti->nama_cuti]);
-                } elseif ($cuti->nama_cuti == 'Sakit') {
-                    $mapping_shift ? $mapping_shift->update(['status_absen' => $cuti->nama_cuti])
-                        : MappingShift::create(['user_id' => $cuti->user_id, 'tanggal' => $cuti->tanggal, 'status_absen' => $cuti->nama_cuti]);
-                } elseif ($cuti->nama_cuti == 'Izin Telat') {
+                } elseif(strpos($cuti->nama_cuti, "Izin Datang Terlambat") !== false) {
                     if ($mapping_shift) {
                         $karyawan->update(['izin_telat' => $karyawan->izin_telat - 1]);
-                        $mapping_shift->update(['jam_absen' => optional($mapping_shift->Shift)->jam_masuk, 'telat' => 0, 'lat_absen' => optional($karyawan->Lokasi)->lat_kantor, 'long_absen' => optional($karyawan->Lokasi)->long_kantor, 'jarak_masuk' => 0, 'foto_jam_absen' => $cuti->foto_cuti, 'status_absen' => $cuti->nama_cuti]);
+                        $mapping_shift->update(['jam_absen' => optional($mapping_shift->Shift)->jam_masuk, 'telat' => 0, 'lat_absen' => optional($karyawan->Lokasi)->lat_kantor, 'long_absen' => optional($karyawan->Lokasi)->long_kantor, 'jarak_masuk' => 0, 'foto_jam_absen' => $cuti->foto_cuti, 'status_absen' => 'Izin Datang Terlambat']);
                     } else {
                         $cuti->update(['status_cuti' => 'Pending']);
                         Alert::error('Failed', 'Karyawan belum absen masuk pada tanggal tersebut.');
                         return redirect('/data-cuti');
                     }
-                } elseif ($cuti->nama_cuti == 'Izin Pulang Cepat') {
+                } elseif(strpos($cuti->nama_cuti, "Izin Pulang Cepat") !== false) {
                     if ($mapping_shift) {
                         $karyawan->update(['izin_pulang_cepat' => $karyawan->izin_pulang_cepat - 1]);
-                        $mapping_shift->update(['jam_pulang' => optional($mapping_shift->Shift)->jam_keluar, 'lat_pulang' => optional($karyawan->Lokasi)->lat_kantor, 'long_pulang' => optional($karyawan->Lokasi)->long_kantor, 'pulang_cepat' => 0, 'jarak_pulang' => 0, 'foto_jam_pulang' => $cuti->foto_cuti, 'status_absen' => $cuti->nama_cuti]);
+                        $mapping_shift->update(['jam_pulang' => optional($mapping_shift->Shift)->jam_keluar, 'lat_pulang' => optional($karyawan->Lokasi)->lat_kantor, 'long_pulang' => optional($karyawan->Lokasi)->long_kantor, 'pulang_cepat' => 0, 'jarak_pulang' => 0, 'foto_jam_pulang' => $cuti->foto_cuti, 'status_absen' => 'Izin Pulang Cepat']);
                     } else {
                         $cuti->update(['status_cuti' => 'Pending']);
                         Alert::error('Failed', 'Karyawan belum absen masuk pada tanggal tersebut.');
