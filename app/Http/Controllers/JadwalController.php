@@ -41,19 +41,29 @@ class JadwalController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'dosen_id' => 'required|exists:users,id',
-            'nama_kelas' => 'required|string|max:255',
-            'mata_kuliah' => 'required|string|max:255',
-            'waktu_mulai' => 'required|date',
-            'waktu_selesai' => 'required|date|after:waktu_mulai',
+            'dosen_id'       => 'required|exists:users,id',
+            'nama_kelas'     => 'required|string|max:255',
+            'mata_kuliah'    => 'required|string|max:255',
+            'waktu_mulai'    => 'required|date_format:Y-m-d\TH:i',
+            'waktu_selesai'  => 'required|date_format:Y-m-d\TH:i|after:waktu_mulai',
+        ], [
+            'waktu_mulai.required'       => 'Waktu Mulai wajib diisi.',
+            'waktu_mulai.date_format'    => 'Format Waktu Mulai tidak valid.',
+            'waktu_selesai.required'     => 'Waktu Selesai wajib diisi.',
+            'waktu_selesai.date_format'  => 'Format Waktu Selesai tidak valid.',
+            'waktu_selesai.after'        => 'Waktu Selesai harus setelah Waktu Mulai.',
         ]);
 
+        // Convert datetime-local format (Y-m-d\TH:i) to MySQL datetime (Y-m-d H:i:s)
+        $waktuMulai   = str_replace('T', ' ', $request->waktu_mulai) . ':00';
+        $waktuSelesai = str_replace('T', ' ', $request->waktu_selesai) . ':00';
+
         Jadwal::create([
-            'dosen_id' => $request->dosen_id,
-            'nama_kelas' => $request->nama_kelas,
-            'mata_kuliah' => $request->mata_kuliah,
-            'waktu_mulai' => $request->waktu_mulai,
-            'waktu_selesai' => $request->waktu_selesai,
+            'dosen_id'      => $request->dosen_id,
+            'nama_kelas'    => $request->nama_kelas,
+            'mata_kuliah'   => $request->mata_kuliah,
+            'waktu_mulai'   => $waktuMulai,
+            'waktu_selesai' => $waktuSelesai,
         ]);
 
         return redirect('/jadwal')->with('success', 'Jadwal Mengajar berhasil ditambahkan.');
