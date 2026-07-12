@@ -1315,6 +1315,12 @@
                 });
                 updateSelectedText();
             });
+
+            // Expose a function to refresh the dropdown UI if options list is modified
+            selectElement.refreshDropdown = function() {
+                populateOptions();
+                updateSelectedText();
+            };
         }
 
         // Initialize first tab & dropdowns
@@ -1345,6 +1351,24 @@
             // Load Indonesian Regional API cascading selects
             setupAddressGroup('ktp');
             setupAddressGroup('dom');
+
+            // Handle invalid form fields hidden in tabs
+            var form = document.getElementById('tambahDosenForm');
+            form.addEventListener('invalid', function(e) {
+                e.preventDefault();
+                var section = e.target.closest('.tab-content-section');
+                if (section) {
+                    var tabId = section.id.replace('section-', '');
+                    var btn = document.querySelector(`.tab-btn[data-target="${tabId}"]`);
+                    if (btn) {
+                        var index = parseInt(btn.getAttribute('data-index'));
+                        showTab(index);
+                    }
+                }
+                setTimeout(function() {
+                    e.target.focus();
+                }, 50);
+            }, true);
         });
 
         // setup Indonesian region API for a specific address prefix (ktp / domisili)
@@ -1511,7 +1535,7 @@
         function copyKtpAddress(checkbox) {
             if (checkbox.checked) {
                 var ktpGroup = document.querySelector('.address-group[data-prefix="ktp"]');
-                var domGroup = document.querySelector('.address-group[data-prefix="domisili"]');
+                var domGroup = document.querySelector('.address-group[data-prefix="dom"]');
 
                 // Copy values of select elements
                 document.getElementById('dom_prov').innerHTML = document.getElementById('ktp_prov').innerHTML;
