@@ -16,42 +16,33 @@
                             <div class="col">
                                 @php
                                     $izin_cuti = $data_cuti_user->User->izin_cuti;
-                                    $izin_dinas_luar = $data_cuti_user->User->izin_dinas_luar;
-                                    $izin_sakit = $data_cuti_user->User->izin_sakit;
-                                    $izin_cek_kesehatan = $data_cuti_user->User->izin_cek_kesehatan;
-                                    $izin_keperluan_pribadi = $data_cuti_user->User->izin_keperluan_pribadi;
-                                    $izin_lainnya = $data_cuti_user->User->izin_lainnya;
                                     $izin_telat = $data_cuti_user->User->izin_telat;
                                     $izin_pulang_cepat = $data_cuti_user->User->izin_pulang_cepat;
 
                                     $data_cuti = array(
                                         [
-                                            'nama' => 'Izin Cuti',
-                                            'nama_cuti' => 'Izin Cuti ('.$izin_cuti.')'
+                                            'nama' => 'Cuti Tahunan',
+                                            'nama_cuti' => 'Cuti Tahunan ('.$izin_cuti.')'
                                         ],
                                         [
-                                            'nama' => 'Izin Dinas Luar',
-                                            'nama_cuti' => 'Izin Dinas Luar ('.$izin_dinas_luar.')'
+                                            'nama' => 'Cuti Keluarga Meninggal',
+                                            'nama_cuti' => 'Cuti Keluarga Meninggal'
                                         ],
                                         [
-                                            'nama' => 'Izin Sakit',
-                                            'nama_cuti' => 'Izin Sakit ('.$izin_sakit.')'
+                                            'nama' => 'Cuti Menikah',
+                                            'nama_cuti' => 'Cuti Menikah'
                                         ],
                                         [
-                                            'nama' => 'Izin Cek Kesehatan',
-                                            'nama_cuti' => 'Izin Cek Kesehatan ('.$izin_cek_kesehatan.')'
+                                            'nama' => 'Off Dengan Surat Dokter',
+                                            'nama_cuti' => 'Off Dengan Surat Dokter'
                                         ],
                                         [
-                                            'nama' => 'Izin Keperluan Pribadi',
-                                            'nama_cuti' => 'Izin Keperluan Pribadi ('.$izin_keperluan_pribadi.')'
+                                            'nama' => 'Lain-Lain (Unpaid Leave)',
+                                            'nama_cuti' => 'Lain-Lain (Unpaid Leave)'
                                         ],
                                         [
-                                            'nama' => 'Izin Lainnya',
-                                            'nama_cuti' => 'Izin Lainnya ('.$izin_lainnya.')'
-                                        ],
-                                        [
-                                            'nama' => 'Izin Telat',
-                                            'nama_cuti' => 'Izin Telat ('.$izin_telat.')'
+                                            'nama' => 'Izin Datang Terlambat',
+                                            'nama_cuti' => 'Izin Datang Terlambat ('.$izin_telat.')'
                                         ],
                                         [
                                             'nama' => 'Izin Pulang Cepat',

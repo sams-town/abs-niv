@@ -21,31 +21,38 @@
                     <div class="group-input">
                         @php
                             $izin_cuti = $data_user->izin_cuti;
-                            $izin_lainnya = $data_user->izin_lainnya;
                             $izin_telat = $data_user->izin_telat;
                             $izin_pulang_cepat = $data_user->izin_pulang_cepat;
 
                             $data_cuti = array(
                                 [
-                                    'nama' => 'Cuti',
-                                    'nama_cuti' => 'Cuti ('.$izin_cuti.')'
+                                    'nama' => 'Cuti Tahunan',
+                                    'nama_cuti' => 'Cuti Tahunan ('.$izin_cuti.')'
                                 ],
                                 [
-                                    'nama' => 'Izin Masuk',
-                                    'nama_cuti' => 'Izin Masuk ('.$izin_lainnya.')'
+                                    'nama' => 'Cuti Keluarga Meninggal',
+                                    'nama_cuti' => 'Cuti Keluarga Meninggal'
                                 ],
                                 [
-                                    'nama' => 'Izin Telat',
-                                    'nama_cuti' => 'Izin Telat ('.$izin_telat.')'
+                                    'nama' => 'Cuti Menikah',
+                                    'nama_cuti' => 'Cuti Menikah'
+                                ],
+                                [
+                                    'nama' => 'Off Dengan Surat Dokter',
+                                    'nama_cuti' => 'Off Dengan Surat Dokter'
+                                ],
+                                [
+                                    'nama' => 'Lain-Lain (Unpaid Leave)',
+                                    'nama_cuti' => 'Lain-Lain (Unpaid Leave)'
+                                ],
+                                [
+                                    'nama' => 'Izin Datang Terlambat',
+                                    'nama_cuti' => 'Izin Datang Terlambat ('.$izin_telat.')'
                                 ],
                                 [
                                     'nama' => 'Izin Pulang Cepat',
                                     'nama_cuti' => 'Izin Pulang Cepat ('.$izin_pulang_cepat.')'
-                                ],
-                                [
-                                    'nama' => 'Sakit',
-                                    'nama_cuti' => 'Sakit'
-                                ],
+                                ]
                             );
                         @endphp
                         <label for="nama_cuti" style="z-index:1000">Jenis Cuti / Izin</label>
