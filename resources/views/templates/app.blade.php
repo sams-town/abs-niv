@@ -401,7 +401,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- push.js dihapus: tidak menggunakan browser push notification --}}
     <script src="{{ url('/js/app.js') }}"></script>
-    <script>
+    {{-- <script>
         window.Echo.channel("messages").listen("NotifApproval", (event) => {
             var user_id = {{ auth()->user()->id }};
             if (event.user_id == user_id) {
@@ -448,7 +448,7 @@
                 // Push.create() dihapus: tidak menggunakan browser push notification
             }
         });
-    </script>
+    </script> --}}
     {{-- @include('sweetalert::alert') --}}
     @stack('script')
     <script>
