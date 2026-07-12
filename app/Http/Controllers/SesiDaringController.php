@@ -56,6 +56,7 @@ class SesiDaringController extends Controller
             'passcode' => $request->passcode,
             'status_sesi' => 'scheduled',
             'catatan' => $request->catatan,
+            'token_daring' => 'TOK-' . strtoupper(\Illuminate\Support\Str::random(6)),
         ]);
 
         return redirect('/dosen')->with('success', 'Sesi Daring berhasil dijadwalkan.');
@@ -84,7 +85,8 @@ class SesiDaringController extends Controller
             if ($result['status_pembayaran'] === 'invalid') {
                 return redirect()->back()->with('warning', $result['catatan_sistem']);
             }
-            return redirect()->back()->with('success', 'Sesi Daring berhasil diselesaikan. Penggajian dihitung.');
+            $sesi = $result['sesi'];
+            return redirect()->back()->with('success', 'Sesi Daring berhasil diselesaikan. Silakan masukkan token [' . $sesi->token_daring . '] pada menu Token Daring untuk mencatat penggajian.');
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

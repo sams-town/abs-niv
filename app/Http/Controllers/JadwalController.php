@@ -15,9 +15,9 @@ class JadwalController extends Controller
         
         // Admin or HRD can see all schedules, Dosen can only see their own
         if ($user->hasRole('admin') || $user->is_admin == 'admin' || $user->hasRole('hrd')) {
-            $jadwals = Jadwal::with(['dosen', 'sesiDarings'])->orderBy('waktu_mulai', 'desc')->get();
+            $jadwals = Jadwal::with(['dosen', 'sesiDarings.laporanMengajars'])->orderBy('waktu_mulai', 'desc')->get();
         } else {
-            $jadwals = Jadwal::with(['dosen', 'sesiDarings'])
+            $jadwals = Jadwal::with(['dosen', 'sesiDarings.laporanMengajars'])
                 ->where('dosen_id', $user->id)
                 ->orderBy('waktu_mulai', 'desc')
                 ->get();

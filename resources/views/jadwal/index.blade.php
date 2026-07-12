@@ -116,7 +116,16 @@
                                                 <span class="text-muted" style="font-size: 12px;">Kelas Berjalan</span>
                                             @endif
                                         @elseif($sesi->status_sesi === 'ended')
-                                            <span class="text-success" style="font-size: 13px; font-weight: 700;"><i class="fa fa-check-circle me-1"></i> Terhitung</span>
+                                            @php
+                                                $laporan = $sesi->laporanMengajars->first();
+                                            @endphp
+                                            @if($laporan && $laporan->status_pembayaran === 'pending')
+                                                <a href="{{ url('/dosen/token-daring') }}" class="btn btn-sm btn-warning" style="border-radius: 8px; font-weight: 700; padding: 6px 12px; width: 100%; font-size: 12px;">
+                                                    <i class="fa fa-key me-1"></i> Input Token
+                                                </a>
+                                            @else
+                                                <span class="text-success" style="font-size: 13px; font-weight: 700;"><i class="fa fa-check-circle me-1"></i> Terhitung</span>
+                                            @endif
                                         @endif
                                     </td>
                                 </tr>

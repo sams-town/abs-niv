@@ -256,6 +256,19 @@
                         Pegawai
                     </a>
                 </li>
+                @if(auth()->user()->tipe_user === 'dosen')
+                <li>
+                    <a href="{{ url('/dosen/token-daring') }}">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path d="M7 17a5 5 0 0 1 0-10h4l5-5h2v2l-1 1 1 1v2l-1 1 1 1v2h-2l-5-5H7z" fill="white"/>
+                                <circle cx="6.5" cy="12" r="1.5" fill="#fbbf24"/>
+                            </svg>
+                        </div>
+                        Token Daring
+                    </a>
+                </li>
+                @endif
                 <li>
                     <a href="{{ url('/menu') }}">
                         <div class="icon-box bg_surface_color">

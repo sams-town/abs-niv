@@ -16,6 +16,7 @@ class SesiDaring extends Model
         'meeting_url',
         'meeting_id',
         'passcode',
+        'token_daring',
         'status_sesi',
         'start_time',
         'end_time',

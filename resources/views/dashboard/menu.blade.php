@@ -1083,6 +1083,18 @@
                                     Dashboard Admin
                                 </a>
                             </li>
+                            @if(auth()->user()->tipe_user === 'dosen')
+                            <li>
+                                <a href="{{ url('/dosen/token-daring') }}">
+                                    <div class="icon-box" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" fill="white"/>
+                                        </svg>
+                                    </div>
+                                    Token Daring
+                                </a>
+                            </li>
+                            @endif
                           @endif
 
                           <li>

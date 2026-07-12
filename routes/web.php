@@ -50,6 +50,7 @@ use App\Http\Controllers\SkemaHonorariumController;
 use App\Http\Controllers\SesiDaringController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\MataKuliahController;
+use App\Http\Controllers\DosenTokenController;
 
 /*
 |--------------------------------------------------------------------------
@@ -502,6 +503,10 @@ Route::get('/sesi-daring/create/{jadwalId}', [SesiDaringController::class, 'crea
 Route::post('/sesi-daring', [SesiDaringController::class, 'store'])->middleware(['auth']);
 Route::post('/sesi-daring/{id}/start', [SesiDaringController::class, 'start'])->middleware(['auth']);
 Route::post('/sesi-daring/{id}/end', [SesiDaringController::class, 'end'])->middleware(['auth']);
+
+// ===== MODUL TOKEN DARING (Dosen) =====
+Route::get('/dosen/token-daring', [DosenTokenController::class, 'index'])->middleware(['auth']);
+Route::post('/dosen/token-daring/verify', [DosenTokenController::class, 'verify'])->middleware(['auth']);
 
 // ===== APPROVAL CUTI BERTINGKAT =====
 Route::post('/data-cuti/approval-1/{id}', [CutiController::class, 'approvalLevel1'])->middleware(['auth', 'role:kepala_cabang']);
