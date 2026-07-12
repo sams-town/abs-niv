@@ -212,30 +212,30 @@
                                     <span style="{{ Request::is('kunjungan*') ? 'color: blue' : '' }}">Kunjungan</span>
                                 </a>
                             </li>
-                            <li>
+                            {{-- <li>
                                 <a href="{{ url('/kinerja-pegawai-user') }}" class="nav-link">
                                     <i class="fa fa-x-ray" style="{{ Request::is('kinerja-pegawai-user*') ? 'color: blue' : 'color: black' }}"></i>
                                     <span style="{{ Request::is('kinerja-pegawai-user*') ? 'color: blue' : '' }}">Kinerja Pegawai</span>
                                 </a>
-                            </li>
-                            <li>
+                            </li> --}}
+                            {{-- <li>
                                 <a href="{{ url('/penugasan-kerja') }}" class="nav-link">
                                     <i class="fas fa-wave-square" style="{{ Request::is('penugasan-kerja*') ? 'color: blue' : 'color: black' }}"></i>
                                     <span style="{{ Request::is('penugasan-kerja*') ? 'color: blue' : '' }}">Penugasan Kerja</span>
                                 </a>
-                            </li>
+                            </li> --}}
                             <li>
                                 <a href="{{ url('/rapat-kerja') }}" class="nav-link">
                                     <i class="fas fa-vihara" style="{{ Request::is('rapat-kerja*') ? 'color: blue' : 'color: black' }}"></i>
                                     <span style="{{ Request::is('rapat-kerja*') ? 'color: blue' : '' }}">Rapat Kerja</span>
                                 </a>
                             </li>
-                            <li>
+                            {{-- <li>
                                 <a href="{{ url('/inventory') }}" class="nav-link">
                                     <i class="fas fa-warehouse" style="{{ Request::is('inventory*') ? 'color: blue' : 'color: black' }}"></i>
                                     <span style="{{ Request::is('inventory*') ? 'color: blue' : '' }}">Inventory</span>
                                 </a>
-                            </li>
+                            </li> --}}
                             <li>
                                 <a href="{{ url('/exit') }}" class="nav-link">
                                     <i class="fas fa-user-minus" style="{{ Request::is('exit*') ? 'color: blue' : 'color: black' }}"></i>

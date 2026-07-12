@@ -283,30 +283,30 @@
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/kunjungan') }}"><i data-feather="navigation"> </i><span>Kunjungan</span></a>
                         </li>
 
-                        <li class="sidebar-list">
+                        {{-- <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/penugasan') }}"><i data-feather="award"> </i><span>Penugasan</span></a>
-                        </li>
+                        </li> --}}
 
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/rapat') }}"><i data-feather="monitor"> </i><span>Rapat</span></a>
                         </li>
 
-                        <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="wind"></i><span>Kinerja Pegawai</span></a>
+                        {{-- <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="wind"></i><span>Kinerja Pegawai</span></a>
                             <ul class="sidebar-submenu">
                               <li><a href="{{ url('/jenis-kinerja') }}">Jenis Kinerja</a></li>
                               <li><a href="{{ url('/laporan-kinerja') }}">Laporan Kinerja</a></li>
                               <li><a href="{{ url('/kinerja-pegawai') }}">Kinerja Pegawai</a></li>
                             </ul>
-                        </li>
+                        </li> --}}
 
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('laporan-kerja*') ? 'active' : '' }}" href="{{ url('/laporan-kerja') }}"><i data-feather="message-square"> </i><span>Laporan Kerja</span></a>
                         </li>
                       @endif
 
-                      <li class="sidebar-list">
+                      {{-- <li class="sidebar-list">
                         <a class="sidebar-link sidebar-title link-nav" href="{{ url('/inventory') }}"><i data-feather="git-merge"> </i><span>Inventory</span></a>
-                      </li>
+                      </li> --}}
 
                       @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance') || auth()->user()->hasRole('regional_manager'))
                         <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="dollar-sign"></i><span>Keuangan</span></a>
@@ -335,9 +335,9 @@
                       </li>
 
                       @if (auth()->user()->hasRole('admin'))
-                        <li class="sidebar-list">
+                        {{-- <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('berita*') ? 'active' : '' }}" href="{{ url('/berita') }}"><i data-feather="star"> </i><span>Berita & Informasi</span></a>
-                        </li>
+                        </li> --}}
 
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('settings*') ? 'active' : '' }}" href="{{ url('/settings') }}"><i data-feather="settings"> </i><span>Settings</span></a>
