@@ -17,7 +17,7 @@ class StatusPtkpController extends Controller
             $data = StatusPtkp::orderBy('id', 'DESC');
         }
         return view('statusPtkp.index', [
-            'title' => 'Master Status Pegawi',
+            'title' => 'Master Status PTKP (Penghasilan Tidak Kena Pajak)',
             'data' => $data->paginate(10)->withQueryString()
         ]);
     }

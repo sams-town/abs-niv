@@ -3,7 +3,7 @@
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <a href="{{ url('/status-ptkp/tambah') }}" class="btn btn-primary">+ Tambah Status Pegawai</a>
+                <a href="{{ url('/status-ptkp/tambah') }}" class="btn btn-primary">+ Tambah Status PTKP</a>
             </div>
             <!-- /.card-header -->
             <div class="card-body">
@@ -22,9 +22,9 @@
                         <tr>
                             <th>No.</th>
                             <th>Status</th>
-                            <th>Nilai PKTP 2016 DST</th>
-                            <th>Nilai PKTP 2015</th>
-                            <th>Nilai PKTP 2009 - 2012</th>
+                            <th>Nilai PTKP 2016 DST</th>
+                            <th>Nilai PTKP 2015</th>
+                            <th>Nilai PTKP 2009 - 2012</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
