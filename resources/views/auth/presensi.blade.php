@@ -54,73 +54,73 @@
             }
         }
 
-        // Memuat model yang diperlukan
-        Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri("{{ url('/face/weights') }}"),
-            faceapi.nets.faceLandmark68Net.loadFromUri("{{ url('/face/weights') }}"),
-            faceapi.nets.faceRecognitionNet.loadFromUri("{{ url('/face/weights') }}")
-        ]).then(startStream);
+      // Memuat model yang diperlukan
+      Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri("{{ url('/face/weights') }}"),
+          faceapi.nets.faceLandmark68Net.loadFromUri("{{ url('/face/weights') }}"),
+          faceapi.nets.faceRecognitionNet.loadFromUri("{{ url('/face/weights') }}")
+      ]).then(startStream);
 
-        video.onloadedmetadata = () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            start();
-        };
+      video.onloadedmetadata = () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          start();
+      };
 
-        async function start() {
-            Swal.fire({
-                title: 'Loading...',
-                text: 'Loading face data, please wait.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading()
-                }
-            });
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
+      async function start() {
+          Swal.fire({
+              title: 'Loading...',
+              text: 'Loading face data, please wait.',
+              allowOutsideClick: false,
+              didOpen: () => {
+                  Swal.showLoading()
+              }
+          });
+          $.ajaxSetup({
+              headers: {
+                  'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+              }
+          });
 
-            // Mengambil data neural untuk menciptakan faceMatcher
-            $.ajax({
-                datatype: 'json',
-                url: "{{ url('/ajaxGetNeural') }}",
-                data: ""
-            }).done(async function(data) {
-                if (data.length > 2) {
-                    var json_str = "{\"parent\":" + data + "}"
-                    var content = JSON.parse(json_str);
-                    for (let x = 0; x < content.parent.length; x++) {
-                        for (let y = 0; y < content.parent[x].descriptors.length; y++) {
-                            let results = Object.values(content.parent[x].descriptors[y])
-                            content.parent[x].descriptors[y] = new Float32Array(results)
-                        }
-                    }
-                    faceMatcher = await createFaceMatcher(content);
-                    onPlay();
-                }
-            });
-        }
+          // Mengambil data neural untuk menciptakan faceMatcher
+          $.ajax({
+              datatype: 'json',
+              url: "{{ url('/ajaxGetNeural') }}",
+              data: ""
+          }).done(async function(data) {
+              if (data.length > 2) {
+                  var json_str = "{\"parent\":" + data + "}"
+                  var content = JSON.parse(json_str);
+                  for (let x = 0; x < content.parent.length; x++) {
+                      for (let y = 0; y < content.parent[x].descriptors.length; y++) {
+                          let results = Object.values(content.parent[x].descriptors[y])
+                          content.parent[x].descriptors[y] = new Float32Array(results)
+                      }
+                  }
+                  faceMatcher = await createFaceMatcher(content);
+                  onPlay();
+              }
+          });
+      }
 
-        async function createFaceMatcher(data) {
-            const labeledFaceDescriptors = await Promise.all(data.parent.map(className => {
-                return new faceapi.LabeledFaceDescriptors(
-                    className.label,
-                    className.descriptors.map(d => new Float32Array(d))
-                );
-            }));
-            return new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
-        }
+      async function createFaceMatcher(data) {
+          const labeledFaceDescriptors = await Promise.all(data.parent.map(className => {
+              return new faceapi.LabeledFaceDescriptors(
+                  className.label,
+                  className.descriptors.map(d => new Float32Array(d))
+              );
+          }));
+          return new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
+      }
 
-        async function onPlay() {
-            if (faceMatcher) {
-                const displaySize = { width: video.videoWidth, height: video.videoHeight };
-                faceapi.matchDimensions(canvas, displaySize);
+      async function onPlay() {
+          if (faceMatcher) {
+              const displaySize = { width: video.videoWidth, height: video.videoHeight };
+              faceapi.matchDimensions(canvas, displaySize);
 
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks()
-                    .withFaceDescriptors();
+              const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options())
+                  .withFaceLandmarks()
+                  .withFaceDescriptors();
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
                 const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
 

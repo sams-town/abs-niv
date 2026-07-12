@@ -55,7 +55,7 @@
 
       // Memuat model yang diperlukan
       Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri("{{ url('/face/weights') }}"),
+          faceapi.nets.ssdMobilenetv1.loadFromUri("{{ url('/face/weights') }}"),
           faceapi.nets.faceLandmark68Net.loadFromUri("{{ url('/face/weights') }}"),
           faceapi.nets.faceRecognitionNet.loadFromUri("{{ url('/face/weights') }}")
       ]).then(startStream);
@@ -117,7 +117,7 @@
               const displaySize = { width: video.videoWidth, height: video.videoHeight };
               faceapi.matchDimensions(canvas, displaySize);
 
-              const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+              const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options())
                   .withFaceLandmarks()
                   .withFaceDescriptors();
               const resizedDetections = faceapi.resizeResults(detections, displaySize);
