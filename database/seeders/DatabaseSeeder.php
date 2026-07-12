@@ -782,7 +782,6 @@ class DatabaseSeeder extends Seeder
             'ptkp' => 126000000
         ]);
 
-
-
+        $this->call(MataKuliahSeeder::class);
     }
 }

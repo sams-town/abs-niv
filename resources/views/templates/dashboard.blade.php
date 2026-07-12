@@ -202,6 +202,9 @@
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('skema-honorarium*') ? 'active' : '' }}" href="{{ url('/skema-honorarium') }}"><i data-feather="credit-card"> </i><span>Skema Honorarium</span></a>
                         </li>
+                        <li class="sidebar-list">
+                            <a class="sidebar-link sidebar-title link-nav {{ Request::is('mata-kuliah*') ? 'active' : '' }}" href="{{ url('/mata-kuliah') }}"><i data-feather="book"> </i><span>Mata Kuliah</span></a>
+                        </li>
                       @endif
 
                       <li class="sidebar-list">

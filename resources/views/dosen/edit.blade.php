@@ -490,16 +490,9 @@
                     <div class="col-md-6">
                         <label for="mata_kuliah">Mata Kuliah Yang Diampu <span class="required-star">*</span></label>
                         <select name="mata_kuliah[]" id="mata_kuliah" class="form-select" multiple required>
-                            <option value="Algoritma & Pemrograman" {{ in_array('Algoritma & Pemrograman', $current_subjects) ? 'selected' : '' }}>Algoritma & Pemrograman</option>
-                            <option value="Basis Data" {{ in_array('Basis Data', $current_subjects) ? 'selected' : '' }}>Basis Data</option>
-                            <option value="Rekayasa Perangkat Lunak" {{ in_array('Rekayasa Perangkat Lunak', $current_subjects) ? 'selected' : '' }}>Rekayasa Perangkat Lunak</option>
-                            <option value="Struktur Data" {{ in_array('Struktur Data', $current_subjects) ? 'selected' : '' }}>Struktur Data</option>
-                            <option value="Sistem Operasi" {{ in_array('Sistem Operasi', $current_subjects) ? 'selected' : '' }}>Sistem Operasi</option>
-                            <option value="Jaringan Komputer" {{ in_array('Jaringan Komputer', $current_subjects) ? 'selected' : '' }}>Jaringan Komputer</option>
-                            <option value="Kecerdasan Buatan (AI)" {{ in_array('Kecerdasan Buatan (AI)', $current_subjects) ? 'selected' : '' }}>Kecerdasan Buatan (AI)</option>
-                            <option value="Pemrograman Web" {{ in_array('Pemrograman Web', $current_subjects) ? 'selected' : '' }}>Pemrograman Web</option>
-                            <option value="Kalkulus & Aljabar Linear" {{ in_array('Kalkulus & Aljabar Linear', $current_subjects) ? 'selected' : '' }}>Kalkulus & Aljabar Linear</option>
-                            <option value="Statistika & Probabilitas" {{ in_array('Statistika & Probabilitas', $current_subjects) ? 'selected' : '' }}>Statistika & Probabilitas</option>
+                            @foreach($mata_kuliah as $mk)
+                                <option value="{{ $mk->nama_mk }}" {{ in_array($mk->nama_mk, $current_subjects) ? 'selected' : '' }}>{{ $mk->nama_mk }} ({{ $mk->prodi }})</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="col-md-6">

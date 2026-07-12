@@ -799,16 +799,9 @@
                     <div class="col-md-12">
                         <label for="mata_kuliah">Mata Kuliah Yang Diampu <span class="required-star">*</span></label>
                         <select name="mata_kuliah[]" id="mata_kuliah" class="form-select" multiple required>
-                            <option value="Algoritma & Pemrograman">Algoritma & Pemrograman</option>
-                            <option value="Basis Data">Basis Data</option>
-                            <option value="Rekayasa Perangkat Lunak">Rekayasa Perangkat Lunak</option>
-                            <option value="Struktur Data">Struktur Data</option>
-                            <option value="Sistem Operasi">Sistem Operasi</option>
-                            <option value="Jaringan Komputer">Jaringan Komputer</option>
-                            <option value="Kecerdasan Buatan (AI)">Kecerdasan Buatan (AI)</option>
-                            <option value="Pemrograman Web">Pemrograman Web</option>
-                            <option value="Kalkulus & Aljabar Linear">Kalkulus & Aljabar Linear</option>
-                            <option value="Statistika & Probabilitas">Statistika & Probabilitas</option>
+                            @foreach($mata_kuliah as $mk)
+                                <option value="{{ $mk->nama_mk }}" {{ (is_array(old('mata_kuliah')) && in_array($mk->nama_mk, old('mata_kuliah'))) ? 'selected' : '' }}>{{ $mk->nama_mk }} ({{ $mk->prodi }})</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>

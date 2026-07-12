@@ -36,7 +36,8 @@ class DosenController extends Controller
             'lokasi'    => Lokasi::where('status', 'approved')->orderBy('nama_lokasi')->get(),
             'roles'     => \Spatie\Permission\Models\Role::orderBy('name')->get(),
             'status_pajak' => \App\Models\StatusPajak::orderBy('id')->get(),
-            'skemas'    => \App\Models\MasterSkemaHonorarium::orderBy('nama_skema')->get()
+            'skemas'    => \App\Models\MasterSkemaHonorarium::orderBy('nama_skema')->get(),
+            'mata_kuliah' => \App\Models\MataKuliah::orderBy('nama_mk')->get()
         ]);
     }
 
@@ -167,7 +168,8 @@ class DosenController extends Controller
             'roles'     => \Spatie\Permission\Models\Role::orderBy('name')->get(),
             'status_pajak' => \App\Models\StatusPajak::orderBy('id')->get(),
             'current_subjects' => $current_subjects,
-            'skemas'    => \App\Models\MasterSkemaHonorarium::orderBy('nama_skema')->get()
+            'skemas'    => \App\Models\MasterSkemaHonorarium::orderBy('nama_skema')->get(),
+            'mata_kuliah' => \App\Models\MataKuliah::orderBy('nama_mk')->get()
         ]);
     }
 

@@ -49,6 +49,7 @@ use App\Http\Controllers\DosenController;
 use App\Http\Controllers\SkemaHonorariumController;
 use App\Http\Controllers\SesiDaringController;
 use App\Http\Controllers\JadwalController;
+use App\Http\Controllers\MataKuliahController;
 
 /*
 |--------------------------------------------------------------------------
@@ -481,6 +482,16 @@ Route::prefix('dosen')->middleware(['auth', 'role:admin|hrd'])->group(function (
     Route::get('/edit/{id}', [DosenController::class, 'edit']);
     Route::put('/update/{id}', [DosenController::class, 'update']);
     Route::delete('/delete/{id}', [DosenController::class, 'deactivate']);
+});
+
+// ===== MODUL MATA KULIAH =====
+Route::prefix('mata-kuliah')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+    Route::get('/', [MataKuliahController::class, 'index']);
+    Route::get('/tambah', [MataKuliahController::class, 'tambah']);
+    Route::post('/store', [MataKuliahController::class, 'store']);
+    Route::get('/edit/{id}', [MataKuliahController::class, 'edit']);
+    Route::put('/update/{id}', [MataKuliahController::class, 'update']);
+    Route::delete('/delete/{id}', [MataKuliahController::class, 'delete']);
 });
 
 Route::resource('/skema-honorarium', SkemaHonorariumController::class)->middleware(['auth', 'role:admin|hrd']);
