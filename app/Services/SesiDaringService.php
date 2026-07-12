@@ -88,9 +88,26 @@ class SesiDaringService
             $totalGaji = 0;
 
             if ($durasiMenit >= 1) {
-                $totalGaji = $durasiMenit * $rate;
+                $totalGaji = 1.00 * $rate;
                 $statusPembayaran = 'valid';
                 $catatanSistem = "Sesi valid. Durasi: {$durasiMenit} menit dengan tarif Rp " . number_format($rate, 0, ',', '.') . " per unit.";
+
+                // Create LogMengajar record
+                \App\Models\LogMengajar::create([
+                    'dosen_id' => $dosen->id,
+                    'kelas_id' => $sesi->jadwal->nama_kelas,
+                    'tanggal' => $endTime->toDateString(),
+                    'jumlah_unit' => 1.00,
+                ]);
+
+                // Create TransaksiMengajar record
+                \App\Models\TransaksiMengajar::create([
+                    'dosen_id' => $dosen->id,
+                    'kelas_id' => $sesi->jadwal->nama_kelas,
+                    'tanggal' => $endTime->toDateString(),
+                    'jumlah_sesi_token' => 1.00,
+                    'nominal_honor' => $rate,
+                ]);
             } else {
                 $statusPembayaran = 'invalid';
                 $catatanSistem = "Peringatan: Durasi sesi kurang dari 1 menit ({$durasiMenit} menit). Sesi tidak valid untuk dibayar.";

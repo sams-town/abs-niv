@@ -150,14 +150,17 @@ class PegawaiExport implements FromQuery, WithColumnFormatting, WithMapping, Wit
     public function query()
     {
         $search = request()->input('search');
-        $data = User::when($search, function ($query) use ($search) {
-            $query->where('name', 'LIKE', '%'.$search.'%')
+        $data = User::pegawai()
+        ->when($search, function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', '%'.$search.'%')
                   ->orWhere('email', 'LIKE', '%'.$search.'%')
                   ->orWhere('telepon', 'LIKE', '%'.$search.'%')
                   ->orWhere('username', 'LIKE', '%'.$search.'%')
-                  ->orWhereHas('Jabatan', function ($query) use ($search) {
-                      $query->where('nama_jabatan', 'LIKE', '%'.$search.'%');
+                  ->orWhereHas('Jabatan', function ($q2) use ($search) {
+                      $q2->where('nama_jabatan', 'LIKE', '%'.$search.'%');
                   });
+            });
         })
         ->orderBy('name', 'ASC');
 

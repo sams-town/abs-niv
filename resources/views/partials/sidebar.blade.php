@@ -1,3 +1,6 @@
+@php
+    $settings = App\Models\settings::first();
+@endphp
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     @if(auth()->user()->is_admin == 'admin')
@@ -5,7 +8,7 @@
     @else
         <a href="{{ url('/absen') }}" class="brand-link">
     @endif
-        <img src="{{ url('assets/img/absensi.png') }}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+        <img src="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('assets/img/absensi.png') }}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-light">Absensi Online</span>
     </a>
 
@@ -127,7 +130,7 @@
                             </a>
                         </li>
 
-                        {{-- <li class="nav-item">
+                        <li class="nav-item">
                             <a href="{{ url('/golongan') }}" class="nav-link {{ Request::is('golongan*') ? 'active' : '' }}">
                                 <i class="nav-icon fa fa-people-arrows"></i>
                                 <p>
@@ -152,12 +155,37 @@
                                     Master Status PTKP
                                 </p>
                             </a>
-                        </li> --}}
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ url('/skema-honorarium') }}" class="nav-link {{ Request::is('skema-honorarium*') ? 'active' : '' }}">
+                                <i class="nav-icon fa fa-credit-card"></i>
+                                <p>
+                                    Skema Honorarium
+                                </p>
+                            </a>
+                        </li>
                 </ul>
             </nav>
     
             <hr style="background-color:dimgray">
         @endcan
+
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-header">AKADEMIK</li>
+                <li class="nav-item">
+                    <a href="{{ url('/jadwal') }}" class="nav-link {{ Request::is('jadwal*') ? 'active' : '' }}">
+                        <i class="nav-icon fa fa-calendar-alt"></i>
+                        <p>
+                            Jadwal & Sesi Daring
+                        </p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <hr style="background-color:dimgray">
 
         
 

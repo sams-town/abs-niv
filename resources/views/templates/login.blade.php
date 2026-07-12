@@ -41,7 +41,7 @@
 <body>
      <!-- preloade -->
      <div class="preload preload-container">
-        <div class="preload-logo">
+        <div class="preload-logo" style="background-image: url('{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}'); background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #533dea;">
           <div class="spinner"></div>
         </div>
       </div>

@@ -1,3 +1,6 @@
+@php
+  $settings = App\Models\settings::first();
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +12,7 @@
   {{-- logo --}}
   <link rel="stylesheet" href="{{ url('adminlte/plugins/fullcalendar/main.css') }}">
 
-  <link rel="shorcut icon" href="{{ url('assets/img/absensi.png') }}">
+  <link rel="shortcut icon" href="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('assets/img/absensi.png') }}">
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="{{ url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback') }}">
   <!-- Font Awesome -->
@@ -69,7 +72,7 @@
 
   <!-- Preloader -->
   <div class="preloader flex-column justify-content-center align-items-center">
-    <img src="{{ url('adminlte/dist/img/AdminLTELogo.png') }}" alt="AdminLTELogo" height="60" width="60">
+    <img src="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('adminlte/dist/img/AdminLTELogo.png') }}" alt="Logo" height="60" width="60">
   </div>
 
   @include('partials.topbar')

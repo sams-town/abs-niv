@@ -33,22 +33,25 @@ class karyawanController extends Controller
     {
         $search = request()->input('search');
 
-        $data = User::when($search, function ($query) use ($search) {
-                    $query->where('name', 'LIKE', '%'.$search.'%')
+        $data = User::pegawai()
+                ->when($search, function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'LIKE', '%'.$search.'%')
                           ->orWhere('email', 'LIKE', '%'.$search.'%')
                           ->orWhere('telepon', 'LIKE', '%'.$search.'%')
                           ->orWhere('username', 'LIKE', '%'.$search.'%')
-                          ->orWhereHas('Jabatan', function ($query) use ($search) {
-                              $query->where('nama_jabatan', 'LIKE', '%'.$search.'%');
+                          ->orWhereHas('Jabatan', function ($q2) use ($search) {
+                              $q2->where('nama_jabatan', 'LIKE', '%'.$search.'%');
                           });
+                    });
                 })
                 ->orderBy('name', 'ASC')
                 ->paginate(10)
                 ->withQueryString();
 
         if (auth()->user()->is_admin == 'admin') {
-            $total_pegawai = User::count();
-            $aktif_pegawai = User::where(function ($query) {
+            $total_pegawai = User::pegawai()->count();
+            $aktif_pegawai = User::pegawai()->where(function ($query) {
                 $query->whereNull('masa_berlaku')
                       ->orWhere('masa_berlaku', '>', date('Y-m-d'));
             })->count();
@@ -56,13 +59,13 @@ class karyawanController extends Controller
                                 ->where('status_cuti', 'Diterima')
                                 ->where('nama_cuti', 'Cuti')
                                 ->count();
-            $baru_bulan_ini = User::whereMonth('created_at', date('m'))
+            $baru_bulan_ini = User::pegawai()->whereMonth('created_at', date('m'))
                                   ->whereYear('created_at', date('Y'))
                                   ->count();
 
             // Calculate location distribution data
             $total_lokasi = \App\Models\Lokasi::count();
-            $lokasi_counts = User::select('lokasi_id', \DB::raw('count(*) as total'))
+            $lokasi_counts = User::pegawai()->select('lokasi_id', \DB::raw('count(*) as total'))
                 ->whereNotNull('lokasi_id')
                 ->groupBy('lokasi_id')
                 ->orderBy('total', 'desc')
@@ -90,7 +93,7 @@ class karyawanController extends Controller
             // Calculate domicile (Domisili KTP) distribution data
             $cities = ['Jakarta', 'Bogor', 'Depok', 'Tangerang', 'Bekasi', 'Bandung', 'Surabaya', 'Tasikmalaya', 'Semarang', 'Yogyakarta', 'Sukabumi', 'Cianjur', 'Garut', 'Cirebon'];
             $domisili_raw = [];
-            foreach (User::all() as $u) {
+            foreach (User::pegawai()->get() as $u) {
                 $alamat = $u->alamat;
                 $found_domisili = 'Lainnya';
                 if ($alamat) {
