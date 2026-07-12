@@ -120,6 +120,7 @@ class User extends Authenticatable
     public function scopeDosen($query)
     {
         return $query->where('tipe_user', 'dosen')
+                     ->where('is_admin', '!=', 'superadmin')
                      ->whereDoesntHave('roles', function ($q) {
                          $q->where('name', 'Super Admin');
                      });
@@ -128,6 +129,7 @@ class User extends Authenticatable
     public function scopePegawai($query)
     {
         return $query->where('tipe_user', 'pegawai')
+                     ->where('is_admin', '!=', 'superadmin')
                      ->whereDoesntHave('roles', function ($q) {
                          $q->where('name', 'Super Admin');
                      });
