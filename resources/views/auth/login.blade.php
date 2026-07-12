@@ -115,8 +115,13 @@
         }
         .absensi-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 16px;
+        }
+        .absensi-flex {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
         }
         .absensi-card {
             background: #f8fafc;
@@ -232,8 +237,7 @@
 
             <button type="submit" class="btn-login-primary mb-3">Masuk ke Akun</button>
             
-            <div class="d-flex justify-content-between align-items-center mt-2">
-                <a href="{{ url('/forgot-password') }}" class="forgot-link">Lupa Password? <i class="fa fa-key"></i></a>
+            <div class="text-center mt-2">
                 <span class="forgot-link">Belum punya akun? <a href="{{ url('/register') }}" style="color: #533dea; font-weight: 700;">Daftar</a></span>
             </div>
         </form>
@@ -246,19 +250,11 @@
                 <div class="absensi-card-icon">
                     <i class="fas fa-user-shield"></i>
                 </div>
-                <div class="absensi-card-title">Face Recognition</div>
-                <a href="{{ url('/presensi') }}" class="btn-absensi masuk">Absen Masuk</a>
-                <a href="{{ url('/presensi-pulang') }}" class="btn-absensi pulang">Absen Pulang</a>
-            </div>
-
-            <!-- Card QR Code -->
-            <div class="absensi-card qr">
-                <div class="absensi-card-icon">
-                    <i class="fas fa-qrcode"></i>
+                <div class="absensi-card-title">Face Recognition (Kamera)</div>
+                <div class="absensi-flex">
+                    <a href="{{ url('/presensi') }}" class="btn-absensi masuk" style="flex: 1; margin-bottom: 0;">Absen Masuk</a>
+                    <a href="{{ url('/presensi-pulang') }}" class="btn-absensi pulang" style="flex: 1; margin-bottom: 0;">Absen Pulang</a>
                 </div>
-                <div class="absensi-card-title">QR Code</div>
-                <a href="{{ url('/qr-masuk') }}" class="btn-absensi qr-masuk">Absen Masuk</a>
-                <a href="{{ url('/qr-pulang') }}" class="btn-absensi pulang">Absen Pulang</a>
             </div>
         </div>
     </div>
