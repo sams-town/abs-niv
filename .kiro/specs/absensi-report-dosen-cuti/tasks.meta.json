@@ -1,0 +1,312 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Buat migration `add_dosen_fields_to_users_table`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835836983
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835851410
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835898775
+      }
+    ],
+    "1.2 Buat migration `add_approval_bertingkat_to_cutis_table`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835837113
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835851949
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835899490
+      }
+    ],
+    "2.1 Modifikasi `app/Models/User.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835837230
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835904993
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835944216
+      }
+    ],
+    "2.2 Modifikasi `app/Models/Cuti.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835837445
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835905746
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835944903
+      }
+    ],
+    "3.1 Buat `app/Helpers/PivotBuilder.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835837626
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835951164
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836060382
+      }
+    ],
+    "3.5 Buat `app/Helpers/CutiStateHelper.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835837741
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835951574
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836061168
+      }
+    ],
+    "4. Checkpoint — Migrations, Models, Helpers": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835837860
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836072862
+      }
+    ],
+    "5.1 Buat `app/Http/Controllers/AbsenPivotController.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835837988
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836096074
+      }
+    ],
+    "5.6 Buat `app/Exports/AbsenPivotExport.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835838134
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836096777
+      }
+    ],
+    "6.1 Buat `app/Http/Controllers/DosenController.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835838270
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836097471
+      }
+    ],
+    "7.1 Modifikasi method `tambah()` di `app/Http/Controllers/CutiController.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835838454
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836098036
+      }
+    ],
+    "7.2 Modifikasi method `dataCuti()` di `app/Http/Controllers/CutiController.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835838662
+      },
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836098867
+      }
+    ],
+    "7.4 Tambahkan method `approvalLevel1(Request $request, $id)` di `app/Http/Controllers/CutiController.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835838817
+      }
+    ],
+    "7.5 Tambahkan method `approvalLevel2(Request $request, $id)` di `app/Http/Controllers/CutiController.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835838979
+      }
+    ],
+    "8. Checkpoint — Controllers": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835839092
+      }
+    ],
+    "9.1 Buat `resources/views/laporan-pivot/index.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835839221
+      }
+    ],
+    "9.2 Buat `resources/views/laporan-pivot/result.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835839359
+      }
+    ],
+    "9.3 Buat `resources/views/laporan-pivot/rekap-bulanan.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835839483
+      }
+    ],
+    "9.4 Buat `resources/views/laporan-pivot/pdf.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835839606
+      }
+    ],
+    "10.1 Buat `resources/views/dosen/index.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835839815
+      }
+    ],
+    "10.2 Buat `resources/views/dosen/tambah.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835839967
+      }
+    ],
+    "10.3 Buat `resources/views/dosen/edit.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835840125
+      }
+    ],
+    "11.1 Modifikasi `resources/views/cuti/datacuti.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835841341
+      }
+    ],
+    "11.2 Modifikasi `resources/views/cuti/indexuser.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835841566
+      }
+    ],
+    "12.1 Tambahkan routes Laporan Pivot dan Dosen di `routes/web.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835841732
+      }
+    ],
+    "12.2 Tambahkan routes Approval Cuti Bertingkat di `routes/web.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835841894
+      }
+    ],
+    "12.3 Modifikasi `resources/views/partials/sidebar.blade.php`": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835842040
+      }
+    ],
+    "13. Final Checkpoint": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835842190
+      }
+    ],
+    "1. Database Migrations": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835899704
+      }
+    ],
+    "2. Model Updates": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783835945085
+      }
+    ],
+    "3. Helper / Service Classes": [
+      {
+        "executionId": "9b42ce68-c0d6-4244-97c7-544e0847eecc",
+        "chatSessionId": "sess_3bcb36f2-0628-4b6f-8210-ea8397f5dbc8",
+        "timestamp": 1783836061225
+      }
+    ]
+  }
+}

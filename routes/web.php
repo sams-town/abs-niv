@@ -44,6 +44,11 @@ use App\Http\Controllers\TargetKinerjaController;
 use App\Http\Controllers\KinerjaPegawaiController;
 use App\Http\Controllers\LaporanKinerjaController;
 use App\Http\Controllers\PengajuanKeuanganController;
+use App\Http\Controllers\AbsenPivotController;
+use App\Http\Controllers\DosenController;
+use App\Http\Controllers\SkemaHonorariumController;
+use App\Http\Controllers\SesiDaringController;
+use App\Http\Controllers\JadwalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -123,6 +128,11 @@ Route::put('/exit/update/{id}', [PegawaiKeluarController::class, 'update'])->mid
 Route::delete('/exit/delete/{id}', [PegawaiKeluarController::class, 'delete'])->middleware('auth');
 Route::post('/exit/approval/{id}', [PegawaiKeluarController::class, 'approval'])->middleware('auth');
 
+Route::get('/shift-management/template', [ShiftController::class, 'downloadTemplate'])->middleware('admin');
+Route::post('/shift-management/import', [ShiftController::class, 'import'])->middleware('admin');
+Route::delete('/shift-management/delete-assignment/{id}', [ShiftController::class, 'deleteAssignment'])->middleware('admin');
+Route::post('/shift-management/assign', [ShiftController::class, 'assign'])->middleware('admin');
+
 Route::resource('/shift', ShiftController::class)->middleware('admin');
 
 Route::get('/pegawai/shift/{id}', [karyawanController::class, 'shift'])->middleware('admin');
@@ -140,13 +150,13 @@ Route::get('/pegawai/edit-dinas/{id}', [karyawanController::class, 'editDinas'])
 Route::put('/pegawai/proses-edit-shift/{id}', [karyawanController::class, 'prosesEditShift'])->middleware('auth');
 Route::put('/pegawai/proses-edit-dinas/{id}', [karyawanController::class, 'prosesEditDinas'])->middleware('auth');
 
-Route::get('/kontrak', [KontrakController::class, 'index'])->middleware('admin');
-Route::get('/kontrak/tambah', [KontrakController::class, 'tambah'])->middleware('admin');
-Route::post('/kontrak/store', [KontrakController::class, 'store'])->middleware('admin');
-Route::get('/kontrak/edit/{id}', [KontrakController::class, 'edit'])->middleware('admin');
-Route::put('/kontrak/update/{id}', [KontrakController::class, 'update'])->middleware('admin');
-Route::delete('/kontrak/delete/{id}', [KontrakController::class, 'delete'])->middleware('admin');
-Route::get('/kontrak/export', [KontrakController::class, 'export'])->middleware('admin');
+Route::get('/kontrak', [KontrakController::class, 'index'])->middleware('auth');
+Route::get('/kontrak/tambah', [KontrakController::class, 'tambah'])->middleware(['auth', 'role:admin|hrd']);
+Route::post('/kontrak/store', [KontrakController::class, 'store'])->middleware(['auth', 'role:admin|hrd']);
+Route::get('/kontrak/edit/{id}', [KontrakController::class, 'edit'])->middleware(['auth', 'role:admin|hrd']);
+Route::put('/kontrak/update/{id}', [KontrakController::class, 'update'])->middleware(['auth', 'role:admin|hrd']);
+Route::delete('/kontrak/delete/{id}', [KontrakController::class, 'delete'])->middleware(['auth', 'role:admin|hrd']);
+Route::get('/kontrak/export', [KontrakController::class, 'export'])->middleware(['auth', 'role:admin|hrd']);
 
 Route::get('/absen', [AbsenController::class, 'index'])->middleware('auth');
 Route::get('/dinas-luar', [DinasLuar::class, 'index'])->middleware('auth');
@@ -451,6 +461,38 @@ Route::get('/informasi-user', [BeritaController::class, 'informasiUser'])->middl
 Route::get('/informasi-user/show/{id}', [BeritaController::class, 'informasiUserShow'])->middleware('auth');
 
 Route::get('/switch/{id}', [authController::class, 'switch']);
+
+// ===== LAPORAN PIVOT =====
+Route::prefix('laporan-pivot')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+    Route::get('/', [AbsenPivotController::class, 'index']);
+    Route::get('/generate', [AbsenPivotController::class, 'generate']);
+    Route::get('/export-excel', [AbsenPivotController::class, 'exportExcel']);
+    Route::get('/export-pdf', [AbsenPivotController::class, 'exportPdf']);
+    Route::get('/rekap-bulanan', [AbsenPivotController::class, 'rekapBulanan']);
+});
+
+// ===== MODUL DOSEN =====
+Route::prefix('dosen')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+    Route::get('/', [DosenController::class, 'index']);
+    Route::get('/tambah', [DosenController::class, 'create']);
+    Route::post('/store', [DosenController::class, 'store']);
+    Route::get('/edit/{id}', [DosenController::class, 'edit']);
+    Route::put('/update/{id}', [DosenController::class, 'update']);
+    Route::delete('/delete/{id}', [DosenController::class, 'deactivate']);
+});
+
+Route::resource('/skema-honorarium', SkemaHonorariumController::class)->middleware(['auth', 'role:admin|hrd']);
+Route::resource('/jadwal', JadwalController::class)->middleware(['auth']);
+
+// ===== MODUL SESI DARING =====
+Route::get('/sesi-daring/create/{jadwalId}', [SesiDaringController::class, 'create'])->middleware(['auth']);
+Route::post('/sesi-daring', [SesiDaringController::class, 'store'])->middleware(['auth']);
+Route::post('/sesi-daring/{id}/start', [SesiDaringController::class, 'start'])->middleware(['auth']);
+Route::post('/sesi-daring/{id}/end', [SesiDaringController::class, 'end'])->middleware(['auth']);
+
+// ===== APPROVAL CUTI BERTINGKAT =====
+Route::post('/data-cuti/approval-1/{id}', [CutiController::class, 'approvalLevel1'])->middleware(['auth', 'role:kepala_cabang']);
+Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel2'])->middleware(['auth', 'role:admin|hrd']);
 
 Route::get('/reset', function () {
     Artisan::call('optimize');

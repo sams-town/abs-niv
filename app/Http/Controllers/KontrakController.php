@@ -16,22 +16,49 @@ class KontrakController extends Controller
         $nama = request()->input('nama');
         $mulai = request()->input('mulai');
         $akhir = request()->input('akhir');
+        $user = auth()->user();
 
-        $kontraks = Kontrak::when($mulai && $akhir, function ($query) use ($mulai, $akhir) {
-                                $query->whereBetween('tanggal', [$mulai, $akhir]);
-                            })
-                            ->when($nama, function ($query) use ($nama) {
-                                $query->whereHas('user', function ($q) use ($nama) {
-                                    $q->where('name', 'LIKE', '%' . $nama . '%');
-                                });
+        $isAdmin = $user->is_admin == 'admin' || $user->hasRole('admin') || $user->hasRole('hrd');
+
+        $query = Kontrak::with('user');
+
+        if (!$isAdmin) {
+            $query->where('user_id', $user->id);
+        } else {
+            $query->when($nama, function ($q) use ($nama) {
+                $q->whereHas('user', function ($uq) use ($nama) {
+                    $uq->where('name', 'LIKE', '%' . $nama . '%');
+                });
+            });
+        }
+
+        $kontraks = $query->when($mulai && $akhir, function ($q) use ($mulai, $akhir) {
+                                $q->whereBetween('tanggal', [$mulai, $akhir]);
                             })
                             ->orderBy('tanggal', 'DESC')
                             ->paginate(10)
                             ->withQueryString();
 
+        // Check if there are any contracts about to expire (within 30 days)
+        $expiringCount = 0;
+        if (!$isAdmin) {
+            $expiringCount = Kontrak::where('user_id', $user->id)
+                ->whereNotNull('tanggal_selesai')
+                ->where('tanggal_selesai', '<=', \Carbon\Carbon::now()->addDays(30))
+                ->where('tanggal_selesai', '>=', \Carbon\Carbon::now()->subDays(7)) // Active / recently expired
+                ->count();
+        } else {
+            $expiringCount = Kontrak::whereNotNull('tanggal_selesai')
+                ->where('tanggal_selesai', '<=', \Carbon\Carbon::now()->addDays(30))
+                ->where('tanggal_selesai', '>=', \Carbon\Carbon::now()->subDays(7))
+                ->count();
+        }
+
         return view('kontrak.index', compact(
             'title',
-            'kontraks'
+            'kontraks',
+            'isAdmin',
+            'expiringCount'
         ));
     }
 

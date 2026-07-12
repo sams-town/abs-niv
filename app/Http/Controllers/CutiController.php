@@ -79,45 +79,68 @@ class CutiController extends Controller
                 $validatedData['foto_cuti'] = $request->file('foto_cuti')->store('foto_cuti');
             }
 
+            $validatedData['status_approval_1'] = 'Pending';
             $cuti = Cuti::create($validatedData);
         }
 
-        $user_roles = User::whereHas('roles', function ($query) {
-            $query->where('name', 'admin')
-                ->orWhere('name', 'hrd')
-                ->orWhere('name', 'general_manager');
-        });
-
-        $kepala_cabang = User::whereHas('roles', function ($query) {
+        // Cek kepala_cabang di lokasi yang sama
+        $kepala_cabang_lokasi = User::whereHas('roles', function ($query) {
             $query->where('name', 'kepala_cabang');
-        })->where('lokasi_id', auth()->user()->lokasi_id);
+        })->where('lokasi_id', auth()->user()->lokasi_id)->get();
 
-        $users = $user_roles->union($kepala_cabang)->get();
-
-        foreach ($users as $user) {
-            $type = 'Approval';
-            $notif = 'Pengajuan ' . $cuti->nama_cuti . ' Dari ' . auth()->user()->name . ' Butuh Approval Anda';
-            $url = url('/data-cuti?user_id='.$cuti->user_id.'&mulai='.$request["tanggal_mulai"].'&akhir='.$request["tanggal_akhir"]);
-
-            $user->messages = [
-                'user_id'   =>  auth()->user()->id,
-                'from'   =>  auth()->user()->name,
-                'message'   =>  $notif,
-                'action'   =>  '/data-cuti?user_id='.$cuti->user_id.'&mulai='.$request["tanggal_mulai"].'&akhir='.$request["tanggal_akhir"]
-            ];
-            $user->notify(new \App\Notifications\UserNotification);
-
-            NotifApproval::dispatch($type, $user->id, $notif, $url);
-
-            $settings = settings::first();
-            if ($settings->api_url) {
-                Http::post($settings->api_url, [
-                    'api_key' => $settings->api_whatsapp,
-                    'sender' => $settings->whatsapp,
-                    'number' => $user->telepon,
+        if ($kepala_cabang_lokasi->count() > 0) {
+            // Ada kepala_cabang → notifikasi hanya ke mereka (Level 1)
+            foreach ($kepala_cabang_lokasi as $kc) {
+                $type = 'Approval';
+                $notif = 'Pengajuan ' . $cuti->nama_cuti . ' Dari ' . auth()->user()->name . ' Menunggu Persetujuan Anda';
+                $url = url('/data-cuti?user_id='.$cuti->user_id.'&mulai='.$request["tanggal_mulai"].'&akhir='.$request["tanggal_akhir"]);
+                $kc->messages = [
+                    'user_id' => auth()->user()->id,
+                    'from'    => auth()->user()->name,
                     'message' => $notif,
-                    'footer' => $url,
-                ]);
+                    'action'  => '/data-cuti?user_id='.$cuti->user_id.'&mulai='.$request["tanggal_mulai"].'&akhir='.$request["tanggal_akhir"]
+                ];
+                $kc->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch($type, $kc->id, $notif, $url);
+                $settings = settings::first();
+                if ($settings->api_url) {
+                    Http::post($settings->api_url, [
+                        'api_key' => $settings->api_whatsapp,
+                        'sender'  => $settings->whatsapp,
+                        'number'  => $kc->telepon,
+                        'message' => $notif,
+                        'footer'  => $url,
+                    ]);
+                }
+            }
+        } else {
+            // Tidak ada kepala_cabang → lewati Level 1, notifikasi admin+hrd langsung
+            $cuti->update(['status_approval_1' => 'Dilewati']);
+            $admins = User::whereHas('roles', function ($q) {
+                $q->where('name', 'admin')->orWhere('name', 'hrd');
+            })->get();
+            foreach ($admins as $adm) {
+                $type = 'Approval';
+                $notif = 'Pengajuan ' . $cuti->nama_cuti . ' Dari ' . auth()->user()->name . ' Butuh Approval Anda';
+                $url = url('/data-cuti?user_id='.$cuti->user_id.'&mulai='.$request["tanggal_mulai"].'&akhir='.$request["tanggal_akhir"]);
+                $adm->messages = [
+                    'user_id' => auth()->user()->id,
+                    'from'    => auth()->user()->name,
+                    'message' => $notif,
+                    'action'  => '/data-cuti?user_id='.$cuti->user_id.'&mulai='.$request["tanggal_mulai"].'&akhir='.$request["tanggal_akhir"]
+                ];
+                $adm->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch($type, $adm->id, $notif, $url);
+                $settings = settings::first();
+                if ($settings->api_url) {
+                    Http::post($settings->api_url, [
+                        'api_key' => $settings->api_whatsapp,
+                        'sender'  => $settings->whatsapp,
+                        'number'  => $adm->telepon,
+                        'message' => $notif,
+                        'footer'  => $url,
+                    ]);
+                }
             }
         }
 
@@ -216,6 +239,8 @@ class CutiController extends Controller
         $user_id = request()->input('user_id');
         $mulai = request()->input('mulai');
         $akhir = request()->input('akhir');
+        $status_approval_1 = request()->input('status_approval_1');
+        $status_cuti_filter = request()->input('status_cuti_filter');
 
         $cuti = Cuti::when(auth()->user()->hasRole('kepala_cabang'), function ($query) {
                         return $query->where('lokasi_id', auth()->user()->lokasi_id);
@@ -226,12 +251,20 @@ class CutiController extends Controller
                     ->when($user_id, function ($query) use ($user_id) {
                         return $query->where('user_id', $user_id);
                     })
+                    ->when($status_approval_1, function ($query) use ($status_approval_1) {
+                        return $query->where('status_approval_1', $status_approval_1);
+                    })
+                    ->when($status_cuti_filter, function ($query) use ($status_cuti_filter) {
+                        return $query->where('status_cuti', $status_cuti_filter);
+                    })
+                    ->with(['approver1', 'ua'])
                     ->orderBy('id', 'desc')->paginate(10)->withQueryString();
 
         return view('cuti.datacuti', [
             'title' => 'Data Cuti Karyawan',
             'data_cuti' => $cuti,
             'users' => $users,
+            'filters' => request()->all(),
         ]);
     }
 
@@ -549,6 +582,149 @@ class CutiController extends Controller
 
         $request->session()->flash('success', 'Data Berhasil di Update');
         return redirect('/data-cuti');
+    }
+
+    public function approvalLevel1(Request $request, $id)
+    {
+        $cuti = Cuti::findOrFail($id);
+
+        if ($cuti->status_approval_1 !== 'Pending') {
+            return redirect('/data-cuti')->with('error', 'Approval Level 1 sudah diproses.');
+        }
+
+        $request->validate(['action' => 'required|in:setujui,tolak']);
+
+        $settings = settings::first();
+        $karyawan = User::find($cuti->user_id);
+        $url = url('/cuti?mulai='.$cuti->tanggal.'&akhir='.$cuti->tanggal);
+
+        if ($request->action === 'setujui') {
+            $cuti->update([
+                'status_approval_1' => 'Disetujui',
+                'user_approval_1'   => auth()->user()->id,
+                'catatan_approval_1' => $request->catatan_approval_1,
+            ]);
+            // Notifikasi ke admin+hrd untuk Final Approval
+            $admins = User::whereHas('roles', function ($q) {
+                $q->where('name', 'admin')->orWhere('name', 'hrd');
+            })->get();
+            foreach ($admins as $adm) {
+                $notif = 'Pengajuan ' . $cuti->nama_cuti . ' dari ' . ($karyawan->name ?? '-') . ' telah disetujui Manager, menunggu Final Approval Anda.';
+                $adm->messages = ['user_id' => auth()->user()->id, 'from' => auth()->user()->name, 'message' => $notif, 'action' => '/data-cuti'];
+                $adm->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch('Approval', $adm->id, $notif, url('/data-cuti'));
+                if ($settings && $settings->api_url) {
+                    Http::post($settings->api_url, ['api_key' => $settings->api_whatsapp, 'sender' => $settings->whatsapp, 'number' => $adm->telepon, 'message' => $notif, 'footer' => url('/data-cuti')]);
+                }
+            }
+        } else {
+            $cuti->update([
+                'status_approval_1' => 'Ditolak',
+                'status_cuti'       => 'Ditolak',
+                'user_approval_1'   => auth()->user()->id,
+                'catatan_approval_1' => $request->catatan_approval_1,
+            ]);
+            // Notifikasi ke karyawan
+            $notif = $cuti->nama_cuti . ' Anda Ditolak oleh ' . auth()->user()->name . ' (Level Manager)';
+            if ($karyawan) {
+                $karyawan->messages = ['user_id' => auth()->user()->id, 'from' => auth()->user()->name, 'message' => $notif, 'action' => '/cuti'];
+                $karyawan->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch('Rejected', $karyawan->id, $notif, $url);
+                if ($settings && $settings->api_url) {
+                    Http::post($settings->api_url, ['api_key' => $settings->api_whatsapp, 'sender' => $settings->whatsapp, 'number' => $karyawan->telepon, 'message' => $notif, 'footer' => $url]);
+                }
+            }
+        }
+
+        return redirect('/data-cuti')->with('success', 'Approval Level 1 berhasil diproses.');
+    }
+
+    public function approvalLevel2(Request $request, $id)
+    {
+        $cuti = Cuti::findOrFail($id);
+
+        if (!in_array($cuti->status_approval_1, ['Disetujui', 'Dilewati'])) {
+            return redirect('/data-cuti')->with('error', 'Approval Level 1 belum selesai.');
+        }
+        if (in_array($cuti->status_cuti, ['Diterima', 'Ditolak'])) {
+            return redirect('/data-cuti')->with('error', 'Status cuti sudah final.');
+        }
+
+        $request->validate(['action' => 'required|in:setujui,tolak']);
+
+        $settings = settings::first();
+        $karyawan = User::find($cuti->user_id);
+        $mapping_shift = MappingShift::where('tanggal', $cuti->tanggal)->where('user_id', $cuti->user_id)->first();
+        $url = url('/cuti?mulai='.$cuti->tanggal.'&akhir='.$cuti->tanggal);
+
+        if ($request->action === 'setujui') {
+            $cuti->update([
+                'status_cuti'   => 'Diterima',
+                'user_approval' => auth()->user()->id,
+                'catatan'       => $request->catatan,
+            ]);
+
+            // Logika debet saldo + update mapping_shifts (sama dengan editAdminProses)
+            if ($karyawan) {
+                if ($cuti->nama_cuti == 'Cuti') {
+                    $karyawan->update(['izin_cuti' => $karyawan->izin_cuti - 1]);
+                    $mapping_shift ? $mapping_shift->update(['status_absen' => $cuti->nama_cuti])
+                        : MappingShift::create(['user_id' => $cuti->user_id, 'tanggal' => $cuti->tanggal, 'status_absen' => $cuti->nama_cuti]);
+                } elseif ($cuti->nama_cuti == 'Izin Masuk') {
+                    $karyawan->update(['izin_lainnya' => $karyawan->izin_lainnya - 1]);
+                    $mapping_shift ? $mapping_shift->update(['status_absen' => $cuti->nama_cuti])
+                        : MappingShift::create(['user_id' => $cuti->user_id, 'tanggal' => $cuti->tanggal, 'status_absen' => $cuti->nama_cuti]);
+                } elseif ($cuti->nama_cuti == 'Sakit') {
+                    $mapping_shift ? $mapping_shift->update(['status_absen' => $cuti->nama_cuti])
+                        : MappingShift::create(['user_id' => $cuti->user_id, 'tanggal' => $cuti->tanggal, 'status_absen' => $cuti->nama_cuti]);
+                } elseif ($cuti->nama_cuti == 'Izin Telat') {
+                    if ($mapping_shift) {
+                        $karyawan->update(['izin_telat' => $karyawan->izin_telat - 1]);
+                        $mapping_shift->update(['jam_absen' => optional($mapping_shift->Shift)->jam_masuk, 'telat' => 0, 'lat_absen' => optional($karyawan->Lokasi)->lat_kantor, 'long_absen' => optional($karyawan->Lokasi)->long_kantor, 'jarak_masuk' => 0, 'foto_jam_absen' => $cuti->foto_cuti, 'status_absen' => $cuti->nama_cuti]);
+                    } else {
+                        $cuti->update(['status_cuti' => 'Pending']);
+                        Alert::error('Failed', 'Karyawan belum absen masuk pada tanggal tersebut.');
+                        return redirect('/data-cuti');
+                    }
+                } elseif ($cuti->nama_cuti == 'Izin Pulang Cepat') {
+                    if ($mapping_shift) {
+                        $karyawan->update(['izin_pulang_cepat' => $karyawan->izin_pulang_cepat - 1]);
+                        $mapping_shift->update(['jam_pulang' => optional($mapping_shift->Shift)->jam_keluar, 'lat_pulang' => optional($karyawan->Lokasi)->lat_kantor, 'long_pulang' => optional($karyawan->Lokasi)->long_kantor, 'pulang_cepat' => 0, 'jarak_pulang' => 0, 'foto_jam_pulang' => $cuti->foto_cuti, 'status_absen' => $cuti->nama_cuti]);
+                    } else {
+                        $cuti->update(['status_cuti' => 'Pending']);
+                        Alert::error('Failed', 'Karyawan belum absen masuk pada tanggal tersebut.');
+                        return redirect('/data-cuti');
+                    }
+                }
+            }
+
+            $notif = $cuti->nama_cuti . ' Anda Telah Diterima oleh ' . auth()->user()->name;
+            if ($karyawan) {
+                $karyawan->messages = ['user_id' => auth()->user()->id, 'from' => auth()->user()->name, 'message' => $notif, 'action' => '/cuti'];
+                $karyawan->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch('Approved', $karyawan->id, $notif, $url);
+                if ($settings && $settings->api_url) {
+                    Http::post($settings->api_url, ['api_key' => $settings->api_whatsapp, 'sender' => $settings->whatsapp, 'number' => $karyawan->telepon, 'message' => $notif, 'footer' => $url]);
+                }
+            }
+        } else {
+            $cuti->update([
+                'status_cuti'   => 'Ditolak',
+                'user_approval' => auth()->user()->id,
+                'catatan'       => $request->catatan,
+            ]);
+            $notif = $cuti->nama_cuti . ' Anda Ditolak oleh ' . auth()->user()->name;
+            if ($karyawan) {
+                $karyawan->messages = ['user_id' => auth()->user()->id, 'from' => auth()->user()->name, 'message' => $notif, 'action' => '/cuti'];
+                $karyawan->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch('Rejected', $karyawan->id, $notif, $url);
+                if ($settings && $settings->api_url) {
+                    Http::post($settings->api_url, ['api_key' => $settings->api_whatsapp, 'sender' => $settings->whatsapp, 'number' => $karyawan->telepon, 'message' => $notif, 'footer' => $url]);
+                }
+            }
+        }
+
+        return redirect('/data-cuti')->with('success', 'Final Approval berhasil diproses.');
     }
 
 }

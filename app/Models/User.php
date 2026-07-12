@@ -116,4 +116,24 @@ class User extends Authenticatable
     {
         return $this->morphMany(DatabaseNotification::class, 'notifiable')->orderBy('created_at', 'desc');
     }
+
+    public function scopeDosen($query)
+    {
+        return $query->where('tipe_user', 'dosen');
+    }
+
+    public function scopePegawai($query)
+    {
+        return $query->where('tipe_user', 'pegawai');
+    }
+
+    public function masterSkemaHonorarium()
+    {
+        return $this->belongsTo(MasterSkemaHonorarium::class, 'master_skema_honorarium_id');
+    }
+
+    public function logMengajars()
+    {
+        return $this->hasMany(LogMengajar::class, 'dosen_id');
+    }
 }

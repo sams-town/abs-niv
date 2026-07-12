@@ -142,6 +142,8 @@
                         <th>Alasan Cuti</th>
                         <th>Foto Cuti</th>
                         <th>Status Cuti</th>
+                        <th>Status Manager</th>
+                        <th>Status Final</th>
                         <th>User Approval</th>
                         <th>Catatan</th>
                         <th>Actions</th>
@@ -166,6 +168,29 @@
                                 {{ $dcu->status_cuti ?? '-' }}
                             @else
                                 {{ $dcu->status_cuti ?? '-' }}
+                            @endif
+                       </td>
+                       <td>
+                            @php $sa1 = $dcu->status_approval_1 ?? 'Pending'; @endphp
+                            @if($sa1 == 'Pending' && $dcu->status_cuti == 'Pending')
+                                <span class="badge badge-warning" style="font-size:11px">Menunggu Manager</span>
+                            @elseif(in_array($sa1, ['Disetujui','Dilewati']) && $dcu->status_cuti == 'Pending')
+                                <span class="badge badge-info" style="font-size:11px">Menunggu Admin/HRD</span>
+                            @elseif($sa1 == 'Ditolak')
+                                <span class="badge badge-danger" style="font-size:11px">Ditolak Manager</span>
+                            @else
+                                <span class="badge badge-secondary" style="font-size:11px">{{ $sa1 }}</span>
+                            @endif
+                       </td>
+                       <td>
+                            @if($dcu->status_cuti == 'Diterima')
+                                <span class="badge badge-success" style="font-size:11px">Diterima</span><br>
+                                <small>{{ optional($dcu->ua)->name ?? '' }}</small>
+                            @elseif($dcu->status_cuti == 'Ditolak')
+                                <span class="badge badge-danger" style="font-size:11px">Ditolak</span><br>
+                                <small>{{ optional($dcu->ua)->name ?? '' }}</small>
+                            @else
+                                <span class="badge badge-warning" style="font-size:11px">Pending</span>
                             @endif
                        </td>
                        <td>{{ $dcu->ua->name ?? '-' }}</td>

@@ -178,35 +178,53 @@
         </script>
         <script src="{{ url('/html/assets/js/select2/select2.full.min.js') }}"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="{{ url('/push/bin/push.js') }}"></script>
+        {{-- push.js dihapus: tidak menggunakan browser push notification --}}
         <script src="{{ url('/js/app.js') }}"></script>
         <script>
             window.Echo.channel("messages").listen("NotifApproval", (event) => {
                 var user_id = {{ auth()->user()->id }};
                 if (event.user_id == user_id) {
+                    // Prevent duplicate replayed alerts on refresh
+                    var notifKey = 'notif_' + event.user_id + '_' + btoa(unescape(encodeURIComponent(event.notif)));
+                    if (sessionStorage.getItem(notifKey)) {
+                        return;
+                    }
+                    sessionStorage.setItem(notifKey, 'true');
+
+                    // Validasi URL: hanya izinkan path lokal
+                    var safeUrl = '';
+                    var rawUrl = event.url || '';
+                    var localOrigin = window.location.origin;
+                    if (rawUrl.startsWith(localOrigin) || rawUrl.startsWith('/')) {
+                        safeUrl = rawUrl;
+                    } else if (!rawUrl.startsWith('http')) {
+                        safeUrl = '/' + rawUrl;
+                    }
+                    var footerHtml = safeUrl ? '<a href="' + safeUrl + '">Lihat Detail</a>' : '';
+
                     if (event.type == "Approved") {
                         Swal.fire({
                             icon: "success",
-                            title: "Approved",
+                            title: "Disetujui",
                             text: event.notif,
-                            footer: "<a href=" + event.url + ">View Application</a>",
+                            footer: footerHtml,
                         });
                     } else if (event.type == "Approval" || event.type == "Info") {
                         Swal.fire({
                             icon: "info",
-                            title: "",
+                            title: "Notifikasi",
                             text: event.notif,
-                            footer: "<a href=" + event.url + ">View Application</a>",
+                            footer: footerHtml,
                         });
                     } else {
                         Swal.fire({
                             icon: "error",
-                            title: "Rejected",
+                            title: "Ditolak",
                             text: event.notif,
-                            footer: "<a href=" + event.url + ">View Application</a>",
+                            footer: footerHtml,
                         });
                     }
-                    Push.create(event.notif);
+                    // Push.create() dihapus
                 }
             });
         </script>

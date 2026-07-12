@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('kirim:email2')->weekly()->mondays()->at('07:00')->timezone('Asia/Jakarta');
         $schedule->command('reset:cuti')->dailyAt('07:00')->timezone('Asia/Jakarta');
         $schedule->command('create:shift')->monthly()->timezone('Asia/Jakarta');
+        $schedule->command('session:end-hanging')->everyMinute();
     }
 
     /**

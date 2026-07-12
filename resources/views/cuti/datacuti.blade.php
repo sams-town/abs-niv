@@ -31,6 +31,22 @@
                                     </select>
                                 </div>
                                 <div class="col-3">
+                                    <select name="status_approval_1" class="form-control">
+                                        <option value="">Approval Manager (Semua)</option>
+                                        @foreach(['Pending','Disetujui','Ditolak','Dilewati'] as $s)
+                                            <option value="{{ $s }}" {{ request('status_approval_1')==$s ? 'selected' : '' }}>{{ $s }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-3">
+                                    <select name="status_cuti_filter" class="form-control">
+                                        <option value="">Status Final (Semua)</option>
+                                        @foreach(['Pending','Diterima','Ditolak'] as $s)
+                                            <option value="{{ $s }}" {{ request('status_cuti_filter')==$s ? 'selected' : '' }}>{{ $s }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-3">
                                     <input type="datetime" class="form-control" name="mulai" placeholder="Tanggal Mulai" id="mulai" value="{{ request('mulai') }}">
                                 </div>
                                 <div class="col-3">
@@ -56,6 +72,8 @@
                                     <th>Foto Cuti</th>
                                     <th>Status Cuti</th>
                                     <th>User Approval</th>
+                                    <th>Approval Manager</th>
+                                    <th>Aksi Approval</th>
                                     <th>Catatan</th>
                                     <th>Actions</th>
                                 </tr>
@@ -86,6 +104,44 @@
                                         @endif
                                     </td>
                                     <td>{{ $dc->ua->name ?? '-' }}</td>
+                                    <td>
+                                        @php $sa1 = $dc->status_approval_1 ?? 'Pending'; @endphp
+                                        @if($sa1 == 'Disetujui') <span class="badge badge-success">Disetujui</span>
+                                        @elseif($sa1 == 'Ditolak') <span class="badge badge-danger">Ditolak</span>
+                                        @elseif($sa1 == 'Dilewati') <span class="badge badge-secondary">Dilewati</span>
+                                        @else <span class="badge badge-warning">Pending</span>
+                                        @endif
+                                        @if($sa1 != 'Pending') <br><small>{{ optional($dc->approver1)->name }}</small> @endif
+                                    </td>
+                                    <td>
+                                        @if(in_array($dc->status_cuti, ['Diterima','Ditolak']))
+                                            <span class="badge badge-{{ $dc->status_cuti=='Diterima'?'success':'danger' }}">Final: {{ $dc->status_cuti }}</span>
+                                        @elseif(in_array($sa1, ['Disetujui','Dilewati']) && $dc->status_cuti == 'Pending')
+                                            @canany(['admin','hrd'])
+                                            <form action="{{ url('/data-cuti/approval-2/'.$dc->id) }}" method="post" class="d-inline">
+                                                @csrf <input type="hidden" name="action" value="setujui">
+                                                <button class="btn btn-success btn-xs" onclick="return confirm('Setujui?')">✓ Final</button>
+                                            </form>
+                                            <form action="{{ url('/data-cuti/approval-2/'.$dc->id) }}" method="post" class="d-inline">
+                                                @csrf <input type="hidden" name="action" value="tolak">
+                                                <button class="btn btn-danger btn-xs" onclick="return confirm('Tolak?')">✗ Tolak</button>
+                                            </form>
+                                            @endcanany
+                                        @elseif($sa1 == 'Pending')
+                                            @if(auth()->user()->hasRole('kepala_cabang') && auth()->user()->lokasi_id == optional($dc->User)->lokasi_id)
+                                            <form action="{{ url('/data-cuti/approval-1/'.$dc->id) }}" method="post" class="d-inline">
+                                                @csrf <input type="hidden" name="action" value="setujui">
+                                                <button class="btn btn-success btn-xs" onclick="return confirm('Setujui?')">✓ Setujui</button>
+                                            </form>
+                                            <form action="{{ url('/data-cuti/approval-1/'.$dc->id) }}" method="post" class="d-inline">
+                                                @csrf <input type="hidden" name="action" value="tolak">
+                                                <button class="btn btn-danger btn-xs" onclick="return confirm('Tolak?')">✗ Tolak</button>
+                                            </form>
+                                            @else
+                                            <span class="badge badge-warning">Menunggu Manager</span>
+                                            @endif
+                                        @endif
+                                    </td>
                                     <td>{{ $dc->catatan ?? '-' }}</td>
                                     <td>
                                         <ul class="action">

@@ -47,9 +47,106 @@ class karyawanController extends Controller
                 ->withQueryString();
 
         if (auth()->user()->is_admin == 'admin') {
+            $total_pegawai = User::count();
+            $aktif_pegawai = User::where(function ($query) {
+                $query->whereNull('masa_berlaku')
+                      ->orWhere('masa_berlaku', '>', date('Y-m-d'));
+            })->count();
+            $cuti_pegawai = Cuti::where('tanggal', date('Y-m-d'))
+                                ->where('status_cuti', 'Diterima')
+                                ->where('nama_cuti', 'Cuti')
+                                ->count();
+            $baru_bulan_ini = User::whereMonth('created_at', date('m'))
+                                  ->whereYear('created_at', date('Y'))
+                                  ->count();
+
+            // Calculate location distribution data
+            $total_lokasi = \App\Models\Lokasi::count();
+            $lokasi_counts = User::select('lokasi_id', \DB::raw('count(*) as total'))
+                ->whereNotNull('lokasi_id')
+                ->groupBy('lokasi_id')
+                ->orderBy('total', 'desc')
+                ->get();
+            
+            $distribusi_lokasi = [];
+            $lokasi_terbesar = 'None';
+            $max_lokasi_count = 0;
+            
+            foreach ($lokasi_counts as $lc) {
+                $lokasi = \App\Models\Lokasi::find($lc->lokasi_id);
+                $nama_lokasi = $lokasi ? $lokasi->nama_lokasi : 'Unknown';
+                $pct = $total_pegawai > 0 ? round(($lc->total / $total_pegawai) * 100, 1) : 0;
+                $distribusi_lokasi[] = [
+                    'label' => $nama_lokasi,
+                    'count' => $lc->total,
+                    'percentage' => $pct
+                ];
+                if ($lc->total > $max_lokasi_count) {
+                    $max_lokasi_count = $lc->total;
+                    $lokasi_terbesar = $nama_lokasi;
+                }
+            }
+
+            // Calculate domicile (Domisili KTP) distribution data
+            $cities = ['Jakarta', 'Bogor', 'Depok', 'Tangerang', 'Bekasi', 'Bandung', 'Surabaya', 'Tasikmalaya', 'Semarang', 'Yogyakarta', 'Sukabumi', 'Cianjur', 'Garut', 'Cirebon'];
+            $domisili_raw = [];
+            foreach (User::all() as $u) {
+                $alamat = $u->alamat;
+                $found_domisili = 'Lainnya';
+                if ($alamat) {
+                    if (preg_match('/\b\d{5}\b/', $alamat, $matches)) {
+                        $found_domisili = $matches[0];
+                    } else {
+                        foreach ($cities as $city) {
+                            if (stripos($alamat, $city) !== false) {
+                                $found_domisili = $city;
+                                break;
+                            }
+                        }
+                    }
+                }
+                $domisili_raw[$found_domisili] = ($domisili_raw[$found_domisili] ?? 0) + 1;
+            }
+            
+            arsort($domisili_raw);
+            $total_provinsi = count(array_keys($domisili_raw));
+            
+            $provinsi_terbesar = 'Lainnya';
+            $max_prov_count = 0;
+            foreach ($domisili_raw as $k => $v) {
+                if ($k !== 'Lainnya' && $v > $max_prov_count) {
+                    $max_prov_count = $v;
+                    $provinsi_terbesar = $k;
+                }
+            }
+            if ($provinsi_terbesar === 'Lainnya' && !empty($domisili_raw)) {
+                reset($domisili_raw);
+                $provinsi_terbesar = key($domisili_raw);
+            }
+
+            $distribusi_domisili = [];
+            foreach ($domisili_raw as $k => $v) {
+                $pct = $total_pegawai > 0 ? round(($v / $total_pegawai) * 100, 1) : 0;
+                $distribusi_domisili[] = [
+                    'label' => $k,
+                    'count' => $v,
+                    'percentage' => $pct
+                ];
+            }
+
             return view('karyawan.index', [
                 'title' => 'Pegawai',
-                'data_user' => $data
+                'data_user' => $data,
+                'total_pegawai' => $total_pegawai,
+                'aktif_pegawai' => $aktif_pegawai,
+                'cuti_pegawai' => $cuti_pegawai,
+                'baru_bulan_ini' => $baru_bulan_ini,
+                'total_lokasi' => $total_lokasi,
+                'lokasi_terbesar' => $lokasi_terbesar,
+                'distribusi_lokasi' => $distribusi_lokasi,
+                'total_provinsi' => $total_provinsi,
+                'provinsi_terbesar' => $provinsi_terbesar,
+                'distribusi_domisili' => $distribusi_domisili,
             ]);
         } else {
             return view('karyawan.indexUser', [
@@ -213,12 +310,25 @@ class karyawanController extends Controller
             'potongan_bpjs_kesehatan' => 'nullable',
             'potongan_bpjs_ketenagakerjaan' => 'nullable',
             'masa_berlaku' => 'nullable',
+            'nama_ibu_kandung' => 'nullable',
+            'kontak_darurat_nama' => 'nullable',
+            'kontak_darurat_hp' => 'nullable',
+            'kontak_darurat_hubungan' => 'nullable',
+            'alamat_domisili' => 'nullable',
+            'cuti_melahirkan' => 'nullable',
+            'cuti_kematian' => 'nullable',
+            'batas_terlambat' => 'nullable',
+            'kasbon_obat' => 'nullable',
+            'potongan_koperasi' => 'nullable',
         ]);
 
         $validatedData["izin_cuti"] = $request->izin_cuti ?? 0;
         $validatedData["izin_lainnya"] = $request->izin_lainnya ?? 0;
         $validatedData["izin_telat"] = $request->izin_telat ?? 0;
         $validatedData["izin_pulang_cepat"] = $request->izin_pulang_cepat ?? 0;
+        $validatedData["cuti_melahirkan"] = $request->cuti_melahirkan ?? 90;
+        $validatedData["cuti_kematian"] = $request->cuti_kematian ?? 3;
+        $validatedData["batas_terlambat"] = $request->batas_terlambat ?? 5;
 
         $validatedData['gaji_pokok'] = $request->gaji_pokok ? str_replace(',', '', $request->gaji_pokok) : 0;
         $validatedData['tunjangan_makan'] = $request->tunjangan_makan ? str_replace(',', '', $request->tunjangan_makan) : 0;
@@ -237,6 +347,8 @@ class karyawanController extends Controller
         $validatedData['saldo_kasbon'] = $request->saldo_kasbon ? str_replace(',', '', $request->saldo_kasbon) : 0;
         $validatedData['potongan_bpjs_kesehatan'] = $request->potongan_bpjs_kesehatan ? str_replace(',', '', $request->potongan_bpjs_kesehatan) : 0;
         $validatedData['potongan_bpjs_ketenagakerjaan'] = $request->potongan_bpjs_ketenagakerjaan ? str_replace(',', '', $request->potongan_bpjs_ketenagakerjaan) : 0;
+        $validatedData['kasbon_obat'] = $request->kasbon_obat ? str_replace(',', '', $request->kasbon_obat) : 0;
+        $validatedData['potongan_koperasi'] = $request->potongan_koperasi ? str_replace(',', '', $request->potongan_koperasi) : 0;
 
         if ($request->file('foto_karyawan')) {
             $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan');
@@ -248,6 +360,21 @@ class karyawanController extends Controller
         if ($request->role) {
             foreach($request->role as $role){
                 $user->assignRole($role);
+            }
+        }
+
+        if ($request->hasFile('document_files')) {
+            $files = $request->file('document_files');
+            $names = $request->document_names;
+            foreach ($files as $index => $file) {
+                if ($file->isValid()) {
+                    $path = $file->store('files');
+                    \App\Models\File::create([
+                        'jenis_file' => $names[$index] ?? 'Dokumen Tambahan',
+                        'user_id' => $user->id,
+                        'fileUpload' => $path
+                    ]);
+                }
             }
         }
 

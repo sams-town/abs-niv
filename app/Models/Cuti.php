@@ -20,6 +20,11 @@ class Cuti extends Model
         return $this->belongsTo(User::class, 'user_approval');
     }
 
+    public function approver1()
+    {
+        return $this->belongsTo(User::class, 'user_approval_1');
+    }
+
     public function lokasi()
     {
         return $this->belongsTo(Lokasi::class);

@@ -8,8 +8,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="author" content="pixelstrap">
-    <link rel="shortcut icon" href="{{ url('/storage/'.$settings->logo) }}" />
-    <link rel="apple-touch-icon-precomposed" href="{{ url('/storage/'.$settings->logo) }}" />
+    <link rel="shortcut icon" href="{{ url('/assets/img/logo.png') }}" />
+    <link rel="apple-touch-icon-precomposed" href="{{ url('/assets/img/logo.png') }}" />
     <title>{{ $title }}</title>
     <link rel="stylesheet" type="text/css" href="{{ url('clock/dist/bootstrap-clockpicker.min.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +30,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url('/html/assets/css/vendors/prism.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url('/html/assets/css/vendors/bootstrap.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url('/html/assets/css/style.css') }}">
-    <link id="color" rel="stylesheet" href="{{ url('/html/assets/css/color-1.css" media="screen') }}">
+    <link id="color" rel="stylesheet" href="{{ url('/html/assets/css/color-1.css') }}" media="screen">
     <link rel="stylesheet" type="text/css" href="{{ url('/html/assets/css/responsive.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url('/html/assets/css/vendors/calendar.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url('/html/assets/css/vendors/datatables.css') }}">
@@ -41,6 +41,7 @@
     <script src="{{ url('https://unpkg.com/leaflet@1.8.0/dist/leaflet.js') }}" integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ==" crossorigin=""></script>
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css">
     <script type="text/javascript" src="https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url('css/modern-theme.css') }}">
     <style>
         .btn-grey {
             background-color: #6c757d;
@@ -79,7 +80,10 @@
       <div class="loader"></div>
     </div> --}}
     <div class="preload preload-container">
-        <div class="preload-logo"></div>
+        <div class="preload-content">
+            <img class="preload-logo" src="{{ url('/assets/img/logo.png') }}" alt="Loading...">
+            <div class="preload-spinner"></div>
+        </div>
     </div>
     <div class="page-wrapper compact-wrapper" id="pageWrapper">
       <div class="page-header">
@@ -96,13 +100,12 @@
             </div>
           </form>
           <div class="header-logo-wrapper col-auto p-0">
-            <div class="logo-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid" src="{{ url('/html/assets/images/logo/login.png') }}" alt=""></a></div>
+            <div class="logo-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid" src="{{ url('/assets/img/logo.png') }}" alt="Logo"></a></div>
             <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="align-center"></i></div>
           </div>
 
           <div class="left-header col horizontal-wrapper ps-0" style="display: flex; gap: 5px;">
             <a href="{{ url('/switch/user') }}" class="btn btn-sm btn-warning" onclick="return confirm('Are You Sure ?')">Dashboard User</a>
-            <a href="{{ url('/petunjuk.pdf') }}" target="_blank" class="btn btn-sm btn-primary">Petunjuk Penggunaan</a>
           </div>
 
           <div class="nav-right col-8 pull-right right-header p-0">
@@ -147,11 +150,15 @@
       <div class="page-body-wrapper">
         <div class="sidebar-wrapper">
           <div>
-            <div class="logo-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid for-light me-2" src="{{ asset('/storage/'.$settings->logo) }}" style="width: 50px" alt=""></a><div style="font-size: 20px; color:white; display:inline">{{ $settings->name }}</div>
-              <div class="back-btn"><i class="fa fa-angle-left"></i></div>
-              <div class="toggle-sidebar"><i class="fa fa-cog status_toggle middle sidebar-toggle"> </i></div>
+            <div class="logo-wrapper d-flex align-items-center">
+              <a href="{{ url('/dashboard') }}">
+                <img class="img-fluid for-light" src="{{ url('/assets/img/logo.png') }}" alt="Logo">
+              </a>
+              <div style="font-size: 18px; color:white; font-weight:600">{{ $settings->name }}</div>
+              <div class="back-btn ms-auto"><i class="fa fa-angle-left"></i></div>
+              <div class="toggle-sidebar ms-2"><i class="fa fa-cog status_toggle middle sidebar-toggle"> </i></div>
             </div>
-            <div class="logo-icon-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid" src="{{ url('/html/assets/images/logo/logo-icon1.png') }}" alt=""></a></div>
+            <div class="logo-icon-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid" src="{{ url('/assets/img/logo.png') }}" alt="Logo"></a></div>
             <nav class="sidebar-main">
               <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
               <div id="sidebar-menu">
@@ -188,6 +195,19 @@
                         </li>
                       @endif
 
+                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd'))
+                        <li class="sidebar-list">
+                            <a class="sidebar-link sidebar-title link-nav {{ Request::is('dosen*') ? 'active' : '' }}" href="{{ url('/dosen') }}"><i data-feather="book-open"> </i><span>Data Dosen</span></a>
+                        </li>
+                        <li class="sidebar-list">
+                            <a class="sidebar-link sidebar-title link-nav {{ Request::is('skema-honorarium*') ? 'active' : '' }}" href="{{ url('/skema-honorarium') }}"><i data-feather="credit-card"> </i><span>Skema Honorarium</span></a>
+                        </li>
+                      @endif
+
+                      <li class="sidebar-list">
+                          <a class="sidebar-link sidebar-title link-nav {{ Request::is('jadwal*') ? 'active' : '' }}" href="{{ url('/jadwal') }}"><i data-feather="calendar"> </i><span>Jadwal & Sesi Daring</span></a>
+                      </li>
+
                       @if (auth()->user()->hasRole('admin'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/role') }}"><i data-feather="airplay"> </i><span>Role</span></a>
@@ -220,9 +240,11 @@
                         </li>
                       @endif
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance'))
+
+
+                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd'))
                         <li class="sidebar-list">
-                            <a class="sidebar-link sidebar-title link-nav" href="{{ url('/rekap-data') }}"><i data-feather="credit-card"> </i><span>Rekap Data</span></a>
+                            <a class="sidebar-link sidebar-title link-nav {{ Request::is('laporan-pivot*') ? 'active' : '' }}" href="{{ url('/laporan-pivot') }}"><i data-feather="bar-chart-2"> </i><span>Laporan Pivot</span></a>
                         </li>
                       @endif
 
@@ -385,35 +407,54 @@
     <script src="{{ url('accounting.min.js') }}"></script>
     <script type="text/javascript" src="{{ url('/clock/dist/bootstrap-clockpicker.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{ url('/push/bin/push.js') }}"></script>
+    {{-- push.js dihapus: tidak menggunakan browser push notification --}}
     <script src="{{ url('/js/app.js') }}"></script>
     <script>
         window.Echo.channel("messages").listen("NotifApproval", (event) => {
             var user_id = {{ auth()->user()->id }};
             if (event.user_id == user_id) {
+                // Prevent duplicate alerts permanently
+                var notifKey = 'notif_' + event.user_id + '_' + btoa(unescape(encodeURIComponent(event.notif)));
+                if (localStorage.getItem(notifKey)) {
+                    return;
+                }
+                localStorage.setItem(notifKey, 'true');
+
+                // Validasi URL: hanya izinkan path lokal (tidak ada http/https external)
+                var safeUrl = '';
+                var rawUrl = event.url || '';
+                var localOrigin = window.location.origin;
+                if (rawUrl.startsWith(localOrigin) || rawUrl.startsWith('/')) {
+                    safeUrl = rawUrl;
+                } else if (!rawUrl.startsWith('http')) {
+                    safeUrl = '/' + rawUrl;
+                }
+                // Jika URL external (bukan domain ini), tidak tampilkan link
+                var footerHtml = safeUrl ? '<a href="' + safeUrl + '">Lihat Detail</a>' : '';
+
                 if (event.type == "Approved") {
                     Swal.fire({
                         icon: "success",
-                        title: "Approved",
+                        title: "Disetujui",
                         text: event.notif,
-                        footer: "<a href=" + event.url + ">View Application</a>",
+                        footer: footerHtml,
                     });
                 } else if (event.type == "Approval" || event.type == "Info") {
                     Swal.fire({
                         icon: "info",
-                        title: "",
+                        title: "Notifikasi",
                         text: event.notif,
-                        footer: "<a href=" + event.url + ">View Application</a>",
+                        footer: footerHtml,
                     });
                 } else {
                     Swal.fire({
                         icon: "error",
-                        title: "Rejected",
+                        title: "Ditolak",
                         text: event.notif,
-                        footer: "<a href=" + event.url + ">View Application</a>",
+                        footer: footerHtml,
                     });
                 }
-                Push.create(event.notif);
+                // Push.create() dihapus: tidak menggunakan browser push notification
             }
         });
     </script>
@@ -473,6 +514,16 @@
       flatpickr("input[type=datetime]", {})
     </script>
     @stack('script')
-    @include('sweetalert::alert')
+    {{-- @include('sweetalert::alert') --}}
+    <script>
+        // Unregister semua service worker lama (dari hris.rejofarm.com atau domain lain)
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (let reg of registrations) {
+                    reg.unregister();
+                }
+            });
+        }
+    </script>
   </body>
 </html>

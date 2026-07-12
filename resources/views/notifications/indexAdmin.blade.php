@@ -40,20 +40,20 @@
                   <div class="inbox">
                     @foreach ($inboxs as $inbox)
                         @php
-                            $user = App\Models\User::find($inbox->data['user_id']);
+                            $user = isset($inbox->data['user_id']) ? App\Models\User::find($inbox->data['user_id']) : null;
                         @endphp
-                        <a href="{!! !$inbox->read_at ? url('/notifications/read-message/'.$inbox->id) : url($inbox->data['action']); !!}" class="d-flex" style="{{ !$inbox->read_at ? 'background-color: rgb(241, 241, 241)' : '' }}">
+                        <a href="{!! !$inbox->read_at ? url('/notifications/read-message/'.$inbox->id) : url($inbox->data['action'] ?? '/'); !!}" class="d-flex" style="{{ !$inbox->read_at ? 'background-color: rgb(241, 241, 241)' : '' }}">
                             <div class="d-flex-size-email">                                       
                                 <label class="d-block mb-0">
-                                @if ($user->foto_karyawan == null)
-                                    <img class="me-3 rounded-circle" src="{{ url('assets/img/foto_default.jpg') }}" alt="image">
-                                @else
+                                @if ($user && $user->foto_karyawan)
                                     <img class="me-3 rounded-circle" src="{{ url('/storage/'.$user->foto_karyawan) }}" alt="">
+                                @else
+                                    <img class="me-3 rounded-circle" src="{{ url('assets/img/foto_default.jpg') }}" alt="image">
                                 @endif
                             </div>
                             <div class="flex-grow-1">
-                                <h6>{{ $user->name }} </h6>
-                                <p>{{ $inbox->data['message'] }}</p><span>{{ date('d M Y H:i:s',strtotime($inbox->created_at)) }}</span>
+                                <h6>{{ $user ? $user->name : 'Sistem' }} </h6>
+                                <p>{{ $inbox->data['message'] ?? '' }}</p><span>{{ date('d M Y H:i:s',strtotime($inbox->created_at)) }}</span>
                             </div>
                         </a>
                     @endforeach

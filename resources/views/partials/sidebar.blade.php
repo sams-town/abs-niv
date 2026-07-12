@@ -60,6 +60,13 @@
                         </li>
     
                         <li class="nav-item">
+                            <a href="{{ url('/dosen') }}" class="nav-link {{ Request::is('dosen*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-chalkboard-teacher"></i>
+                                <p>Data Dosen</p>
+                            </a>
+                        </li>
+    
+                        <li class="nav-item">
                             <a href="{{ url('/shift') }}" class="nav-link {{ Request::is('shift*') ? 'active' : '' }}">
                                 <i class="nav-icon fa fa-fw fa-clock"></i>
                                 <p>
@@ -74,6 +81,13 @@
                                 <p>
                                     Rekap Data Absensi
                                 </p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ url('/laporan-pivot') }}" class="nav-link {{ Request::is('laporan-pivot*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-chart-bar"></i>
+                                <p>Laporan Pivot</p>
                             </a>
                         </li>
 
