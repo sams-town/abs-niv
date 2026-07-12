@@ -668,7 +668,7 @@
                         <input type="checkbox" id="same_as_ktp" onchange="copyKtpAddress(this)" style="accent-color:#4f46e5; width:16px; height:16px; vertical-align: middle;"> Sama dengan Alamat KTP
                     </div>
                 </div>
-                <div class="row g-3 mb-2 address-group" data-prefix="domisili">
+                <div class="row g-3 mb-2 address-group" data-prefix="dom">
                     <div class="col-md-6">
                         <label>Provinsi <span class="required-star">*</span></label>
                         <select class="form-select addr-provinsi" id="dom_prov" required>
@@ -1344,7 +1344,7 @@
 
             // Load Indonesian Regional API cascading selects
             setupAddressGroup('ktp');
-            setupAddressGroup('domisili');
+            setupAddressGroup('dom');
         });
 
         // setup Indonesian region API for a specific address prefix (ktp / domisili)
