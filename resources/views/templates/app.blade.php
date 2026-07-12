@@ -452,6 +452,19 @@
     {{-- @include('sweetalert::alert') --}}
     @stack('script')
     <script>
+        // Clear all old notification data
+        (function() {
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('notif_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.startsWith('notif_')) {
+                    sessionStorage.removeItem(key);
+                }
+            });
+        })();
         // Unregister semua service worker lama (dari hris.rejofarm.com atau domain lain)
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
