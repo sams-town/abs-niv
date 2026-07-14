@@ -3,6 +3,7 @@
     @php
         $settings = App\Models\settings::first();
         $logoUrl = $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png');
+        $logoUrl = $logoUrl . '?v=' . ($settings ? strtotime($settings->updated_at) : time());
     @endphp
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -10,20 +11,22 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         html, body {
-            height: 100%;
-            width: 100%;
+            height: 100% !important;
+            width: 100% !important;
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         body {
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(145deg, #0f1535 0%, #1a2060 40%, #1e3a8a 100%);
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: linear-gradient(145deg, #0f1535 0%, #1a2060 40%, #1e3a8a 100%) !important;
             position: relative;
             overflow: hidden;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         /* Animated background orbs */
@@ -56,9 +59,27 @@
             50% { transform: translate(-20px, -20px) scale(1.1); }
         }
 
-        /* Reset layout from template */
-        .login-section { width: 100%; padding: 0; margin: 0; }
-        .tf-container { width: 100%; padding: 0; margin: 0; }
+        /* Centering overrides for templates */
+        .login-section {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .tf-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
         .mt-7 { margin-top: 0 !important; }
 
         /* Main Card */
@@ -71,13 +92,14 @@
             padding: 40px 36px 36px;
             width: 100%;
             max-width: 420px;
-            margin: 16px;
+            margin: 16px !important;
             box-shadow:
                 0 32px 64px rgba(0,0,0,0.4),
                 0 0 0 1px rgba(255,255,255,0.05) inset;
             position: relative;
             overflow: hidden;
             animation: cardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            z-index: 10;
         }
         @keyframes cardIn {
             from { opacity: 0; transform: translateY(30px) scale(0.95); }
@@ -284,17 +306,55 @@
         /* Mobile perfect fit */
         @media (max-width: 480px) {
             body {
-                align-items: center;
-                padding: 0;
+                align-items: center !important;
+                padding: 10px !important;
             }
             .login-card {
-                margin: 12px;
-                padding: 32px 24px 28px;
-                border-radius: 24px;
-                max-width: 100%;
+                margin: 0 !important;
+                padding: 24px 20px 20px !important;
+                border-radius: 20px !important;
+                max-width: 100% !important;
             }
-            .logo-wrap h1 { font-size: 20px; }
-            .btn-absen { font-size: 12px; padding: 13px 8px; }
+            .logo-wrap {
+                margin-bottom: 20px !important;
+            }
+            .logo-wrap .logo-img-container {
+                width: 70px !important; height: 70px !important;
+                margin-bottom: 10px !important;
+                padding: 6px !important;
+            }
+            .logo-wrap h1 {
+                font-size: 19px !important;
+            }
+            .logo-wrap p {
+                font-size: 12px !important;
+            }
+            .field-group {
+                margin-bottom: 12px !important;
+            }
+            .field-group label {
+                font-size: 11px !important;
+                margin-bottom: 6px !important;
+            }
+            .field-group input {
+                padding: 11px 14px !important;
+                font-size: 14px !important;
+                border-radius: 12px !important;
+            }
+            .btn-masuk {
+                padding: 12px !important;
+                font-size: 14px !important;
+                border-radius: 12px !important;
+                margin-top: 4px !important;
+            }
+            .divider {
+                margin: 16px 0 12px !important;
+            }
+            .btn-absen {
+                padding: 11px 8px !important;
+                font-size: 12px !important;
+                border-radius: 12px !important;
+            }
         }
     </style>
 

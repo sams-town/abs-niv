@@ -3,13 +3,15 @@
   <head>
     @php
         $settings = App\Models\settings::first();
+        $logoUrl = $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png');
+        $logoUrl = $logoUrl . '?v=' . ($settings ? strtotime($settings->updated_at) : time());
     @endphp
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="author" content="pixelstrap">
-    <link rel="shortcut icon" href="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}" />
-    <link rel="apple-touch-icon-precomposed" href="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}" />
+    <link rel="shortcut icon" href="{{ $logoUrl }}" />
+    <link rel="apple-touch-icon-precomposed" href="{{ $logoUrl }}" />
     <title>{{ $title }}</title>
     <link rel="stylesheet" type="text/css" href="{{ url('clock/dist/bootstrap-clockpicker.min.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -81,7 +83,7 @@
     </div> --}}
     <div class="preload preload-container">
         <div class="preload-content">
-            <img class="preload-logo" src="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}" alt="Loading...">
+            <img class="preload-logo" src="{{ $logoUrl }}" alt="Loading...">
             <div class="preload-spinner"></div>
         </div>
     </div>
@@ -100,7 +102,7 @@
             </div>
           </form>
           <div class="header-logo-wrapper col-auto p-0">
-            <div class="logo-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid" src="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}" alt="Logo"></a></div>
+            <div class="logo-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid" src="{{ $logoUrl }}" alt="Logo"></a></div>
             <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="align-center"></i></div>
           </div>
 
@@ -152,13 +154,13 @@
           <div>
             <div class="logo-wrapper d-flex align-items-center">
               <a href="{{ url('/dashboard') }}">
-                <img class="img-fluid for-light" src="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}" alt="Logo">
+                <img class="img-fluid for-light" src="{{ $logoUrl }}" alt="Logo">
               </a>
               <div style="font-size: 18px; color:white; font-weight:600">{{ $settings->name }}</div>
               <div class="back-btn ms-auto"><i class="fa fa-angle-left"></i></div>
               <div class="toggle-sidebar ms-2"><i class="fa fa-cog status_toggle middle sidebar-toggle"> </i></div>
             </div>
-            <div class="logo-icon-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid" src="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}" alt="Logo"></a></div>
+            <div class="logo-icon-wrapper"><a href="{{ url('/dashboard') }}"><img class="img-fluid" src="{{ $logoUrl }}" alt="Logo"></a></div>
             <nav class="sidebar-main">
               <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
               <div id="sidebar-menu">

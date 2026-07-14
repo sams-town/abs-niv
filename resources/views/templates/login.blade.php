@@ -5,6 +5,8 @@
 <head>
     @php
         $settings = App\Models\settings::first();
+        $logoUrl = $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png');
+        $logoUrl = $logoUrl . '?v=' . ($settings ? strtotime($settings->updated_at) : time());
     @endphp
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -13,8 +15,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
     <title>{{ $title }}</title>
     <!-- Favicon and Touch Icons  -->
-    <link rel="shortcut icon" href="{{ url('/storage/'.$settings->logo) }}" />
-    <link rel="apple-touch-icon-precomposed" href="{{ url('/storage/'.$settings->logo) }}" />
+    <link rel="shortcut icon" href="{{ $logoUrl }}" />
+    <link rel="apple-touch-icon-precomposed" href="{{ $logoUrl }}" />
     <!-- Font -->
     <link rel="stylesheet" href="{{ url('/myhr/fonts/fonts.css') }}" />
     <!-- Icons -->
@@ -34,14 +36,14 @@
 
     <link rel="stylesheet" type="text/css" href="{{ url('/myhr/styles/styles.css') }}" />
     <link rel="manifest" href="{{ url('/myhr/_manifest.json') }}" data-pwa-version="set_in_manifest_and_pwa_js">
-    <link rel="apple-touch-icon" sizes="192x192" href="{{ url('/storage/'.$settings->logo) }}">
+    <link rel="apple-touch-icon" sizes="192x192" href="{{ $logoUrl }}">
     @stack('style')
 </head>
 
 <body>
      <!-- preloade -->
      <div class="preload preload-container">
-        <div class="preload-logo" style="background-image: url('{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}'); background-size: contain; background-repeat: no-repeat; background-position: center; background-color: transparent;">
+        <div class="preload-logo" style="background-image: url('{{ $logoUrl }}'); background-size: contain; background-repeat: no-repeat; background-position: center; background-color: transparent;">
           <div class="spinner"></div>
         </div>
       </div>

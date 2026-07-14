@@ -5,6 +5,8 @@
 <head>
     @php
         $settings = App\Models\settings::first();
+        $logoUrl = $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png');
+        $logoUrl = $logoUrl . '?v=' . ($settings ? strtotime($settings->updated_at) : time());
     @endphp
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -13,8 +15,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }}</title>
     <!-- Favicon and Touch Icons  -->
-    <link rel="shortcut icon" href="{{ url('/storage/'.$settings->logo) }}" />
-    <link rel="apple-touch-icon-precomposed" href="{{ url('/storage/'.$settings->logo) }}" />
+    <link rel="shortcut icon" href="{{ $logoUrl }}" />
+    <link rel="apple-touch-icon-precomposed" href="{{ $logoUrl }}" />
     <!-- Font -->
     <link rel="stylesheet" href="{{ url('/myhr/fonts/fonts.css') }}" />
     <!-- Icons -->
@@ -60,7 +62,7 @@
 
 <body>
     <div class="preload preload-container">
-        <div class="preload-logo" style="background-image: url('{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}'); background-size: contain; background-repeat: no-repeat; background-position: center; background-color: transparent;"></div>
+        <div class="preload-logo" style="background-image: url('{{ $logoUrl }}'); background-size: contain; background-repeat: no-repeat; background-position: center; background-color: transparent;"></div>
     </div>
 
     @if (Request::is('dashboard*'))
@@ -163,7 +165,7 @@
                 <div class="tf-container">
                     <div class="d-flex justify-content-between align-items-center">
                         <a href="{{ url('/') }}" class="sidebar-logo">
-                            <img src="{{ asset('/storage/'.$settings->logo) }}" alt="logo">
+                            <img src="{{ $logoUrl }}" alt="logo">
                             <h5>Absensi</h5>
                         </a>
                         <a href="javascript:void(0);" class="clear-panel"> <i class="icon-close1"></i> </a>
