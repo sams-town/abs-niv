@@ -39,6 +39,16 @@ class MappingShift extends Model
                     return $query->whereBetween('tanggal', [$mulai, $akhir]);
                 });
         })
+        ->whereIn('users.tipe_user', ['pegawai', 'dosen'])
+        ->where(function($q) {
+            $q->whereNull('users.is_admin')
+              ->orWhereNotIn('users.is_admin', ['superadmin', 'admin']);
+        })
+        ->where('users.username', '!=', 'admin')
+        ->where('users.username', '!=', 'superadmin')
+        ->whereDoesntHave('User.roles', function ($q) {
+            $q->where('name', 'Super Admin');
+        })
         ->when(auth()->user()->hasRole('kepala_cabang'), function ($query) {
             return $query->where('users.lokasi_id', auth()->user()->lokasi_id);
         })

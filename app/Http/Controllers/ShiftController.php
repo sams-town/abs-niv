@@ -28,10 +28,11 @@ class ShiftController extends Controller
                 ->get(); // Fetch all to display as cards as per design
 
         $total_shift = Shift::count();
-        $karyawan_aktif = User::where(function ($query) {
-            $query->whereNull('masa_berlaku')
-                  ->orWhere('masa_berlaku', '>', date('Y-m-d'));
-        })->count();
+        $karyawan_aktif = User::pegawaiDanDosen()
+            ->where(function ($query) {
+                $query->whereNull('masa_berlaku')
+                      ->orWhere('masa_berlaku', '>', date('Y-m-d'));
+            })->count();
         $jadwal_terjadwal = MappingShift::whereNotNull('shift_id')->count();
 
         // Group mapping shifts by shift and user to get assignment date ranges
@@ -87,7 +88,7 @@ class ShiftController extends Controller
             $s->assigned_employees = $assigned_employees;
         }
 
-        $all_users = User::orderBy('name', 'asc')->get();
+        $all_users = User::pegawaiDanDosen()->orderBy('name', 'asc')->get();
 
         return view('shift.index', [
             'title' => 'Shift',

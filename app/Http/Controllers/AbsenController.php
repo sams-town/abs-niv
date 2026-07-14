@@ -341,7 +341,7 @@ class AbsenController extends Controller
 
         return view('absen.dataabsen', [
             'title' => 'Data Absen',
-            'user' => User::select('id', 'name')->get(),
+            'user' => User::pegawaiDanDosen()->select('id', 'name')->get(),
             'data_absen' => $data_absen
         ]);
     }

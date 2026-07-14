@@ -27,7 +27,7 @@ class dashboardController extends Controller
         if(auth()->user()->is_admin == "admin"){
             return view('dashboard.index', [
                 'title' => 'Dashboard',
-                'jumlah_user' => User::count(),
+                'jumlah_user' => User::pegawaiDanDosen()->count(),
                 'jumlah_masuk' => MappingShift::where('tanggal', $tgl_skrg)->where('status_absen', 'Masuk')->count(),
                 'jumlah_libur' => MappingShift::where('tanggal', $tgl_skrg)->where('status_absen', 'Libur')->count(),
                 'jumlah_cuti' => MappingShift::where('tanggal', $tgl_skrg)->where('status_absen', 'Cuti')->count(),

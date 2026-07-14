@@ -125,9 +125,12 @@ class User extends Authenticatable
     public function scopeDosen($query)
     {
         return $query->where('tipe_user', 'dosen')
-                     ->where('is_admin', '!=', 'superadmin')
-                     ->where('is_admin', '!=', 'admin')
+                     ->where(function($q) {
+                         $q->whereNull('is_admin')
+                           ->orWhereNotIn('is_admin', ['superadmin', 'admin']);
+                     })
                      ->where('username', '!=', 'admin')
+                     ->where('username', '!=', 'superadmin')
                      ->whereDoesntHave('roles', function ($q) {
                          $q->where('name', 'Super Admin');
                      });
@@ -136,9 +139,26 @@ class User extends Authenticatable
     public function scopePegawai($query)
     {
         return $query->where('tipe_user', 'pegawai')
-                     ->where('is_admin', '!=', 'superadmin')
-                     ->where('is_admin', '!=', 'admin')
+                     ->where(function($q) {
+                         $q->whereNull('is_admin')
+                           ->orWhereNotIn('is_admin', ['superadmin', 'admin']);
+                     })
                      ->where('username', '!=', 'admin')
+                     ->where('username', '!=', 'superadmin')
+                     ->whereDoesntHave('roles', function ($q) {
+                         $q->where('name', 'Super Admin');
+                     });
+    }
+
+    public function scopePegawaiDanDosen($query)
+    {
+        return $query->whereIn('tipe_user', ['pegawai', 'dosen'])
+                     ->where(function($q) {
+                         $q->whereNull('is_admin')
+                           ->orWhereNotIn('is_admin', ['superadmin', 'admin']);
+                     })
+                     ->where('username', '!=', 'admin')
+                     ->where('username', '!=', 'superadmin')
                      ->whereDoesntHave('roles', function ($q) {
                          $q->where('name', 'Super Admin');
                      });
