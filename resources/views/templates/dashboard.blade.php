@@ -113,10 +113,10 @@
           <div class="nav-right col-8 pull-right right-header p-0">
             <ul class="nav-menus">
               <li>
-                <a class="notification-box" href="{{ url('/notifications') }}"><i class="fa fa-bell"></i>
-                  @if (auth()->user()->notifications()->whereNull('read_at')->count() > 0)
-                    <span class="badge rounded-pill badge-danger">{{ auth()->user()->notifications()->whereNull('read_at')->count() }}</span>
-                  @endif
+                <a class="notification-box" href="{{ url('/notifications') }}" id="bell-notif-box"><i class="fa fa-bell"></i>
+                  <span class="badge rounded-pill badge-danger" id="bell-notif-badge" style="display: {{ auth()->user()->notifications()->whereNull('read_at')->count() > 0 ? 'inline-block' : 'none' }}">
+                    {{ auth()->user()->notifications()->whereNull('read_at')->count() }}
+                  </span>
                 </a>
               </li>
               <li class="profile-nav onhover-dropdown p-0 me-0">
@@ -558,6 +558,75 @@
                 }
             });
         }
+    </script>
+    <script>
+        // Web Audio API Synthesizer for high-quality notification sound (no asset files required)
+        function playNotificationSound() {
+            try {
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                const now = context.currentTime;
+                
+                // Note 1 (G5)
+                const osc1 = context.createOscillator();
+                const gain1 = context.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(783.99, now); // G5
+                gain1.gain.setValueAtTime(0.2, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                osc1.connect(gain1);
+                gain1.connect(context.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.35);
+                
+                // Note 2 (C6)
+                const osc2 = context.createOscillator();
+                const gain2 = context.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(1046.50, now + 0.12); // C6
+                gain2.gain.setValueAtTime(0.2, now + 0.12);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc2.connect(gain2);
+                gain2.connect(context.destination);
+                osc2.start(now + 0.12);
+                osc2.stop(now + 0.5);
+            } catch (e) {
+                console.warn("Web Audio API blocked or not supported: ", e);
+            }
+        }
+
+        // Notification Polling Logic
+        (function() {
+            let lastNotifCount = {{ auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0 }};
+            
+            function checkNotifications() {
+                fetch('{{ url("/ajax-unread-notifications-count") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const newCount = parseInt(data.count) || 0;
+                        const badge = document.getElementById('bell-notif-badge');
+                        
+                        if (badge) {
+                            if (newCount > 0) {
+                                badge.textContent = newCount;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                        
+                        // Play sound if new notification arrives
+                        if (newCount > lastNotifCount) {
+                            playNotificationSound();
+                        }
+                        
+                        lastNotifCount = newCount;
+                    })
+                    .catch(err => console.error("Error fetching notification count:", err));
+            }
+            
+            // Check every 10 seconds
+            setInterval(checkNotifications, 10000);
+        })();
     </script>
   </body>
 </html>

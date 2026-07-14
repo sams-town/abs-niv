@@ -548,3 +548,9 @@ Route::get('/reset', function () {
     Artisan::call('migrate:fresh --seed');
     Artisan::call('storage:link');
 });
+
+Route::get('/ajax-unread-notifications-count', function() {
+    return response()->json([
+        'count' => auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0
+    ]);
+})->middleware('auth');
