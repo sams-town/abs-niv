@@ -14,7 +14,7 @@
             height: 100% !important;
             width: 100% !important;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #090d16 !important;
+            background: #f1f5f9 !important;
         }
 
         body {
@@ -27,30 +27,6 @@
             overflow: hidden;
             margin: 0 !important;
             padding: 0 !important;
-        }
-
-        /* Beautiful glowing background mesh */
-        .bg-glow-1 {
-            position: absolute;
-            width: 600px; height: 600px;
-            background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
-            top: -200px; left: -100px;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: pulseGlow 10s ease-in-out infinite alternate;
-        }
-        .bg-glow-2 {
-            position: absolute;
-            width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%);
-            bottom: -150px; right: -50px;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: pulseGlow 12s ease-in-out infinite alternate-reverse;
-        }
-        @keyframes pulseGlow {
-            0% { transform: scale(1) translate(0, 0); opacity: 0.8; }
-            100% { transform: scale(1.1) translate(30px, 20px); opacity: 1; }
         }
 
         /* Overrides to force template centering */
@@ -78,79 +54,136 @@
         }
         .mt-7 { margin-top: 0 !important; }
 
-        /* Sleek Centered Login Card */
-        .login-card {
-            background: rgba(17, 24, 39, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 44px 40px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow:
-                0 25px 50px -12px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-            position: relative;
+        /* Double Pane Layout Card */
+        .login-container {
+            display: flex;
+            width: 860px;
+            height: 560px;
+            background: #ffffff;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 40px -15px rgba(15, 23, 42, 0.1),
+                0 0 0 1px rgba(15, 23, 42, 0.05);
             z-index: 10;
-            animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         @keyframes cardEntrance {
-            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .login-card::before {
+
+        /* Left Pane: Login Form */
+        .form-pane {
+            flex: 1.1;
+            padding: 48px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #ffffff;
+        }
+
+        /* Right Pane: Brand Banner */
+        .brand-pane {
+            flex: 0.9;
+            background: linear-gradient(135deg, #1b358f 0%, #2563eb 100%);
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            text-align: center;
+            position: relative;
+        }
+        .brand-pane::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            inset: 0;
+            background-image: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06) 1.5px, transparent 1.5px),
+                              radial-gradient(circle at 80% 70%, rgba(255,255,255,0.06) 1.5px, transparent 1.5px);
+            background-size: 32px 32px;
+            pointer-events: none;
         }
 
         /* Logo Area */
         .logo-wrap {
-            text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
         .logo-wrap .logo-img-container {
-            width: 80px; height: 80px;
+            width: 72px; height: 72px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.04);
-            border: 2px solid rgba(255, 255, 255, 0.12);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 16px;
-            padding: 6px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            padding: 5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
         .logo-wrap img {
             width: 100%; height: 100%;
             object-fit: contain;
             border-radius: 50%;
         }
-        .logo-wrap h1 {
-            font-size: 24px;
+        .form-pane h2 {
+            font-size: 22px;
             font-weight: 800;
-            color: #ffffff;
+            color: #0f172a;
             letter-spacing: -0.5px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
-        .logo-wrap p {
+        .form-pane p.subtitle {
             font-size: 13px;
-            color: rgba(255, 255, 255, 0.45);
+            color: #64748b;
             font-weight: 500;
+            margin-bottom: 28px;
+        }
+
+        /* Brand Pane Content */
+        .brand-logo-container {
+            width: 110px; height: 110px;
+            border-radius: 50%;
+            background: #ffffff;
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border: 3px solid rgba(255,255,255,0.2);
+            animation: bounceLogo 4s ease-in-out infinite alternate;
+        }
+        @keyframes bounceLogo {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-8px); }
+        }
+        .brand-logo-container img {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .brand-pane h2 {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+        .brand-pane p {
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.5;
+            max-width: 280px;
         }
 
         /* Inputs */
         .field-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         .field-group label {
             display: block;
             font-size: 11px;
             font-weight: 700;
-            color: rgba(255, 255, 255, 0.5);
+            color: #475569;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             margin-bottom: 8px;
         }
         .field-group .input-wrap {
@@ -158,62 +191,62 @@
         }
         .field-group input {
             width: 100%;
-            padding: 13px 16px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
             border-radius: 12px;
-            font-size: 14.5px;
-            color: #ffffff;
+            font-size: 14px;
+            color: #0f172a;
             font-family: 'Plus Jakarta Sans', sans-serif;
             transition: all 0.2s ease;
             -webkit-appearance: none;
         }
-        .field-group input::placeholder { color: rgba(255, 255, 255, 0.25); }
+        .field-group input::placeholder { color: #94a3b8; }
         .field-group input:focus {
             outline: none;
-            border-color: rgba(99, 102, 241, 0.8);
-            background: rgba(99, 102, 241, 0.05);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
         .eye-toggle {
             position: absolute;
             right: 16px; top: 50%;
             transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.35);
+            color: #64748b;
             cursor: pointer;
             font-size: 16px;
         }
-        .eye-toggle:hover { color: rgba(255, 255, 255, 0.7); }
+        .eye-toggle:hover { color: #0f172a; }
 
         /* Login Button */
         .btn-masuk {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            padding: 13px;
+            background: #2563eb;
             border: none;
             border-radius: 12px;
             color: #fff;
-            font-size: 15px;
+            font-size: 14.5px;
             font-weight: 700;
             font-family: 'Plus Jakarta Sans', sans-serif;
             cursor: pointer;
-            margin-top: 6px;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 16px rgba(99,102,241,0.25);
+            margin-top: 4px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
         .btn-masuk:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(99,102,241,0.35);
+            background: #1d4ed8;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3);
         }
         .btn-masuk:active { transform: translateY(1px); }
 
         /* Error Message */
         .error-msg {
-            font-size: 11.5px;
-            color: #fca5a5;
+            font-size: 11px;
+            color: #b91c1c;
             margin-top: 6px;
             padding: 6px 10px;
-            background: rgba(239, 68, 68, 0.1);
+            background: #fee2e2;
             border-radius: 8px;
             border-left: 3px solid #ef4444;
         }
@@ -223,32 +256,32 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            margin: 24px 0 20px;
+            margin: 20px 0 16px;
         }
         .divider::before, .divider::after {
             content: '';
             flex: 1;
             height: 1px;
-            background: rgba(255, 255, 255, 0.08);
+            background: #e2e8f0;
         }
         .divider span {
             font-size: 10px;
             font-weight: 700;
-            color: rgba(255, 255, 255, 0.3);
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
         }
 
         /* Absen Buttons */
         .absen-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 10px;
         }
         .btn-absen {
-            padding: 14px 12px;
+            padding: 12px 10px;
             border-radius: 12px;
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 700;
             font-family: 'Plus Jakarta Sans', sans-serif;
             text-decoration: none;
@@ -256,107 +289,125 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.2s ease;
             border: 1px solid transparent;
             white-space: nowrap;
         }
         .btn-absen.masuk {
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: #10b981;
             color: #fff;
-            box-shadow: 0 4px 14px rgba(16,185,129,0.25);
+            box-shadow: 0 4px 12px rgba(16,185,129,0.15);
         }
         .btn-absen.masuk:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(16,185,129,0.35);
+            background: #059669;
+            box-shadow: 0 6px 16px rgba(16,185,129,0.25);
             color: white;
         }
         .btn-absen.pulang {
-            background: rgba(255, 255, 255, 0.03);
-            color: rgba(255, 255, 255, 0.8);
-            border-color: rgba(255, 255, 255, 0.1);
+            background: #f1f5f9;
+            color: #475569;
+            border-color: #cbd5e1;
         }
         .btn-absen.pulang:hover {
-            background: rgba(255, 255, 255, 0.07);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-            color: white;
+            background: #e2e8f0;
+            border-color: #94a3b8;
+            color: #0f172a;
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 480px) {
-            body {
-                padding: 16px !important;
+        /* Responsive Breakpoints */
+        @media (max-width: 890px) {
+            .login-container {
+                width: 780px;
+                height: 520px;
             }
-            .login-card {
-                padding: 32px 24px;
+        }
+
+        @media (max-width: 767px) {
+            .login-container {
+                width: 100%;
+                max-width: 420px;
+                height: auto;
+                margin: 16px !important;
+                flex-direction: column;
                 border-radius: 20px;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
             }
-            .logo-wrap h1 {
-                font-size: 21px;
+            .brand-pane {
+                display: none !important;
             }
-            .absen-grid {
-                gap: 10px;
+            .form-pane {
+                padding: 36px 24px;
             }
-            .btn-absen {
-                font-size: 12px;
-                padding: 12px 8px;
+            .logo-wrap {
+                display: block !important;
+                margin-bottom: 20px;
             }
         }
     </style>
 
-    <!-- Glowing Backgrounds -->
-    <div class="bg-glow-1"></div>
-    <div class="bg-glow-2"></div>
-
-    <div class="login-card">
-        <!-- Logo -->
-        <div class="logo-wrap">
-            <div class="logo-img-container">
-                <img src="{{ $logoUrl }}" alt="Logo">
+    <!-- Double Pane Layout Container -->
+    <div class="login-container">
+        <!-- Left Pane: Form -->
+        <div class="form-pane">
+            <!-- Logo inside form only visible/needed for spacing and layout on mobile -->
+            <div class="logo-wrap">
+                <div class="logo-img-container">
+                    <img src="{{ $logoUrl }}" alt="Logo">
+                </div>
             </div>
-            <h1>{{ $settings->name ?? 'UNIBA HRIS' }}</h1>
-            <p>Sistem Informasi Kehadiran Terintegrasi</p>
+            
+            <h2>Masuk ke Akun</h2>
+            <p class="subtitle">Silakan masukkan akun Anda untuk melanjutkan ke dashboard.</p>
+
+            <!-- Form Login -->
+            <form action="{{ url('/login-proses') }}" method="POST">
+                @csrf
+                <div class="field-group">
+                    <label>Username</label>
+                    <div class="input-wrap">
+                        <input type="text" name="username" placeholder="Masukkan username" value="{{ old('username') }}" required autocomplete="username">
+                    </div>
+                    @error('username')
+                        <div class="error-msg">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="field-group">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <input type="password" id="pw-field" name="password" placeholder="Masukkan password" required autocomplete="current-password" style="padding-right: 46px;">
+                        <span class="eye-toggle" onclick="togglePw()" id="eye-icon">👁</span>
+                    </div>
+                    @error('password')
+                        <div class="error-msg">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <button type="submit" class="btn-masuk">Masuk ke Akun</button>
+            </form>
+
+            <!-- Absen Quick -->
+            <div class="divider"><span>Atau Absen Langsung</span></div>
+            <div class="absen-grid">
+                <a href="{{ url('/presensi') }}" class="btn-absen masuk">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    Absen Masuk
+                </a>
+                <a href="{{ url('/presensi-pulang') }}" class="btn-absen pulang">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    Absen Pulang
+                </a>
+            </div>
         </div>
 
-        <!-- Form Login -->
-        <form action="{{ url('/login-proses') }}" method="POST">
-            @csrf
-            <div class="field-group">
-                <label>Username</label>
-                <div class="input-wrap">
-                    <input type="text" name="username" placeholder="Masukkan username" value="{{ old('username') }}" required autocomplete="username">
-                </div>
-                @error('username')
-                    <div class="error-msg">{{ $message }}</div>
-                @enderror
+        <!-- Right Pane: Brand Banner -->
+        <div class="brand-pane">
+            <div class="brand-logo-container">
+                <img src="{{ $logoUrl }}" alt="Logo">
             </div>
-
-            <div class="field-group">
-                <label>Password</label>
-                <div class="input-wrap">
-                    <input type="password" id="pw-field" name="password" placeholder="Masukkan password" required autocomplete="current-password" style="padding-right: 46px;">
-                    <span class="eye-toggle" onclick="togglePw()" id="eye-icon">👁</span>
-                </div>
-                @error('password')
-                    <div class="error-msg">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <button type="submit" class="btn-masuk">Masuk ke Akun</button>
-        </form>
-
-        <!-- Absen Quick -->
-        <div class="divider"><span>Atau Absen Langsung</span></div>
-        <div class="absen-grid">
-            <a href="{{ url('/presensi') }}" class="btn-absen masuk">
-                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
-                Absen Masuk
-            </a>
-            <a href="{{ url('/presensi-pulang') }}" class="btn-absen pulang">
-                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                Absen Pulang
-            </a>
+            <h2>{{ $settings->name ?? 'UNIBA HRIS' }}</h2>
+            <p>Sistem Informasi Kehadiran Terintegrasi Dosen & Karyawan Universitas Batam.</p>
         </div>
     </div>
 

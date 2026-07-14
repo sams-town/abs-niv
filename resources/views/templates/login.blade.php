@@ -48,7 +48,7 @@
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            background: linear-gradient(145deg, #0f1535 0%, #1a2060 40%, #1e3a8a 100%) !important;
+            background: #f1f5f9 !important;
             min-height: 100vh !important;
             min-height: 100dvh !important;
         }
