@@ -37,6 +37,42 @@
     <link rel="stylesheet" type="text/css" href="{{ url('/myhr/styles/styles.css') }}" />
     <link rel="manifest" href="{{ url('/myhr/_manifest.json') }}" data-pwa-version="set_in_manifest_and_pwa_js">
     <link rel="apple-touch-icon" sizes="192x192" href="{{ $logoUrl }}">
+    <style>
+        html, body {
+            height: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        body {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: linear-gradient(145deg, #0f1535 0%, #1a2060 40%, #1e3a8a 100%) !important;
+            min-height: 100vh !important;
+            min-height: 100dvh !important;
+        }
+        .login-section {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: transparent !important;
+        }
+        .tf-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: transparent !important;
+        }
+    </style>
     @stack('style')
 </head>
 

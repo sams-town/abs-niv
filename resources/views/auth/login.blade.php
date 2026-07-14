@@ -10,78 +10,6 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html, body {
-            height: 100% !important;
-            width: 100% !important;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        body {
-            min-height: 100vh !important;
-            min-height: 100dvh !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            background: linear-gradient(145deg, #0f1535 0%, #1a2060 40%, #1e3a8a 100%) !important;
-            position: relative;
-            overflow: hidden;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        /* Animated background orbs */
-        body::before {
-            content: '';
-            position: fixed;
-            width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
-            top: -100px; left: -100px;
-            border-radius: 50%;
-            animation: float1 8s ease-in-out infinite;
-            pointer-events: none;
-        }
-        body::after {
-            content: '';
-            position: fixed;
-            width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%);
-            bottom: -80px; right: -80px;
-            border-radius: 50%;
-            animation: float2 10s ease-in-out infinite;
-            pointer-events: none;
-        }
-        @keyframes float1 {
-            0%, 100% { transform: translate(0,0) scale(1); }
-            50% { transform: translate(30px, 30px) scale(1.1); }
-        }
-        @keyframes float2 {
-            0%, 100% { transform: translate(0,0) scale(1); }
-            50% { transform: translate(-20px, -20px) scale(1.1); }
-        }
-
-        /* Centering overrides for templates */
-        .login-section {
-            width: 100% !important;
-            max-width: 100% !important;
-            height: auto !important;
-            min-height: auto !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-        .tf-container {
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-        .mt-7 { margin-top: 0 !important; }
-
         /* Main Card */
         .login-card {
             background: rgba(255,255,255,0.08);
@@ -100,6 +28,49 @@
             overflow: hidden;
             animation: cardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
             z-index: 10;
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        }
+
+        /* Animated background orbs styling inside container */
+        .login-section::before {
+            content: '';
+            position: fixed;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
+            top: -100px; left: -100px;
+            border-radius: 50%;
+            animation: float1 8s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .login-section::after {
+            content: '';
+            position: fixed;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%);
+            bottom: -80px; right: -80px;
+            border-radius: 50%;
+            animation: float2 10s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(30px, 30px) scale(1.1); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(-20px, -20px) scale(1.1); }
         }
         @keyframes cardIn {
             from { opacity: 0; transform: translateY(30px) scale(0.95); }
