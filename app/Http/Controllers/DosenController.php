@@ -113,7 +113,7 @@ class DosenController extends Controller
         $data['batas_terlambat'] = $request->batas_terlambat ?? 5;
 
         if ($request->hasFile('foto_karyawan')) {
-            $data['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan');
+            $data['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan', 'public');
         }
 
         $data['password'] = Hash::make($request->password);
@@ -235,7 +235,7 @@ class DosenController extends Controller
         }
 
         if ($request->hasFile('foto_karyawan')) {
-            $data['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan');
+            $data['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan', 'public');
         }
 
         if ($request->filled('password')) {

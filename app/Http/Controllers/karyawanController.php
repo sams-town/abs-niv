@@ -354,7 +354,7 @@ class karyawanController extends Controller
         $validatedData['potongan_koperasi'] = $request->potongan_koperasi ? str_replace(',', '', $request->potongan_koperasi) : 0;
 
         if ($request->file('foto_karyawan')) {
-            $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan');
+            $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan', 'public');
         }
 
         $validatedData['password'] = Hash::make($validatedData['password']);
@@ -490,7 +490,7 @@ class karyawanController extends Controller
             if ($request->foto_karyawan_lama) {
                 Storage::delete($request->foto_karyawan_lama);
             }
-            $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan');
+            $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan', 'public');
         }
 
         $path = public_path('neural.json');
@@ -896,7 +896,7 @@ class karyawanController extends Controller
             if ($request->foto_karyawan_lama) {
                 Storage::delete($request->foto_karyawan_lama);
             }
-            $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan');
+            $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan', 'public');
         }
 
         $path = public_path('neural.json');
