@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\settings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 
 class SettingsController extends Controller
 {
@@ -34,9 +35,18 @@ class SettingsController extends Controller
             'template_lembur' => 'file|max:20480|nullable',
             'template_slip_gaji' => 'file|max:20480|nullable',
         ]);
+
         if ($request->file('logo')) {
-            $validated['logo'] = $request->file('logo')->store('logo');
+            $file = $request->file('logo');
+
+            // Simpan ke storage/app/public/logo/ (untuk storage link)
+            $storagePath = $file->store('logo', 'public');
+            $validated['logo'] = $storagePath;
+
+            // Juga salin ke public/assets/img/logo.png (fallback tanpa symlink)
+            $file->move(public_path('assets/img'), 'logo.png');
         }
+
         if ($request->file('template_cuti')) {
             $validated['template_cuti'] = $request->file('template_cuti')->store('templates');
         }
@@ -46,7 +56,18 @@ class SettingsController extends Controller
         if ($request->file('template_slip_gaji')) {
             $validated['template_slip_gaji'] = $request->file('template_slip_gaji')->store('templates');
         }
+
         $settings->update($validated);
+
+        // Pastikan storage link ada
+        if (!file_exists(public_path('storage'))) {
+            try {
+                Artisan::call('storage:link');
+            } catch (\Exception $e) {
+                // Abaikan jika gagal, logo tetap tersimpan di public/assets/img/logo.png
+            }
+        }
+
         return back()->with('success', 'Data Berhasil Ditambahkan');
     }
 }

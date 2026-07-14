@@ -81,7 +81,7 @@
     </div> --}}
     <div class="preload preload-container">
         <div class="preload-content">
-            <img class="preload-logo" src="{{ url('/assets/img/logo.png') }}" alt="Loading...">
+            <img class="preload-logo" src="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}" alt="Loading...">
             <div class="preload-spinner"></div>
         </div>
     </div>
