@@ -290,36 +290,5 @@
         </div>
     </div>
 
-    <div class="mt-5 mb-9">
-        <div class="tf-container">
-            <div class="mt-5">
-                <div class="d-flex justify-content-between">
-                    <h3>Berita</h3> <a href="{{ url('/berita-user') }}" class="primary_color fw_6">View All</a>
-                </div>
-                <div class="swiper-container banner-tes">
-                <div class="swiper-wrapper">
-                    @foreach ($berita as $ber)
-                        <div class="swiper-slide">
-                            <img src="{{ url('/storage/'.$ber->berita_file_path) }}" alt="{{ $ber->berita_file_name }}">
-                        </div>
-                    @endforeach
-                </div>
-                </div>
-            </div>
-            <div class="mt-5">
-                <div class="d-flex justify-content-between">
-                    <h3>Informasi</h3> <a href="{{ url('/informasi-user') }}" class="primary_color fw_6">View All</a>
-                </div>
-                <div class="swiper-container banner-tes">
-                <div class="swiper-wrapper">
-                    @foreach ($informasi as $inf)
-                        <div class="swiper-slide">
-                            <img src="{{ url('/storage/'.$inf->berita_file_path) }}" alt="{{ $inf->berita_file_name }}">
-                        </div>
-                    @endforeach
-                </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div style="margin-bottom: 80px;"></div>
 @endsection
