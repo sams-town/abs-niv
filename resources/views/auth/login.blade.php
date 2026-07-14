@@ -4,6 +4,7 @@
         $settings = App\Models\settings::first();
         $logoUrl = $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png');
         $logoUrl = $logoUrl . '?v=' . ($settings ? strtotime($settings->updated_at) : time());
+        $bgUrl = url('/assets/img/login_bg.png') . '?v=' . ($settings ? strtotime($settings->updated_at) : time());
     @endphp
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -14,19 +15,29 @@
             height: 100% !important;
             width: 100% !important;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #f1f5f9 !important;
         }
 
         body {
             min-height: 100vh !important;
             min-height: 100dvh !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+            background-image: url('{{ $bgUrl }}') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
             position: relative;
             overflow: hidden;
             margin: 0 !important;
             padding: 0 !important;
+        }
+
+        /* Overlay to keep background clean and high-contrast */
+        body::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(241, 245, 249, 0.4);
+            pointer-events: none;
+            z-index: 1;
         }
 
         /* Overrides to force template centering */
@@ -54,8 +65,12 @@
         }
         .mt-7 { margin-top: 0 !important; }
 
-        /* Double Pane Layout Card */
+        /* Double Pane Layout Card - Center-Aligned Bulletproof */
         .login-container {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
             display: flex;
             width: 860px;
             height: 560px;
@@ -63,14 +78,14 @@
             border-radius: 28px;
             overflow: hidden;
             box-shadow: 
-                0 20px 40px -15px rgba(15, 23, 42, 0.1),
+                0 30px 60px -15px rgba(15, 23, 42, 0.15),
                 0 0 0 1px rgba(15, 23, 42, 0.05);
-            z-index: 10;
+            z-index: 1000 !important;
             animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         @keyframes cardEntrance {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
+            from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
+            to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
 
         /* Left Pane: Login Form */
@@ -325,10 +340,14 @@
 
         @media (max-width: 767px) {
             .login-container {
-                width: 100%;
-                max-width: 420px;
-                height: auto;
-                margin: 16px !important;
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: calc(100% - 32px) !important;
+                max-width: 420px !important;
+                height: auto !important;
+                margin: 0 !important;
                 flex-direction: column;
                 border-radius: 20px;
                 box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
