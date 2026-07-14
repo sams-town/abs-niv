@@ -270,4 +270,19 @@ class PayrollController extends Controller
 
         return $pdf->stream();
     }
+
+    public function dosen()
+    {
+        return view('payroll.dosen', ['title' => 'Payroll Dosen']);
+    }
+
+    public function slipGajiDosen()
+    {
+        return view('slip-gaji.dosen', ['title' => 'Slip Gaji Dosen']);
+    }
+
+    public function slipGajiKaryawan()
+    {
+        return view('slip-gaji.karyawan', ['title' => 'Slip Gaji Karyawan']);
+    }
 }
