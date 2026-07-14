@@ -237,5 +237,10 @@
 
             <button type="submit" class="btn-login-primary mb-3">Masuk ke Akun</button>
         </form>
+
+        <div class="absensi-flex" style="display: flex; gap: 10px; margin-top: 15px;">
+            <a href="{{ url('/presensi') }}" class="btn-absensi masuk" style="flex: 1; margin-bottom: 0; text-align: center; padding: 10px; background-color: #533dea; color: white; border-radius: 8px; text-decoration: none;">Absen Masuk</a>
+            <a href="{{ url('/presensi-pulang') }}" class="btn-absensi pulang" style="flex: 1; margin-bottom: 0; text-align: center; padding: 10px; background-color: #f8f9fa; color: #333; border: 1px solid #ddd; border-radius: 8px; text-decoration: none;">Absen Pulang</a>
+        </div>
     </div>
 @endsection
