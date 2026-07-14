@@ -256,7 +256,7 @@ class authController extends Controller
                             }
                         }
 
-                        Storage::put($fileName, $image_base64);
+                        Storage::disk('public')->put($fileName, $image_base64);
                         $ms->update([
                             'jam_absen' => $jam_absen,
                             'telat' => $telat,
@@ -371,7 +371,7 @@ class authController extends Controller
                             }
                         }
 
-                        Storage::put($fileName, $image_base64);
+                        Storage::disk('public')->put($fileName, $image_base64);
                         $ms->update([
                             'jam_pulang' => $jam_pulang,
                             'pulang_cepat' => $pulang_cepat,

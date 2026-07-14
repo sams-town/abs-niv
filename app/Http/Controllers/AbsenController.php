@@ -87,7 +87,7 @@ class AbsenController extends Controller
             $image_base64 = base64_decode($image_parts[1]);
             $fileName = 'foto_jam_absen/' . uniqid() . '.png';
 
-            Storage::put($fileName, $image_base64);
+            Storage::disk('public')->put($fileName, $image_base64);
 
 
             $request["foto_jam_absen"] = $fileName;
@@ -212,7 +212,7 @@ class AbsenController extends Controller
             $image_base64 = base64_decode($image_parts[1]);
             $fileName = 'foto_jam_pulang/' . uniqid() . '.png';
 
-            Storage::put($fileName, $image_base64);
+            Storage::disk('public')->put($fileName, $image_base64);
 
             $request["foto_jam_pulang"] = $fileName;
 

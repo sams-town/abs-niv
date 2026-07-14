@@ -587,7 +587,7 @@ class karyawanController extends Controller
         $image_base64 = base64_decode($image_parts[1]);
         $fileName = 'foto_face_recognition/' . $request["path"] . '.png';
 
-        Storage::put($fileName, $image_base64);
+        Storage::disk('public')->put($fileName, $image_base64);
 
         $user = User::where('username', $request['path'])->update(["foto_face_recognition" => $fileName]);
         return $user;
