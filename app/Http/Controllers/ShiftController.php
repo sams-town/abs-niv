@@ -6,8 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Shift;
 use App\Models\MappingShift;
+use App\Models\dinasLuar;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
+use RealRashid\SweetAlert\Facades\Alert;
 
 class ShiftController extends Controller
 {

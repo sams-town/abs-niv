@@ -22,7 +22,7 @@
                             <select class="form-control selectpicker @error('user_id') is-invalid @enderror" id="user_id" name="user_id" data-live-search="true">
                                 <option value="">Pilih Pegawai</option>
                                 @foreach ($data_user as $du)
-                                    @if(old('user_id') == $du->id)
+                                    @if(old('user_id', request('user_id')) == $du->id)
                                         <option value="{{ $du->id }}" selected>{{ $du->name }}</option>
                                     @else
                                         <option value="{{ $du->id }}">{{ $du->name }}</option>

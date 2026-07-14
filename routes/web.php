@@ -200,7 +200,8 @@ Route::get('/lembur', [LemburController::class, 'index'])->middleware('auth');
 Route::post('/lembur/masuk', [LemburController::class, 'masuk'])->middleware('auth');
 Route::put('/lembur/pulang/{id}', [LemburController::class, 'pulang'])->middleware('auth');
 Route::get('/data-lembur', [LemburController::class, 'dataLembur'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::post('/data-lembur/approval/{id}', [LemburController::class, 'approval'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
+Route::post('/data-lembur/approval-1/{id}', [LemburController::class, 'approvalLevel1'])->middleware(['auth', 'role:kepala_cabang']);
+Route::post('/data-lembur/approval-2/{id}', [LemburController::class, 'approvalLevel2'])->middleware(['auth', 'role:admin|hrd']);
 Route::get('/my-lembur', [LemburController::class, 'myLembur'])->middleware('auth');
 
 Route::get('/rekap-data', [RekapDataController::class, 'index'])->middleware('admin');
@@ -268,6 +269,7 @@ Route::put('/golongan/update/{id}', [GolonganController::class, 'update'])->midd
 Route::delete('/golongan/delete/{id}', [GolonganController::class, 'delete'])->middleware('admin');
 
 Route::get('/dokumen', [DokumenController::class, 'index'])->middleware('admin');
+Route::get('/dokumen/user/{id}', [DokumenController::class, 'userFolder'])->middleware('admin');
 Route::get('/dokumen/tambah', [DokumenController::class, 'tambah'])->middleware('admin');
 Route::post('/dokumen/tambah-proses', [DokumenController::class, 'tambahProses'])->middleware('admin');
 Route::get('/dokumen/edit/{id}', [DokumenController::class, 'edit'])->middleware('admin');

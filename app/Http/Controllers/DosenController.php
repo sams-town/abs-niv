@@ -133,14 +133,13 @@ class DosenController extends Controller
             }
             $user->assignRole('dosen');
         }
-
         // Save dynamic documents
         if ($request->hasFile('document_files')) {
             $files = $request->file('document_files');
             $names = $request->document_names;
             foreach ($files as $index => $file) {
                 if ($file->isValid()) {
-                    $path = $file->store('files');
+                    $path = $file->store('files/' . $user->username);
                     \App\Models\File::create([
                         'jenis_file' => $names[$index] ?? 'Dokumen Tambahan',
                         'user_id' => $user->id,
@@ -149,7 +148,6 @@ class DosenController extends Controller
                 }
             }
         }
-
         return redirect('/dosen')->with('success', 'Data Dosen Berhasil Ditambahkan');
     }
 

@@ -46,6 +46,11 @@ class User extends Authenticatable
         return $this->hasMany(Sip::class);
     }
 
+    public function files()
+    {
+        return $this->hasMany(File::class);
+    }
+
     public function Lembur()
     {
         return $this->hasMany(Lembur::class);

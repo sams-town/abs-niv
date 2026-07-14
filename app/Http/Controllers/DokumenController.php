@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\Email;
 use App\Models\Sip;
 use App\Models\User;
+use App\Models\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -14,16 +15,22 @@ class DokumenController extends Controller
     public function index()
     {
         $search = request()->input('search');
-        $sip = Sip::when($search, function ($query) use ($search) {
-                    $query->where('nama_dokumen', 'LIKE', '%' . $search . '%');
-                })
-                ->orderBy('nama_dokumen', 'ASC')
-                ->paginate(10)
-                ->withQueryString();
+        $users = User::where('is_admin', '!=', 'superadmin')
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Super Admin');
+            })
+            ->withCount(['Sip', 'files'])
+            ->when($search, function ($query) use ($search) {
+                $query->where('name', 'LIKE', '%' . $search . '%')
+                      ->orWhere('username', 'LIKE', '%' . $search . '%');
+            })
+            ->orderBy('name', 'ASC')
+            ->paginate(12)
+            ->withQueryString();
 
         return view('dokumen.index', [
-            'title' => 'Data Dokumen Pegawai',
-            'data_dokumen' => $sip
+            'title' => 'Data Dokumen Pegawai & Dosen',
+            'data_user' => $users
         ]);
     }
 
@@ -45,7 +52,8 @@ class DokumenController extends Controller
         ]);
 
         if ($request->file('file')) {
-            $validatedData['file'] = $request->file('file')->store('file');
+            $user = User::findOrFail($request->user_id);
+            $validatedData['file'] = $request->file('file')->store('file/' . $user->username);
         }
 
         Sip::create($validatedData);
@@ -73,7 +81,8 @@ class DokumenController extends Controller
             if ($request->file_lama) {
                 Storage::delete($request->file_lama);
             }
-            $validatedData['file'] = $request->file('file')->store('file');
+            $user = User::findOrFail($request->user_id);
+            $validatedData['file'] = $request->file('file')->store('file/' . $user->username);
         }
 
         Sip::where('id', $id)->update($validatedData);
@@ -85,7 +94,7 @@ class DokumenController extends Controller
         $dokumen = Sip::findOrFail($id);
         $dokumen->delete();
         Storage::delete($dokumen->file);
-        return redirect('/dokumen')->with('success', 'Dokumen Berhasil Didelete');
+        return redirect()->back()->with('success', 'Dokumen Berhasil Didelete');
     }
     
     public function myDokumen()
@@ -135,7 +144,8 @@ class DokumenController extends Controller
         ]);
 
         if ($request->file('file')) {
-            $validatedData['file'] = $request->file('file')->store('file');
+            $user = User::findOrFail($request->user_id);
+            $validatedData['file'] = $request->file('file')->store('file/' . $user->username);
         }
 
         Sip::create($validatedData);
@@ -168,7 +178,9 @@ class DokumenController extends Controller
             if ($request->file_lama) {
                 Storage::delete($request->file_lama);
             }
-            $validatedData['file'] = $request->file('file')->store('file');
+            $dokumen = Sip::findOrFail($id);
+            $user = User::findOrFail($dokumen->user_id);
+            $validatedData['file'] = $request->file('file')->store('file/' . $user->username);
         }
 
         Sip::where('id', $id)->update($validatedData);
@@ -181,5 +193,19 @@ class DokumenController extends Controller
         $dokumen->delete();
         Storage::delete($dokumen->file);
         return redirect('/my-dokumen')->with('success', 'Dokumen Berhasil Didelete');
+    }
+
+    public function userFolder($id)
+    {
+        $user = User::findOrFail($id);
+        $sip_dokumen = Sip::where('user_id', $id)->orderBy('nama_dokumen', 'ASC')->get();
+        $file_dokumen = File::where('user_id', $id)->orderBy('jenis_file', 'ASC')->get();
+
+        return view('dokumen.user_folder', [
+            'title' => 'Folder Dokumen ' . $user->name,
+            'user' => $user,
+            'sip_dokumen' => $sip_dokumen,
+            'file_dokumen' => $file_dokumen
+        ]);
     }
 }

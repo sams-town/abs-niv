@@ -34,7 +34,8 @@ class FileController extends Controller
         ]);
 
         if ($request->file('fileUpload')) {
-            $validatedData['fileUpload'] = $request->file('fileUpload')->store('fileUpload');
+            $user = User::findOrFail($request->user_id);
+            $validatedData['fileUpload'] = $request->file('fileUpload')->store('fileUpload/' . $user->username);
         }
 
         File::create($validatedData);
@@ -62,7 +63,8 @@ class FileController extends Controller
             if ($request->file_lama) {
                 Storage::delete($request->file_lama);
             }
-            $validatedData['fileUpload'] = $request->file('fileUpload')->store('fileUpload');
+            $user = User::findOrFail($request->user_id);
+            $validatedData['fileUpload'] = $request->file('fileUpload')->store('fileUpload/' . $user->username);
         }
 
         File::where('id', $id)->update($validatedData);
@@ -74,7 +76,7 @@ class FileController extends Controller
         $file = File::findOrFail($id);
         $file->delete();
         Storage::delete($file->fileUpload);
-        return redirect('/file')->with('success', 'File Berhasil Didelete');
+        return redirect()->back()->with('success', 'File Berhasil Didelete');
     }
 
     public function myFile()
@@ -101,7 +103,8 @@ class FileController extends Controller
         ]);
 
         if ($request->file('fileUpload')) {
-            $validatedData['fileUpload'] = $request->file('fileUpload')->store('fileUpload');
+            $user = User::findOrFail($request->user_id);
+            $validatedData['fileUpload'] = $request->file('fileUpload')->store('fileUpload/' . $user->username);
         }
 
         File::create($validatedData);
@@ -127,7 +130,9 @@ class FileController extends Controller
             if ($request->file_lama) {
                 Storage::delete($request->file_lama);
             }
-            $validatedData['fileUpload'] = $request->file('fileUpload')->store('fileUpload');
+            $file = File::findOrFail($id);
+            $user = User::findOrFail($file->user_id);
+            $validatedData['fileUpload'] = $request->file('fileUpload')->store('fileUpload/' . $user->username);
         }
 
         File::where('id', $id)->update($validatedData);

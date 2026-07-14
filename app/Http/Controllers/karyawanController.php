@@ -365,13 +365,12 @@ class karyawanController extends Controller
                 $user->assignRole($role);
             }
         }
-
         if ($request->hasFile('document_files')) {
             $files = $request->file('document_files');
             $names = $request->document_names;
             foreach ($files as $index => $file) {
                 if ($file->isValid()) {
-                    $path = $file->store('files');
+                    $path = $file->store('files/' . $user->username);
                     \App\Models\File::create([
                         'jenis_file' => $names[$index] ?? 'Dokumen Tambahan',
                         'user_id' => $user->id,
@@ -380,7 +379,6 @@ class karyawanController extends Controller
                 }
             }
         }
-
         return redirect('/pegawai')->with('success', 'Data Berhasil di Tambahkan');
     }
 

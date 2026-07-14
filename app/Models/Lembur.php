@@ -19,4 +19,9 @@ class Lembur extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+    public function approvedBy1()
+    {
+        return $this->belongsTo(User::class, 'user_approval_1');
+    }
 }

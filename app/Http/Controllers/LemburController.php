@@ -160,44 +160,71 @@ class LemburController extends Controller
                 'total_lembur' => 'required'
             ]);
 
-            $lembur->update($validatedData);
-
-            $user_roles = User::whereHas('roles', function ($query) {
-                $query->where('name', 'admin')
-                    ->orWhere('name', 'hrd')
-                    ->orWhere('name', 'general_manager');
-            });
-
-            $kepala_cabang = User::whereHas('roles', function ($query) {
+            $kepala_cabang_lokasi = User::whereHas('roles', function ($query) {
                 $query->where('name', 'kepala_cabang');
-            })->where('lokasi_id', auth()->user()->lokasi_id);
+            })->where('lokasi_id', auth()->user()->lokasi_id)->get();
 
-            $users = $user_roles->union($kepala_cabang)->get();
+            if ($kepala_cabang_lokasi->count() > 0) {
+                $validatedData['status_approval_1'] = 'Pending';
+                $lembur->update($validatedData);
 
-            foreach ($users as $user) {
-                $type = 'Approval';
-                $notif = 'Pengajuan Lembur Dari ' . auth()->user()->name . ' Butuh Approval Anda';
-                $url = url('/data-lembur?user_id='.$lembur->user_id.'&mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal);
+                foreach ($kepala_cabang_lokasi as $kc) {
+                    $type = 'Approval';
+                    $notif = 'Pengajuan Lembur Dari ' . auth()->user()->name . ' Menunggu Persetujuan Anda';
+                    $url = url('/data-lembur?user_id='.$lembur->user_id.'&mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal);
 
-                $user->messages = [
-                    'user_id'   =>  auth()->user()->id,
-                    'from'   =>  auth()->user()->name,
-                    'message'   =>  $notif,
-                    'action'   =>  '/data-lembur?user_id='.$user->id.'&mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal
-                ];
-                $user->notify(new \App\Notifications\UserNotification);
+                    $kc->messages = [
+                        'user_id'   =>  auth()->user()->id,
+                        'from'   =>  auth()->user()->name,
+                        'message'   =>  $notif,
+                        'action'   =>  '/data-lembur?user_id='.$lembur->user_id.'&mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal
+                    ];
+                    $kc->notify(new \App\Notifications\UserNotification);
+                    NotifApproval::dispatch($type, $kc->id, $notif, $url);
 
-                NotifApproval::dispatch($type, $user->id, $notif, $url);
+                    $settings = settings::first();
+                    if ($settings->api_url) {
+                        Http::post($settings->api_url, [
+                            'api_key' => $settings->api_whatsapp,
+                            'sender' => $settings->whatsapp,
+                            'number' => $kc->telepon,
+                            'message' => $notif,
+                            'footer' => $url,
+                        ]);
+                    }
+                }
+            } else {
+                $validatedData['status_approval_1'] = 'Dilewati';
+                $lembur->update($validatedData);
 
-                $settings = settings::first();
-                if ($settings->api_url) {
-                    Http::post($settings->api_url, [
-                        'api_key' => $settings->api_whatsapp,
-                        'sender' => $settings->whatsapp,
-                        'number' => $user->telepon,
-                        'message' => $notif,
-                        'footer' => $url,
-                    ]);
+                $admins = User::whereHas('roles', function ($query) {
+                    $query->where('name', 'admin')->orWhere('name', 'hrd');
+                })->get();
+
+                foreach ($admins as $adm) {
+                    $type = 'Approval';
+                    $notif = 'Pengajuan Lembur Dari ' . auth()->user()->name . ' Butuh Approval Anda (Level Manager Dilewati)';
+                    $url = url('/data-lembur?user_id='.$lembur->user_id.'&mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal);
+
+                    $adm->messages = [
+                        'user_id'   =>  auth()->user()->id,
+                        'from'   =>  auth()->user()->name,
+                        'message'   =>  $notif,
+                        'action'   =>  '/data-lembur?user_id='.$lembur->user_id.'&mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal
+                    ];
+                    $adm->notify(new \App\Notifications\UserNotification);
+                    NotifApproval::dispatch($type, $adm->id, $notif, $url);
+
+                    $settings = settings::first();
+                    if ($settings->api_url) {
+                        Http::post($settings->api_url, [
+                            'api_key' => $settings->api_whatsapp,
+                            'sender' => $settings->whatsapp,
+                            'number' => $adm->telepon,
+                            'message' => $notif,
+                            'footer' => $url,
+                        ]);
+                    }
                 }
             }
 
@@ -277,72 +304,121 @@ class LemburController extends Controller
         ]);
     }
 
-    public function approval(Request $request, $id)
+    public function approvalLevel1(Request $request, $id)
     {
-        $lembur = Lembur::find($id);
-        $validated = $request->validate([
-            'status' => 'required',
-            'notes' => 'nullable',
-            'approved_by' => 'required',
-        ]);
+        $lembur = Lembur::findOrFail($id);
 
-        if ($request['status'] == 'Approved') {
-            $stat = 'Approve';
-            $user = User::find($lembur->user_id);
-            $type = 'Approved';
-            $notif = 'Lembur Anda Telah Di Approve Oleh ' . auth()->user()->name;
-            $url = url('/my-lembur?mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal);
-
-            $user->messages = [
-                'user_id'   =>  auth()->user()->id,
-                'from'   =>  auth()->user()->name,
-                'message'   =>  $notif,
-                'action'   =>  '/my-lembur?mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal
-            ];
-            $user->notify(new \App\Notifications\UserNotification);
-
-            NotifApproval::dispatch($type, $user->id, $notif, $url);
-
-            $settings = settings::first();
-            if ($settings->api_url) {
-                Http::post($settings->api_url, [
-                    'api_key' => $settings->api_whatsapp,
-                    'sender' => $settings->whatsapp,
-                    'number' => $user->telepon,
-                    'message' => $notif,
-                    'footer' => $url,
-                ]);
-            }
-        } else {
-            $stat = 'Reject';
-            $user = User::find($lembur->user_id);
-            $type = 'Rejected';
-            $notif = 'Lembur Anda Telah Di Reject Oleh ' . auth()->user()->name;
-            $url = url('/my-lembur?mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal);
-
-            $user->messages = [
-                'user_id'   =>  auth()->user()->id,
-                'from'   =>  auth()->user()->name,
-                'message'   =>  $notif,
-                'action'   =>  '/my-lembur?mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal
-            ];
-            $user->notify(new \App\Notifications\UserNotification);
-
-            NotifApproval::dispatch($type, $user->id, $notif, $url);
-
-            $settings = settings::first();
-            if ($settings->api_url) {
-                Http::post($settings->api_url, [
-                    'api_key' => $settings->api_whatsapp,
-                    'sender' => $settings->whatsapp,
-                    'number' => $user->telepon,
-                    'message' => $notif,
-                    'footer' => $url,
-                ]);
-            }
+        if ($lembur->status_approval_1 !== 'Pending') {
+            return redirect('/data-lembur')->with('error', 'Approval Level 1 sudah diproses.');
         }
 
-        $lembur->update($validated);
+        $request->validate(['status' => 'required|in:Approved,Rejected']);
+
+        $settings = settings::first();
+        $karyawan = User::find($lembur->user_id);
+        $url = url('/my-lembur?mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal);
+
+        if ($request->status === 'Approved') {
+            $lembur->update([
+                'status_approval_1' => 'Disetujui',
+                'user_approval_1'   => auth()->user()->id,
+                'catatan_approval_1' => $request->notes,
+            ]);
+
+            // Notify admins & hrd for Final Approval (Level 2)
+            $admins = User::whereHas('roles', function ($q) {
+                $q->where('name', 'admin')->orWhere('name', 'hrd');
+            })->get();
+
+            foreach ($admins as $adm) {
+                $notif = 'Pengajuan Lembur dari ' . ($karyawan->name ?? '-') . ' telah disetujui Manager, menunggu Final Approval Anda.';
+                $adm->messages = ['user_id' => auth()->user()->id, 'from' => auth()->user()->name, 'message' => $notif, 'action' => '/data-lembur'];
+                $adm->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch('Approval', $adm->id, $notif, url('/data-lembur'));
+                if ($settings && $settings->api_url) {
+                    Http::post($settings->api_url, ['api_key' => $settings->api_whatsapp, 'sender' => $settings->whatsapp, 'number' => $adm->telepon, 'message' => $notif, 'footer' => url('/data-lembur')]);
+                }
+            }
+            $stat = 'Approve Level 1';
+        } else {
+            $lembur->update([
+                'status_approval_1' => 'Ditolak',
+                'status'            => 'Rejected',
+                'user_approval_1'   => auth()->user()->id,
+                'catatan_approval_1' => $request->notes,
+            ]);
+
+            // Notify employee
+            $notif = 'Lembur Anda Ditolak oleh ' . auth()->user()->name . ' (Level Manager)';
+            if ($karyawan) {
+                $karyawan->messages = ['user_id' => auth()->user()->id, 'from' => auth()->user()->name, 'message' => $notif, 'action' => '/my-lembur'];
+                $karyawan->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch('Rejected', $karyawan->id, $notif, $url);
+                if ($settings && $settings->api_url) {
+                    Http::post($settings->api_url, ['api_key' => $settings->api_whatsapp, 'sender' => $settings->whatsapp, 'number' => $karyawan->telepon, 'message' => $notif, 'footer' => $url]);
+                }
+            }
+            $stat = 'Reject Level 1';
+        }
+
+        return redirect('/data-lembur')->with('success', 'Berhasil ' . $stat . ' Lembur');
+    }
+
+    public function approvalLevel2(Request $request, $id)
+    {
+        $lembur = Lembur::findOrFail($id);
+
+        if (!in_array($lembur->status_approval_1, ['Disetujui', 'Dilewati'])) {
+            return redirect('/data-lembur')->with('error', 'Approval Level 1 belum selesai.');
+        }
+        if (in_array($lembur->status, ['Approved', 'Rejected'])) {
+            return redirect('/data-lembur')->with('error', 'Status lembur sudah final.');
+        }
+
+        $request->validate(['status' => 'required|in:Approved,Rejected']);
+
+        $settings = settings::first();
+        $karyawan = User::find($lembur->user_id);
+        $url = url('/my-lembur?mulai='.$lembur->tanggal.'&akhir='.$lembur->tanggal);
+
+        if ($request->status === 'Approved') {
+            $lembur->update([
+                'status'      => 'Approved',
+                'approved_by' => auth()->user()->id,
+                'notes'       => $request->notes,
+            ]);
+
+            // Notify employee
+            $notif = 'Lembur Anda Telah Di Approve oleh ' . auth()->user()->name;
+            if ($karyawan) {
+                $karyawan->messages = ['user_id' => auth()->user()->id, 'from' => auth()->user()->name, 'message' => $notif, 'action' => '/my-lembur'];
+                $karyawan->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch('Approved', $karyawan->id, $notif, $url);
+                if ($settings && $settings->api_url) {
+                    Http::post($settings->api_url, ['api_key' => $settings->api_whatsapp, 'sender' => $settings->whatsapp, 'number' => $karyawan->telepon, 'message' => $notif, 'footer' => $url]);
+                }
+            }
+            $stat = 'Approve Final';
+        } else {
+            $lembur->update([
+                'status'      => 'Rejected',
+                'approved_by' => auth()->user()->id,
+                'notes'       => $request->notes,
+            ]);
+
+            // Notify employee
+            $notif = 'Lembur Anda Ditolak oleh ' . auth()->user()->name;
+            if ($karyawan) {
+                $karyawan->messages = ['user_id' => auth()->user()->id, 'from' => auth()->user()->name, 'message' => $notif, 'action' => '/my-lembur'];
+                $karyawan->notify(new \App\Notifications\UserNotification);
+                NotifApproval::dispatch('Rejected', $karyawan->id, $notif, $url);
+                if ($settings && $settings->api_url) {
+                    Http::post($settings->api_url, ['api_key' => $settings->api_whatsapp, 'sender' => $settings->whatsapp, 'number' => $karyawan->telepon, 'message' => $notif, 'footer' => $url]);
+                }
+            }
+            $stat = 'Reject Final';
+        }
+
         return redirect('/data-lembur')->with('success', 'Berhasil ' . $stat . ' Lembur');
     }
 }
