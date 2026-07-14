@@ -236,26 +236,6 @@
             </div>
 
             <button type="submit" class="btn-login-primary mb-3">Masuk ke Akun</button>
-            
-            <div class="text-center mt-2">
-                <span class="forgot-link">Belum punya akun? <a href="{{ url('/register') }}" style="color: #533dea; font-weight: 700;">Daftar</a></span>
-            </div>
         </form>
-
-        <div class="divider-custom">Atau Absensi Cepat</div>
-
-        <div class="absensi-grid">
-            <!-- Card Face Recognition -->
-            <div class="absensi-card">
-                <div class="absensi-card-icon">
-                    <i class="fas fa-user-shield"></i>
-                </div>
-                <div class="absensi-card-title">Face Recognition (Kamera)</div>
-                <div class="absensi-flex">
-                    <a href="{{ url('/presensi') }}" class="btn-absensi masuk" style="flex: 1; margin-bottom: 0;">Absen Masuk</a>
-                    <a href="{{ url('/presensi-pulang') }}" class="btn-absensi pulang" style="flex: 1; margin-bottom: 0;">Absen Pulang</a>
-                </div>
-            </div>
-        </div>
     </div>
 @endsection
