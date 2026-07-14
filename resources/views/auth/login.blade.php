@@ -183,7 +183,7 @@
 
     <div class="login-container-card">
         <div class="logo-header">
-            <img src="{{ $settings && $settings->logo ? url('/storage/'.$settings->logo) : url('/assets/img/logo.png') }}" alt="Logo">
+            <img src="{{ url('/assets/img/logo.png') }}" alt="Logo">
             <h2>{{ $settings->name ?? 'UNIBA HRIS' }}</h2>
             <p>Sistem Informasi Kehadiran Terintegrasi</p>
         </div>
