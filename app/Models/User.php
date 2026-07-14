@@ -126,6 +126,8 @@ class User extends Authenticatable
     {
         return $query->where('tipe_user', 'dosen')
                      ->where('is_admin', '!=', 'superadmin')
+                     ->where('is_admin', '!=', 'admin')
+                     ->where('username', '!=', 'admin')
                      ->whereDoesntHave('roles', function ($q) {
                          $q->where('name', 'Super Admin');
                      });
@@ -135,6 +137,8 @@ class User extends Authenticatable
     {
         return $query->where('tipe_user', 'pegawai')
                      ->where('is_admin', '!=', 'superadmin')
+                     ->where('is_admin', '!=', 'admin')
+                     ->where('username', '!=', 'admin')
                      ->whereDoesntHave('roles', function ($q) {
                          $q->where('name', 'Super Admin');
                      });
