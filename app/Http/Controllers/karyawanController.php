@@ -33,23 +33,23 @@ class karyawanController extends Controller
     {
         $search = request()->input('search');
 
-        $data = User::pegawai()
-                ->when($search, function ($query) use ($search) {
-                    $query->where(function ($q) use ($search) {
-                        $q->where('name', 'LIKE', '%'.$search.'%')
-                          ->orWhere('email', 'LIKE', '%'.$search.'%')
-                          ->orWhere('telepon', 'LIKE', '%'.$search.'%')
-                          ->orWhere('username', 'LIKE', '%'.$search.'%')
-                          ->orWhereHas('Jabatan', function ($q2) use ($search) {
-                              $q2->where('nama_jabatan', 'LIKE', '%'.$search.'%');
-                          });
-                    });
-                })
-                ->orderBy('name', 'ASC')
-                ->paginate(10)
-                ->withQueryString();
-
         if (auth()->user()->is_admin == 'admin') {
+            $data = User::pegawai()
+                    ->when($search, function ($query) use ($search) {
+                        $query->where(function ($q) use ($search) {
+                            $q->where('name', 'LIKE', '%'.$search.'%')
+                              ->orWhere('email', 'LIKE', '%'.$search.'%')
+                              ->orWhere('telepon', 'LIKE', '%'.$search.'%')
+                              ->orWhere('username', 'LIKE', '%'.$search.'%')
+                              ->orWhereHas('Jabatan', function ($q2) use ($search) {
+                                  $q2->where('nama_jabatan', 'LIKE', '%'.$search.'%');
+                              });
+                        });
+                    })
+                    ->orderBy('name', 'ASC')
+                    ->paginate(10)
+                    ->withQueryString();
+
             $total_pegawai = User::pegawai()->count();
             $aktif_pegawai = User::pegawai()->where(function ($query) {
                 $query->whereNull('masa_berlaku')
@@ -111,6 +111,7 @@ class karyawanController extends Controller
                 $domisili_raw[$found_domisili] = ($domisili_raw[$found_domisili] ?? 0) + 1;
             }
             
+            // sort by count
             arsort($domisili_raw);
             $total_provinsi = count(array_keys($domisili_raw));
             
@@ -152,6 +153,7 @@ class karyawanController extends Controller
                 'distribusi_domisili' => $distribusi_domisili,
             ]);
         } else {
+            $data = User::where('id', auth()->user()->id)->paginate(10);
             return view('karyawan.indexUser', [
                 'title' => 'Pegawai',
                 'data_user' => $data
@@ -232,6 +234,10 @@ class karyawanController extends Controller
 
     public function show($id)
     {
+        if (auth()->user()->is_admin != 'admin' && auth()->user()->id != $id) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $user = User::find($id);
 
         return view('karyawan.show', [
