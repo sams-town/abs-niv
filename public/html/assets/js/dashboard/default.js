@@ -82,11 +82,11 @@ var options = {
     borderColor: "#f1f1f1",
   },
 };
-var chart = new ApexCharts(
-  document.querySelector("#company-viewchart"),
-  options
-);
-chart.render();
+var chartEl = document.querySelector("#company-viewchart");
+if (chartEl) {
+  var chart = new ApexCharts(chartEl, options);
+  chart.render();
+}
 // company-viewchart end //
 
 // profit chart start
@@ -189,9 +189,11 @@ var options1 = {
   ],
 };
 
-var chart1 = new ApexCharts(document.querySelector("#profit-view"), options1);
-
-chart1.render();
+var chart1El = document.querySelector("#profit-view");
+if (chart1El) {
+  var chart1 = new ApexCharts(chart1El, options1);
+  chart1.render();
+}
 
 // profit chart end
 
@@ -315,8 +317,11 @@ var options = {
     },
   ],
 };
-var chart = new ApexCharts(document.querySelector("#sell-view"), options);
-chart.render();
+var sellChartEl = document.querySelector("#sell-view");
+if (sellChartEl) {
+  var chart2 = new ApexCharts(sellChartEl, options);
+  chart2.render();
+}
 // sell view chart end
 
 // Items-Slider Slick Slider
