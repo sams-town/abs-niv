@@ -249,7 +249,7 @@ class karyawanController extends Controller
     public function importUsers(Request $request)
     {
         $request->validate([
-            'file_excel' => 'required|mimes:xls,xlsx,csv|max:10000'
+            'file_excel' => 'required|file|max:20480'
         ]);
 
         try {
