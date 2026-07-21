@@ -8,6 +8,9 @@
                     <h4>{{ $title }}</h4>
                 </div>
                 <div class="col-md-6 p-0 text-right">
+                    <button type="button" class="btn btn-outline-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#importDosenModal">
+                        <i class="fa fa-upload me-1"></i> Import Dosen
+                    </button>
                     <a class="btn btn-primary btn-sm" href="{{ url('/dosen/tambah') }}">+ Tambah Dosen</a>
                 </div>
             </div>
@@ -100,6 +103,36 @@
                 </div>
                 <div class="d-flex justify-content-end">{{ $data_user->links() }}</div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Dosen Modal -->
+<div class="modal fade" id="importDosenModal" tabindex="-1" role="dialog" aria-labelledby="importDosenModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importDosenModalLabel">Import Data Dosen</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url('/dosen/import') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body text-start">
+                    @csrf
+                    <div class="mb-3">
+                        <a href="{{ url('/dosen/template') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fa fa-download me-1"></i> Download Template Excel Dosen
+                        </a>
+                    </div>
+                    <div class="form-group">
+                        <label for="file_excel_dosen">File Excel / CSV</label>
+                        <input type="file" name="file_excel" id="file_excel_dosen" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Tutup</button>
+                    <button class="btn btn-primary" type="submit">Import Dosen</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -249,12 +249,46 @@ class karyawanController extends Controller
     public function importUsers(Request $request)
     {
         $request->validate([
-            'file_excel' => 'required|mimes:xls,xlsx,csv|max:5000'
+            'file_excel' => 'required|mimes:xls,xlsx,csv|max:10000'
         ]);
-        $nama_file = $request->file('file_excel')->store('file_excel');
 
-        Excel::import(new UsersImport, public_path('/storage/'.$nama_file));
-        return back()->with('success', 'Data Berhasil Di Import');
+        try {
+            Excel::import(new UsersImport('pegawai'), $request->file('file_excel'));
+            Alert::success('Berhasil', 'Data Pegawai Berhasil Di Import');
+            return back()->with('success', 'Data Pegawai Berhasil Di Import');
+        } catch (\Throwable $e) {
+            Alert::error('Gagal', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
+            return back()->with('error', 'Gagal mengimpor data: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadTemplate()
+    {
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=Template_Import_Pegawai.csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = [
+            'Nama*', 'Email', 'Username*', 'Password*', 'Telepon', 'Divisi', 'Lokasi', 'Role',
+            'Tanggal Lahir (YYYY-MM-DD)', 'Gender (L/P)', 'Tanggal Masuk (YYYY-MM-DD)', 'Status Pernikahan',
+            'Alamat', 'Cuti', 'Izin Masuk', 'Izin Telat', 'Izin Pulang Cepat', 'KTP', 'Gaji Pokok'
+        ];
+
+        $callback = function() use($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            fputcsv($file, [
+                'Budi Santoso', 'budi@example.com', 'budi123', '12345678', '08123456789', 'IT Support', 'Kantor Pusat', 'pegawai',
+                '1995-05-20', 'L', '2023-01-10', 'Lajang', 'Jl. Merdeka No. 10', '12', '3', '3', '3', '3171234567890001', '5000000'
+            ]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function tambahKaryawan()

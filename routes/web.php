@@ -108,6 +108,7 @@ Route::post('/pegawai/tambah-pegawai-proses', [karyawanController::class, 'tamba
 Route::post('/pegawai/face/ajaxPhoto', [karyawanController::class, 'ajaxPhoto'])->middleware('admin');
 Route::post('/pegawai/face/ajaxDescrip', [karyawanController::class, 'ajaxDescrip'])->middleware('admin');
 Route::post('/pegawai/import', [karyawanController::class, 'importUsers'])->middleware('admin');
+Route::get('/pegawai/template', [karyawanController::class, 'downloadTemplate'])->middleware('admin');
 Route::get('/pegawai/detail/{id}', [karyawanController::class, 'detail'])->middleware('admin');
 Route::get('/pegawai/kontrak/{id}', [karyawanController::class, 'kontrak'])->middleware('admin');
 Route::get('/pegawai/show/{id}', [karyawanController::class, 'show'])->middleware('auth');
@@ -485,6 +486,8 @@ Route::prefix('dosen')->middleware(['auth', 'role:admin|hrd'])->group(function (
     Route::get('/edit/{id}', [DosenController::class, 'edit']);
     Route::put('/update/{id}', [DosenController::class, 'update']);
     Route::delete('/delete/{id}', [DosenController::class, 'deactivate']);
+    Route::get('/template', [DosenController::class, 'downloadTemplate']);
+    Route::post('/import', [DosenController::class, 'importDosen']);
 });
 
 // ===== MODUL MATA KULIAH =====

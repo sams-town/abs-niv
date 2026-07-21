@@ -394,11 +394,16 @@
                                     <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <form action="{{ url('/pegawai/import') }}" method="POST" enctype="multipart/form-data">
-                                    <div class="modal-body">
+                                    <div class="modal-body text-start">
                                         @csrf
+                                        <div class="mb-3">
+                                            <a href="{{ url('/pegawai/template') }}" class="btn btn-outline-info btn-sm">
+                                                <i class="fa fa-download me-1"></i> Download Template Excel Pegawai
+                                            </a>
+                                        </div>
                                         <div class="form-group">
-                                            <label for="file_excel">File Excel</label>
-                                            <input type="file" name="file_excel" id="file_excel" class="form-control @error('file_excel') is-invalid @enderror">
+                                            <label for="file_excel">File Excel / CSV</label>
+                                            <input type="file" name="file_excel" id="file_excel" class="form-control @error('file_excel') is-invalid @enderror" required>
                                             @error('file_excel')
                                                 <div class="invalid-feedback">
                                                     {{ $message }}
@@ -407,8 +412,8 @@
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
-                                        <button class="btn btn-primary" type="submit">Save changes</button>
+                                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Batal</button>
+                                        <button class="btn btn-primary" type="submit">Import Pegawai</button>
                                     </div>
                                 </form>
                             </div>
