@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Imports\UsersImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class DosenController extends Controller
@@ -268,13 +269,24 @@ class DosenController extends Controller
             'file_excel' => 'required|file|max:20480'
         ]);
 
+        $filePath = null;
         try {
-            Excel::import(new UsersImport('dosen'), $request->file('file_excel'));
+            $file = $request->file('file_excel');
+            $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getClientOriginalName());
+            $filePath = $file->storeAs('temp_imports', $fileName);
+            $fullPath = storage_path('app/' . $filePath);
+
+            Excel::import(new UsersImport('dosen'), $fullPath);
+
             Alert::success('Berhasil', 'Data Dosen Berhasil Di Import');
             return back()->with('success', 'Data Dosen Berhasil Di Import');
         } catch (\Throwable $e) {
             Alert::error('Gagal', 'Terjadi kesalahan saat mengimpor data dosen: ' . $e->getMessage());
             return back()->with('error', 'Gagal mengimpor data dosen: ' . $e->getMessage());
+        } finally {
+            if ($filePath && Storage::exists($filePath)) {
+                Storage::delete($filePath);
+            }
         }
     }
 

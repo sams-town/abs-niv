@@ -148,7 +148,7 @@ class UsersImport implements ToModel, WithHeadingRow
                 'rekening' => (string) $this->getValue($row, ['rekening', 'no_rekening', 'nomor_rekening'], ''),
                 'gaji_pokok' => $this->transformNumber($this->getValue($row, ['gaji_pokok', 'gajipokok', 'gapok']), 0),
                 'tunjangan_makan' => $tunjanganMakan,
-                'makan_transport' => $tunjanganMakan,
+                'tunjangan_transport' => $this->transformNumber($this->getValue($row, ['tunjangan_transport']), 0),
                 'lembur' => $this->transformNumber($this->getValue($row, ['lembur']), 0),
                 'kehadiran' => $this->transformNumber($this->getValue($row, ['kehadiran']), 0),
                 'thr' => $this->transformNumber($this->getValue($row, ['thr']), 0),
