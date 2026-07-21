@@ -8,6 +8,7 @@ use App\Models\Jabatan;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Carbon\Carbon;
@@ -16,10 +17,13 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 class UsersImport implements ToModel, WithHeadingRow
 {
     protected $defaultTipeUser;
+    protected $validColumns;
 
     public function __construct($defaultTipeUser = 'pegawai')
     {
         $this->defaultTipeUser = $defaultTipeUser;
+        // Cache the actual database columns once
+        $this->validColumns = Schema::getColumnListing('users');
     }
 
     /**
@@ -98,9 +102,9 @@ class UsersImport implements ToModel, WithHeadingRow
                 $lokasi_id = $lokasiFirst ? $lokasiFirst->id : null;
             }
 
-            // 5. Check existing User
+            // 5. Check existing User (only query columns that exist)
             $user = null;
-            if (!empty($nidn)) {
+            if (!empty($nidn) && $this->columnExists('nidn')) {
                 $user = User::where('nidn', $nidn)->first();
             }
             if (!$user && !empty($email)) {
@@ -110,10 +114,11 @@ class UsersImport implements ToModel, WithHeadingRow
                 $user = User::where('username', $username)->first();
             }
 
-            // 6. Build Data Payload
+            // 6. Build Data Payload - only include columns that ACTUALLY exist in DB
             $rawPassword = $this->getValue($row, ['password', 'pass', 'kata_sandi']);
             $tunjanganMakan = $this->transformNumber($this->getValue($row, ['makan_dan_transport', 'tunjangan_makan', 'makan_transport', 'tunjangan_makan_transport']), 0);
 
+            // Core columns (always present in users table)
             $data = [
                 'name' => $name,
                 'email' => $email,
@@ -122,15 +127,12 @@ class UsersImport implements ToModel, WithHeadingRow
                 'tgl_lahir' => $this->transformDate($this->getValue($row, ['tanggal_lahir', 'tgl_lahir', 'birth_date'])),
                 'gender' => $this->getValue($row, ['gender', 'jenis_kelamin', 'jk']),
                 'tgl_join' => $this->transformDate($this->getValue($row, ['tanggal_masuk_perusahaan', 'tgl_join', 'tanggal_join', 'join_date', 'tanggal_masuk'])),
-                'status_nikah' => $this->getValue($row, ['status_pernikahan', 'status_nikah', 'status']),
                 'alamat' => $this->getValue($row, ['alamat', 'address']),
                 'izin_cuti' => $this->transformNumber($this->getValue($row, ['cuti', 'izin_cuti']), 12),
                 'izin_lainnya' => $this->transformNumber($this->getValue($row, ['izin_masuk', 'izin_lainnya']), 3),
                 'izin_telat' => $this->transformNumber($this->getValue($row, ['izin_telat']), 3),
                 'izin_pulang_cepat' => $this->transformNumber($this->getValue($row, ['izin_pulang_cepat']), 3),
                 'is_admin' => $isAdmin,
-                'tipe_user' => $tipeUser,
-                'status_aktif' => true,
                 'masa_berlaku' => $this->transformDate($this->getValue($row, ['masa_berlaku'])),
                 'jabatan_id' => $jabatan_id,
                 'lokasi_id' => $lokasi_id,
@@ -159,7 +161,13 @@ class UsersImport implements ToModel, WithHeadingRow
                 'terlambat' => $this->transformNumber($this->getValue($row, ['terlambat']), 0),
                 'mangkir' => $this->transformNumber($this->getValue($row, ['mangkir']), 0),
                 'saldo_kasbon' => $this->transformNumber($this->getValue($row, ['saldo_kasbon', 'kasbon']), 0),
-                // Dosen specific fields
+            ];
+
+            // Optional columns - only add if they exist in database
+            $optionalColumns = [
+                'tipe_user' => $tipeUser,
+                'status_aktif' => true,
+                'status_nikah' => $this->getValue($row, ['status_pernikahan', 'status_nikah', 'status']),
                 'nidn' => (string) $this->getValue($row, ['nidn', 'no_nidn', 'nomor_nidn'], ''),
                 'nip' => (string) $this->getValue($row, ['nip', 'no_nip', 'nomor_nip'], ''),
                 'gelar_depan' => $this->getValue($row, ['gelar_depan']),
@@ -171,7 +179,16 @@ class UsersImport implements ToModel, WithHeadingRow
                 'nominal_honor' => $this->transformNumber($this->getValue($row, ['nominal_honor', 'honor']), 0),
                 'jabatan_akademik' => $this->getValue($row, ['jabatan_akademik']),
                 'mata_kuliah' => $this->getValue($row, ['mata_kuliah', 'matkul']),
+                'batas_terlambat' => $this->transformNumber($this->getValue($row, ['batas_terlambat']), null),
+                'kasbon_obat' => $this->transformNumber($this->getValue($row, ['kasbon_obat']), null),
+                'potongan_koperasi' => $this->transformNumber($this->getValue($row, ['potongan_koperasi']), null),
             ];
+
+            foreach ($optionalColumns as $col => $val) {
+                if ($this->columnExists($col)) {
+                    $data[$col] = $val;
+                }
+            }
 
             if (!empty($rawPassword)) {
                 $data['password'] = Hash::make($rawPassword);
@@ -203,6 +220,14 @@ class UsersImport implements ToModel, WithHeadingRow
             Log::error('UsersImport Error for row: ' . json_encode($row) . ' Message: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Check if a column exists in the users table (cached).
+     */
+    private function columnExists(string $column): bool
+    {
+        return in_array($column, $this->validColumns);
     }
 
     private function getValue(array $row, array $keys, $default = null)
@@ -257,5 +282,3 @@ class UsersImport implements ToModel, WithHeadingRow
         return is_numeric($cleaned) ? $cleaned : $default;
     }
 }
-
-
