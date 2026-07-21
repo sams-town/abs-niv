@@ -265,9 +265,14 @@ class DosenController extends Controller
 
     public function importDosen(Request $request)
     {
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'file_excel' => 'required|file|max:20480'
         ]);
+
+        if ($validator->fails()) {
+            Alert::error('Validasi Gagal', $validator->errors()->first());
+            return back()->with('error', $validator->errors()->first());
+        }
 
         $filePath = null;
         try {
