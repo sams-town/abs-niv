@@ -416,7 +416,7 @@
                                     <h5 class="modal-title" id="exampleModalLabel">Import Users</h5>
                                     <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <form action="{{ url('/pegawai/import') }}" method="POST" enctype="multipart/form-data">
+                                <form id="formImportPegawai" action="{{ url('/pegawai/import') }}" method="POST" enctype="multipart/form-data">
                                     <div class="modal-body text-start">
                                         @csrf
                                         <div class="mb-3">
@@ -435,10 +435,19 @@
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Batal</button>
-                                        <button class="btn btn-primary" type="submit">Import Pegawai</button>
+                                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal" id="btnBatalImport">Batal</button>
+                                        <button class="btn btn-primary" type="submit" id="btnSubmitImport">Import Pegawai</button>
                                     </div>
                                 </form>
+                                <script>
+                                    document.getElementById('formImportPegawai').addEventListener('submit', function() {
+                                        var btn = document.getElementById('btnSubmitImport');
+                                        var btnBatal = document.getElementById('btnBatalImport');
+                                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Sedang Mengupload...';
+                                        btn.disabled = true;
+                                        btnBatal.disabled = true;
+                                    });
+                                </script>
                             </div>
                         </div>
                     </div>
