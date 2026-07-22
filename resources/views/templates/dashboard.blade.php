@@ -409,7 +409,7 @@
     <script src="{{ url('/html/assets/js/clipboard/clipboard.min.js') }}"></script>
     <script src="{{ url('/html/assets/js/custom-card/custom-card.js') }}"></script>
     <script src="{{ url('/html/assets/js/notify/bootstrap-notify.min.js') }}"></script>
-    <script src="{{ url('/html/assets/js/dashboard/default.js') }}"></script>
+    <script src="{{ url('/html/assets/js/dashboard/default.js') }}?v={{ time() }}"></script>
     <script src="{{ url('/html/assets/js/notify/index.js') }}"></script>
     <script src="{{ url('/html/assets/js/slick-slider/slick.min.js') }}"></script>
     <script src="{{ url('/html/assets/js/slick-slider/slick-theme.js') }}"></script>
