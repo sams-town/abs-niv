@@ -451,7 +451,7 @@
             }
         });
     </script> --}}
-    {{-- @include('sweetalert::alert') --}}
+    @include('sweetalert::alert')
     @stack('script')
     <script>
         // Clear all old notification data

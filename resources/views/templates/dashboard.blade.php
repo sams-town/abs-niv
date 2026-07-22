@@ -548,7 +548,7 @@
       flatpickr("input[type=datetime]", {})
     </script>
     @stack('script')
-    {{-- @include('sweetalert::alert') --}}
+    @include('sweetalert::alert')
     <script>
         // Unregister semua service worker lama (dari hris.rejofarm.com atau domain lain)
         if ("serviceWorker" in navigator) {
