@@ -22,209 +22,140 @@ class UsersImport implements ToModel, WithHeadingRow
     public function __construct($defaultTipeUser = 'pegawai')
     {
         $this->defaultTipeUser = $defaultTipeUser;
-        // Cache the actual database columns once
         $this->validColumns = Schema::getColumnListing('users');
     }
 
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
     public function model(array $row)
     {
         try {
-            // 1. Resolve Name
-            $name = $this->getValue($row, ['nama', 'name', 'nama_lengkap', 'namalengkap']);
-            if (empty($name)) {
+            // --- Step 1: Get and validate required fields ---
+            $name = trim($this->getValue($row, ['nama', 'name', 'namalengkap']));
+            $email = trim($this->getValue($row, ['email', 'email']));
+            $username = trim($this->getValue($row, ['username', 'user']));
+            $password = trim($this->getValue($row, ['password', 'pass', 'katasandi']));
+            $telepon = trim($this->getValue($row, ['telepon', 'phone', 'nohp', 'hp']));
+            $lokasiName = trim($this->getValue($row, ['lokasi', 'lokasi']));
+            $tglLahir = $this->getValue($row, ['tanggallahir', 'tgllahir', 'tgl_lahir', 'tanggal_lahir']);
+            $jenisKelamin = trim($this->getValue($row, ['jeniskelamin', 'gender', 'jk', 'jenis_kelamin']));
+            $tglMasuk = $this->getValue($row, ['tanggalmasuk', 'tglmasuk', 'tgl_join', 'tanggal_masuk']);
+            $roleName = trim($this->getValue($row, ['role', 'peran', 'akses']));
+            $jabatanName = trim($this->getValue($row, ['divisi', 'jabatan', 'namajabatan', 'nama_jabatan']));
+            $isAdmin = trim($this->getValue($row, ['isadmin', 'is_admin', 'admin']));
+            $namaIbuKandung = trim($this->getValue($row, ['namaibukandung', 'nama_ibu_kandung']));
+
+            // Validate required fields
+            if (empty($name) || empty($email) || empty($username) || empty($password) || empty($telepon) || 
+                empty($lokasiName) || empty($tglLahir) || empty($jenisKelamin) || empty($tglMasuk) || 
+                empty($roleName) || empty($jabatanName) || empty($namaIbuKandung)) {
+                Log::warning('Skipping row: Missing required fields', $row);
                 return null;
             }
 
-            // 2. Resolve Email, Username, & NIDN
-            $email = $this->getValue($row, ['email', 'e_mail', 'mail']);
-            $username = $this->getValue($row, ['username', 'user_name', 'user']);
-            $nidn = $this->getValue($row, ['nidn', 'no_nidn', 'nomor_nidn']);
-
-            if (empty($username)) {
-                $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $name)) . rand(100, 999);
+            // --- Step 2: Resolve related models (Lokasi, Jabatan, Role) ---
+            $lokasi = Lokasi::where('nama_lokasi', 'LIKE', "%$lokasiName%")->first();
+            if (!$lokasi) {
+                $lokasi = Lokasi::create([
+                    'nama_lokasi' => $lokasiName,
+                    'status' => 'approved',
+                    'keterangan' => 'Office',
+                    'created_by' => auth()->id() ?? 1
+                ]);
             }
 
-            if (empty($email)) {
-                $email = $username . '@absensi.local';
-            }
-
-            // 3. Resolve Role & Tipe User
-            $roleName = $this->getValue($row, ['role', 'peran', 'akses']);
-            if (empty($roleName)) {
-                $roleName = ($this->defaultTipeUser === 'dosen') ? 'dosen' : 'pegawai';
-            }
-
-            $tipeUser = $this->getValue($row, ['tipe_user', 'tipe', 'jenis_pegawai', 'jenis_user']);
-            if (empty($tipeUser)) {
-                if (!empty($nidn) || strtolower($roleName) === 'dosen' || $this->defaultTipeUser === 'dosen') {
-                    $tipeUser = 'dosen';
-                } else {
-                    $tipeUser = 'pegawai';
-                }
-            } else {
-                $tipeUser = strtolower($tipeUser);
-                if ($tipeUser === 'karyawan') {
-                    $tipeUser = 'pegawai';
-                }
-            }
-
-            $isAdmin = (in_array(strtolower($roleName), ['admin', 'super admin', 'superadmin'])) ? 'admin' : 'user';
-
-            // 4. Resolve Jabatan & Lokasi
-            $jabatanName = $this->getValue($row, ['divisi', 'jabatan', 'nama_jabatan', 'prodi', 'program_studi', 'departemen'], 'Umum');
-            $jabatan = Jabatan::where('nama_jabatan', $jabatanName)->first();
+            $jabatan = Jabatan::where('nama_jabatan', 'LIKE', "%$jabatanName%")->first();
             if (!$jabatan) {
                 $jabatan = Jabatan::create([
                     'nama_jabatan' => $jabatanName
                 ]);
             }
-            $jabatan_id = $jabatan->id;
 
-            $lokasiName = $this->getValue($row, ['lokasi', 'nama_lokasi', 'cabang', 'penempatan']);
-            if (!empty($lokasiName)) {
-                $lokasi = Lokasi::where('nama_lokasi', $lokasiName)->first();
-                if (!$lokasi) {
-                    $lokasi = Lokasi::create([
-                        'nama_lokasi' => $lokasiName,
-                        'created_by' => auth()->id() ?? 1,
-                        'status' => 'approved',
-                        'keterangan' => 'Office'
-                    ]);
-                }
-                $lokasi_id = $lokasi->id;
-            } else {
-                $lokasiFirst = Lokasi::first();
-                $lokasi_id = $lokasiFirst ? $lokasiFirst->id : null;
+            $role = Role::where('name', 'LIKE', "%$roleName%")->first();
+            if (!$role) {
+                $role = Role::create([
+                    'name' => $roleName,
+                    'guard_name' => 'web'
+                ]);
             }
 
-            // 5. Check existing User (only query columns that exist)
-            $user = null;
-            if (!empty($nidn) && $this->columnExists('nidn')) {
-                $user = User::where('nidn', $nidn)->first();
-            }
-            if (!$user && !empty($email)) {
-                $user = User::where('email', $email)->first();
-            }
-            if (!$user && !empty($username)) {
-                $user = User::where('username', $username)->first();
-            }
-
-            // 6. Build Data Payload - only include columns that ACTUALLY exist in DB
-            $rawPassword = $this->getValue($row, ['password', 'pass', 'kata_sandi']);
-            $tunjanganMakan = $this->transformNumber($this->getValue($row, ['makan_dan_transport', 'tunjangan_makan', 'makan_transport', 'tunjangan_makan_transport']), 0);
-
-            // Core columns (always present in users table)
+            // --- Step 3: Prepare data array ---
             $data = [
                 'name' => $name,
                 'email' => $email,
-                'telepon' => (string) $this->getValue($row, ['telepon', 'phone', 'no_hp', 'hp', 'no_telepon', 'handphone'], ''),
                 'username' => $username,
-                'tgl_lahir' => $this->transformDate($this->getValue($row, ['tanggal_lahir', 'tgl_lahir', 'birth_date'])),
-                'gender' => $this->getValue($row, ['gender', 'jenis_kelamin', 'jk']),
-                'tgl_join' => $this->transformDate($this->getValue($row, ['tanggal_masuk_perusahaan', 'tgl_join', 'tanggal_join', 'join_date', 'tanggal_masuk'])),
-                'alamat' => $this->getValue($row, ['alamat', 'address']),
-                'izin_cuti' => $this->transformNumber($this->getValue($row, ['cuti', 'izin_cuti']), 12),
-                'izin_lainnya' => $this->transformNumber($this->getValue($row, ['izin_masuk', 'izin_lainnya']), 3),
-                'izin_telat' => $this->transformNumber($this->getValue($row, ['izin_telat']), 3),
-                'izin_pulang_cepat' => $this->transformNumber($this->getValue($row, ['izin_pulang_cepat']), 3),
-                'is_admin' => $isAdmin,
-                'masa_berlaku' => $this->transformDate($this->getValue($row, ['masa_berlaku'])),
-                'jabatan_id' => $jabatan_id,
-                'lokasi_id' => $lokasi_id,
-                'ktp' => (string) $this->getValue($row, ['ktp', 'no_ktp', 'nik'], ''),
-                'kartu_keluarga' => (string) $this->getValue($row, ['kartu_keluarga', 'no_kk', 'kk'], ''),
-                'bpjs_kesehatan' => (string) $this->getValue($row, ['bpjs_kesehatan', 'bpjskesehatan'], ''),
-                'bpjs_ketenagakerjaan' => (string) $this->getValue($row, ['bpjs_ketenagakerjaan', 'bpjsketenagakerjaan'], ''),
-                'npwp' => (string) $this->getValue($row, ['npwp', 'no_npwp'], ''),
-                'no_pkwt' => (string) $this->getValue($row, ['nomor_pkwt', 'no_pkwt', 'pkwt'], ''),
-                'no_kontrak' => (string) $this->getValue($row, ['nomor_kontrak', 'no_kontrak', 'kontrak'], ''),
-                'tanggal_mulai_pkwt' => $this->transformDate($this->getValue($row, ['tanggal_mulai_pkwt', 'tgl_mulai_pkwt'])),
-                'tanggal_berakhir_pkwt' => $this->transformDate($this->getValue($row, ['tanggal_berakhir_pkwt', 'tgl_berakhir_pkwt'])),
-                'sim' => (string) $this->getValue($row, ['sim', 'no_sim'], ''),
-                'nama_rekening' => $this->getValue($row, ['nama_rekening', 'pemilik_rekening']),
-                'rekening' => (string) $this->getValue($row, ['rekening', 'no_rekening', 'nomor_rekening'], ''),
-                'gaji_pokok' => $this->transformNumber($this->getValue($row, ['gaji_pokok', 'gajipokok', 'gapok']), 0),
-                'tunjangan_makan' => $tunjanganMakan,
-                'tunjangan_transport' => $this->transformNumber($this->getValue($row, ['tunjangan_transport']), 0),
-                'lembur' => $this->transformNumber($this->getValue($row, ['lembur']), 0),
-                'kehadiran' => $this->transformNumber($this->getValue($row, ['kehadiran']), 0),
-                'thr' => $this->transformNumber($this->getValue($row, ['thr']), 0),
-                'bonus_pribadi' => $this->transformNumber($this->getValue($row, ['bonus_pribadi']), 0),
-                'bonus_team' => $this->transformNumber($this->getValue($row, ['bonus_team']), 0),
-                'bonus_jackpot' => $this->transformNumber($this->getValue($row, ['bonus_jackpot']), 0),
-                'izin' => $this->transformNumber($this->getValue($row, ['izin']), 0),
-                'terlambat' => $this->transformNumber($this->getValue($row, ['terlambat']), 0),
-                'mangkir' => $this->transformNumber($this->getValue($row, ['mangkir']), 0),
-                'saldo_kasbon' => $this->transformNumber($this->getValue($row, ['saldo_kasbon', 'kasbon']), 0),
+                'password' => Hash::make($password),
+                'telepon' => $telepon,
+                'lokasi_id' => $lokasi->id,
+                'tgl_lahir' => $this->transformDate($tglLahir),
+                'gender' => $jenisKelamin,
+                'tgl_join' => $this->transformDate($tglMasuk),
+                'is_admin' => in_array(strtolower($isAdmin), ['admin', '1', 'yes']) ? 'admin' : 'user',
+                'nama_ibu_kandung' => $namaIbuKandung,
+                'status_pajak_id' => $this->transformNumber($this->getValue($row, ['statuspajak', 'statuspajakid', 'status_pajak_id']), null),
+                'alamat' => $this->getValue($row, ['alamat', 'alamat']),
+                'alamat_domisili' => $this->getValue($row, ['alamatdomisili', 'alamat_domisili']),
+                'kontak_darurat_nama' => $this->getValue($row, ['kontakdaruratnama', 'kontak_darurat_nama']),
+                'kontak_darurat_hp' => $this->getValue($row, ['kontakdarurathp', 'kontak_darurat_hp']),
+                'kontak_darurat_hubungan' => $this->getValue($row, ['kontakdarurathubungan', 'kontak_darurat_hubungan']),
+                'ktp' => (string)$this->getValue($row, ['ktp', 'ktp', 'noktp', 'no_ktp', 'nik']),
+                'kartu_keluarga' => (string)$this->getValue($row, ['kartukeluarga', 'kartu_keluarga', 'nokk', 'no_kk']),
+                'bpjs_kesehatan' => (string)$this->getValue($row, ['bpjskesehatan', 'bpjs_kesehatan']),
+                'bpjs_ketenagakerjaan' => (string)$this->getValue($row, ['bpjsketenagakerjaan', 'bpjs_ketenagakerjaan']),
+                'npwp' => (string)$this->getValue($row, ['npwp', 'npwp', 'nonpwp', 'no_npwp']),
+                'sim' => (string)$this->getValue($row, ['sim', 'sim', 'nosim', 'no_sim']),
+                'no_pkwt' => (string)$this->getValue($row, ['nip', 'nip', 'nopkwt', 'no_pkwt']),
+                'no_kontrak' => (string)$this->getValue($row, ['nokontrak', 'no_kontrak']),
+                'tanggal_mulai_pkwt' => $this->transformDate($this->getValue($row, ['tanggalmulaikontrak', 'tanggal_mulai_pkwt', 'tgl_mulai_pkwt'])),
+                'tanggal_berakhir_pkwt' => $this->transformDate($this->getValue($row, ['tanggalberakhirkontrak', 'tanggal_berakhir_pkwt', 'tgl_berakhir_pkwt'])),
+                'rekening' => (string)$this->getValue($row, ['rekening', 'norekening', 'no_rekening']),
+                'nama_rekening' => $this->getValue($row, ['namarekening', 'nama_rekening', 'pemilikrekening', 'pemilik_rekening']),
+                'izin_cuti' => $this->transformNumber($this->getValue($row, ['cuti', 'izincuti', 'izin_cuti']), 12),
+                'izin_lainnya' => $this->transformNumber($this->getValue($row, ['izinmasuk', 'izin_lainnya']), 3),
+                'izin_telat' => $this->transformNumber($this->getValue($row, ['izintelat', 'izin_telat']), 3),
+                'izin_pulang_cepat' => $this->transformNumber($this->getValue($row, ['izinpulangcepat', 'izin_pulang_cepat']), 3),
+                'cuti_melahirkan' => $this->transformNumber($this->getValue($row, ['cutimelahirkan', 'cuti_melahirkan']), 90),
+                'cuti_kematian' => $this->transformNumber($this->getValue($row, ['cutikematian', 'cuti_kematian']), 3),
+                'gaji_pokok' => $this->transformNumber($this->getValue($row, ['gajipokok', 'gaji_pokok', 'gapok']), 0),
+                'tunjangan_makan' => $this->transformNumber($this->getValue($row, ['tunjanganmakan', 'tunjangan_makan']), 0),
+                'tunjangan_transport' => $this->transformNumber($this->getValue($row, ['tunjangantransport', 'tunjangan_transport']), 0),
+                'tunjangan_bpjs_kesehatan' => $this->transformNumber($this->getValue($row, ['tunjanganbpjskesehatan', 'tunjangan_bpjs_kesehatan']), 0),
+                'tunjangan_bpjs_ketenagakerjaan' => $this->transformNumber($this->getValue($row, ['tunjanganbpjsketenagakerjaan', 'tunjangan_bpjs_ketenagakerjaan']), 0),
+                'lembur' => $this->transformNumber($this->getValue($row, ['lembur', 'lembur']), 0),
+                'kehadiran' => $this->transformNumber($this->getValue($row, ['kehadiran', 'kehadiran']), 0),
+                'thr' => $this->transformNumber($this->getValue($row, ['thr', 'thr']), 0),
+                'bonus_pribadi' => $this->transformNumber($this->getValue($row, ['bonuspribadi', 'bonus_pribadi']), 0),
+                'bonus_team' => $this->transformNumber($this->getValue($row, ['bonusteam', 'bonus_team']), 0),
+                'bonus_jackpot' => $this->transformNumber($this->getValue($row, ['bonusjackpot', 'bonus_jackpot']), 0),
+                'terlambat' => $this->transformNumber($this->getValue($row, ['terlambat', 'terlambat']), 0),
+                'batas_terlambat' => $this->transformNumber($this->getValue($row, ['batasterlambat', 'batas_terlambat']), 5),
+                'mangkir' => $this->transformNumber($this->getValue($row, ['mangkir', 'mangkir']), 0),
+                'potongan_bpjs_kesehatan' => $this->transformNumber($this->getValue($row, ['potonganbpjskesehatan', 'potongan_bpjs_kesehatan']), 0),
+                'potongan_koperasi' => $this->transformNumber($this->getValue($row, ['potongankoperasi', 'potongan_koperasi']), 0)
             ];
 
-            // Optional columns - only add if they exist in database
-            $optionalColumns = [
-                'tipe_user' => $tipeUser,
-                'status_aktif' => true,
-                'status_nikah' => $this->getValue($row, ['status_pernikahan', 'status_nikah', 'status']),
-                'nidn' => (string) $this->getValue($row, ['nidn', 'no_nidn', 'nomor_nidn'], ''),
-                'nip' => (string) $this->getValue($row, ['nip', 'no_nip', 'nomor_nip'], ''),
-                'gelar_depan' => $this->getValue($row, ['gelar_depan']),
-                'gelar_belakang' => $this->getValue($row, ['gelar_belakang']),
-                'program_studi' => $this->getValue($row, ['program_studi', 'prodi']),
-                'pendidikan_terakhir' => $this->getValue($row, ['pendidikan_terakhir', 'pendidikan']),
-                'status_kepegawaian' => $this->getValue($row, ['status_kepegawaian', 'status_pegawai']),
-                'tipe_honorarium' => $this->getValue($row, ['tipe_honorarium', 'tipe_honor'], 'Per Sesi'),
-                'nominal_honor' => $this->transformNumber($this->getValue($row, ['nominal_honor', 'honor']), 0),
-                'jabatan_akademik' => $this->getValue($row, ['jabatan_akademik']),
-                'mata_kuliah' => $this->getValue($row, ['mata_kuliah', 'matkul']),
-                'batas_terlambat' => $this->transformNumber($this->getValue($row, ['batas_terlambat']), null),
-                'kasbon_obat' => $this->transformNumber($this->getValue($row, ['kasbon_obat']), null),
-                'potongan_koperasi' => $this->transformNumber($this->getValue($row, ['potongan_koperasi']), null),
-            ];
-
-            foreach ($optionalColumns as $col => $val) {
-                if ($this->columnExists($col)) {
-                    $data[$col] = $val;
-                }
-            }
-
-            if (!empty($rawPassword)) {
-                $data['password'] = Hash::make($rawPassword);
-            }
-
+            // --- Step 4: Check if user exists, update or create ---
+            $user = User::where('email', $email)->orWhere('username', $username)->first();
             if ($user) {
+                // If user exists, update (don't change password if not provided)
+                if (empty($password)) {
+                    unset($data['password']);
+                }
                 $user->update(array_filter($data, function($val) {
                     return $val !== null;
                 }));
             } else {
-                if (empty($data['password'])) {
-                    $data['password'] = Hash::make('12345678');
-                }
                 $user = User::create($data);
             }
 
-            // 7. Assign Role
-            $role = Role::where('name', $roleName)->first();
-            if (!$role) {
-                $role = Role::create([
-                    'name' => $roleName,
-                    'guard_name' => 'web',
-                ]);
-            }
+            // --- Step 5: Assign role ---
             $user->syncRoles([$roleName]);
 
             return $user;
         } catch (\Throwable $e) {
-            Log::error('UsersImport Error for row: ' . json_encode($row) . ' Message: ' . $e->getMessage());
+            Log::error('UsersImport Error for row: ' . json_encode($row) . ' Message: ' . $e->getMessage() . ' File: ' . $e->getFile() . ' Line: ' . $e->getLine());
             throw $e;
         }
     }
 
-    /**
-     * Check if a column exists in the users table (cached).
-     */
     private function columnExists(string $column): bool
     {
         return in_array($column, $this->validColumns);
@@ -260,6 +191,7 @@ class UsersImport implements ToModel, WithHeadingRow
             try {
                 return Date::excelToDateTimeObject($value)->format('Y-m-d');
             } catch (\Throwable $e) {
+                //
             }
         }
 

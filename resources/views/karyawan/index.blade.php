@@ -397,7 +397,7 @@
                         <a href="{{ url('/pegawai/export') }}{{ $_GET ? '?'.$_SERVER['QUERY_STRING'] : '' }}" class="btn btn-outline-export">
                             <i class="fa fa-download me-2"></i> Export
                         </a>
-                        <button class="btn btn-outline-import" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        <button class="btn btn-outline-import" type="button" data-bs-toggle="modal" data-bs-target="#importModal">
                             <i class="fa fa-upload me-2"></i> Import
                         </button>
                         <a href="{{ url('/shift') }}" class="btn btn-outline-shift">
@@ -409,24 +409,24 @@
                     </div>
 
                     <!-- Import Modal -->
-                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
+                    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="exampleModalLabel">Import Users</h5>
-                                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <h5 class="modal-title" id="importModalLabel">Import Pegawai</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <form id="formImportPegawai" action="{{ url('/pegawai/import') }}" method="POST" enctype="multipart/form-data">
-                                    <div class="modal-body text-start">
-                                        @csrf
+                                    @csrf
+                                    <div class="modal-body">
                                         <div class="mb-3">
-                                            <a href="{{ url('/pegawai/template') }}" class="btn btn-outline-info btn-sm">
+                                            <a href="{{ url('/pegawai/template') }}" class="btn btn-info btn-sm text-white">
                                                 <i class="fa fa-download me-1"></i> Download Template Excel Pegawai
                                             </a>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="file_excel">File Excel / CSV</label>
-                                            <input type="file" name="file_excel" id="file_excel" class="form-control @error('file_excel') is-invalid @enderror" required>
+                                        <div class="mb-3">
+                                            <label for="file_excel" class="form-label">Pilih File Excel / CSV</label>
+                                            <input type="file" name="file_excel" id="file_excel" class="form-control @error('file_excel') is-invalid @enderror" accept=".xlsx,.xls,.csv" required>
                                             @error('file_excel')
                                                 <div class="invalid-feedback">
                                                     {{ $message }}
@@ -435,21 +435,24 @@
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal" id="btnBatalImport">Batal</button>
-                                        <button class="btn btn-primary" type="submit" id="btnSubmitImport">Import Pegawai</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                        <button type="submit" class="btn btn-primary" id="btnSubmitImport">
+                                            <i class="fa fa-upload me-1"></i> Import
+                                        </button>
                                     </div>
                                 </form>
-                                <script>
-                    document.getElementById('formImportPegawai').addEventListener('submit', function() {
-                        var btn = document.getElementById('btnSubmitImport');
-                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Sedang Mengupload...';
-                        btn.disabled = true;
-                        // Don't disable the cancel button so user can still close modal!
-                    });
-                </script>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Import Modal Script -->
+                    <script>
+                        document.getElementById('formImportPegawai').addEventListener('submit', function(e) {
+                            var btn = document.getElementById('btnSubmitImport');
+                            btn.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i> Memproses...';
+                            btn.disabled = true;
+                        });
+                    </script>
                 </div>
             </div>
         </div>
