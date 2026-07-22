@@ -520,7 +520,8 @@
         };
       $(function(){
           $('form').on('submit', function(){
-              $(':input[type="submit"]').prop('disabled', true);
+              // Only disable submit buttons inside this form, not all on the page!
+              $(this).find(':input[type="submit"]').prop('disabled', true);
           });
           preloader();
       })

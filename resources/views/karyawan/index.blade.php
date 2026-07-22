@@ -440,14 +440,13 @@
                                     </div>
                                 </form>
                                 <script>
-                                    document.getElementById('formImportPegawai').addEventListener('submit', function() {
-                                        var btn = document.getElementById('btnSubmitImport');
-                                        var btnBatal = document.getElementById('btnBatalImport');
-                                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Sedang Mengupload...';
-                                        btn.disabled = true;
-                                        btnBatal.disabled = true;
-                                    });
-                                </script>
+                    document.getElementById('formImportPegawai').addEventListener('submit', function() {
+                        var btn = document.getElementById('btnSubmitImport');
+                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Sedang Mengupload...';
+                        btn.disabled = true;
+                        // Don't disable the cancel button so user can still close modal!
+                    });
+                </script>
                             </div>
                         </div>
                     </div>
