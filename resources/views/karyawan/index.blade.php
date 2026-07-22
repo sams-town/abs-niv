@@ -501,11 +501,11 @@
                                             <td class="text-center" style="position: sticky; left: 0; background-color: rgb(235, 235, 235); z-index: 1;">{{ ($data_user->currentpage() - 1) * $data_user->perpage() + $key + 1 }}.</td>
                                             <td style="position: sticky; left: 40px; background-color: rgb(235, 235, 235); z-index: 1;">{{ $du->name }}</td>
                                             <td class="text-center">
-                                                @if($du->foto_karyawan == null)
-                                                    <img style="width: 80px; border-radius: 50px" src="{{ url('assets/img/foto_default.jpg') }}" alt="{{ $du->name ?? '-' }}">
-                                                @else
-                                                    <img style="width: 80px; border-radius: 50px" src="{{ url('/storage/'.$du->foto_karyawan) }}" alt="{{ $du->name ?? '-' }}">
-                                                @endif
+                                                @if($du->foto_karyawan && \Illuminate\Support\Facades\Storage::disk('public')->exists($du->foto_karyawan))
+                                    <img style="width: 80px; border-radius: 50px" src="{{ url('/storage/'.$du->foto_karyawan) }}" alt="{{ $du->name ?? '-' }}">
+                                @else
+                                    <img style="width: 80px; border-radius: 50px" src="{{ url('assets/img/foto_default.jpg') }}" alt="{{ $du->name ?? '-' }}">
+                                @endif
                                             </td>
                                             <td class="text-center">{{ $du->username ?? '-' }}</td>
                                             <td>{{ $du->Lokasi->nama_lokasi ?? '-' }}</td>

@@ -121,10 +121,10 @@
               </li>
               <li class="profile-nav onhover-dropdown p-0 me-0">
                 <div class="d-flex profile-media">
-                  @if (auth()->user()->foto_karyawan)
+                  @if (auth()->user()->foto_karyawan && \Illuminate\Support\Facades\Storage::disk('public')->exists(auth()->user()->foto_karyawan))
                     <img class="b-r-50" src="{{ url('/storage/'.auth()->user()->foto_karyawan) }}" alt="" style="width: 50px">
                   @else
-                    <img class="b-r-50" src="{{ url('/html/assets/images/dashboard/profile.jpg') }}" alt="">
+                    <img class="b-r-50" src="{{ url('assets/img/foto_default.jpg') }}" alt="" style="width: 50px">
                   @endif
                   <div class="flex-grow-1"><span>{{ auth()->user()->name }}</span>
                     <p class="mb-0 font-roboto">{{ auth()->user()->Jabatan->nama_jabatan }} <i class="middle fa fa-angle-down"></i></p>
