@@ -519,10 +519,11 @@
             }, 150);
         };
       $(function(){
-          $('form').on('submit', function(){
-              // Only disable submit buttons inside this form, not all on the page!
-              $(this).find(':input[type="submit"]').prop('disabled', true);
-          });
+          // Disabled global form submit handler to prevent modal flickering!
+          // $('form').on('submit', function(){
+          //     // Only disable submit buttons inside this form, not all on the page!
+          //     $(this).find(':input[type="submit"]').prop('disabled', true);
+          // });
           preloader();
       })
       $(function () {
