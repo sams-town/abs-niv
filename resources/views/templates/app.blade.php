@@ -402,7 +402,7 @@
     <script src="{{ url('/html/assets/js/select2/select2.full.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- push.js dihapus: tidak menggunakan browser push notification --}}
-    <script src="{{ url('/js/app.js') }}"></script>
+    {{-- <script src="{{ url('/js/app.js') }}"></script> --}}
     {{-- <script>
         window.Echo.channel("messages").listen("NotifApproval", (event) => {
             var user_id = {{ auth()->user()->id }};
