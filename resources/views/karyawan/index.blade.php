@@ -409,7 +409,7 @@
                     </div>
 
                     <!-- Import Modal -->
-                    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+                    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true" data-bs-backdrop="static">
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
@@ -444,6 +444,15 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Import Modal Script -->
+                    <script>
+                        var importModalEl = document.getElementById('importModal');
+                        importModalEl.addEventListener('show.bs.modal', function (event) {
+                            // Clear any existing errors or prevent any accidental submits
+                            event.stopPropagation();
+                        });
+                    </script>
                 </div>
             </div>
         </div>
