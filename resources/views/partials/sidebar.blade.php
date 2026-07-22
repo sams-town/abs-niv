@@ -68,7 +68,14 @@
                                 <p>Data Dosen</p>
                             </a>
                         </li>
-    
+                        
+                        <li class="nav-item">
+                            <a href="{{ url('/pegawai/import-massal') }}" class="nav-link {{ Request::is('pegawai/import-massal*') ? 'active' : '' }}">
+                                <i class="nav-icon fa fa-file-import"></i>
+                                <p>Import Massal</p>
+                            </a>
+                        </li>
+
                         <li class="nav-item">
                             <a href="{{ url('/shift') }}" class="nav-link {{ Request::is('shift*') ? 'active' : '' }}">
                                 <i class="nav-icon fa fa-fw fa-clock"></i>

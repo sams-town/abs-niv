@@ -30,6 +30,11 @@ use RealRashid\SweetAlert\Facades\Alert;
 
 class karyawanController extends Controller
 {
+    public function importMassal()
+    {
+        return view('karyawan.import-massal');
+    }
+    
     public function index()
     {
         $search = request()->input('search');
@@ -265,7 +270,7 @@ class karyawanController extends Controller
             $filePath = $file->storeAs('temp_imports', $fileName);
             $fullPath = storage_path('app/' . $filePath);
 
-            Excel::import(new UsersImport('pegawai'), $fullPath);
+            Excel::import(new UsersImport($request->tipe_user), $fullPath);
             
             Alert::success('Berhasil', 'Data Pegawai Berhasil Di Import');
             return back()->with('success', 'Data Pegawai Berhasil Di Import');
