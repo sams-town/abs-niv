@@ -397,12 +397,52 @@
                         <a href="{{ url('/pegawai/export') }}{{ $_GET ? '?'.$_SERVER['QUERY_STRING'] : '' }}" class="btn btn-outline-export">
                             <i class="fa fa-download me-2"></i> Export
                         </a>
+                        <button type="button" class="btn btn-outline-import" data-bs-toggle="modal" data-bs-target="#importModal">
+                            <i class="fa fa-upload me-2"></i> Import
+                        </button>
                         <a href="{{ url('/shift') }}" class="btn btn-outline-shift">
                             <i class="fa fa-clock me-2"></i> Shift
                         </a>
                         <a href="{{ url('/pegawai/tambah-pegawai') }}" class="btn btn-solid-tambah">
                             <i class="fa fa-plus me-2"></i> Tambah Pegawai
                         </a>
+                    </div>
+
+                    <!-- Import Modal -->
+                    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="importModalLabel">Import Pegawai & Dosen</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form id="formImportPegawai" action="{{ url('/pegawai/import') }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <a href="{{ url('/pegawai/template') }}" class="btn btn-info btn-sm text-white">
+                                                <i class="fa fa-download me-1"></i> Download Template Excel Pegawai
+                                            </a>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="file_excel" class="form-label">Pilih File Excel / CSV</label>
+                                            <input type="file" name="file_excel" id="file_excel" class="form-control @error('file_excel') is-invalid @enderror" accept=".xlsx,.xls,.csv" required>
+                                            @error('file_excel')
+                                                <div class="invalid-feedback">
+                                                    {{ $message }}
+                                                </div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                        <button type="submit" class="btn btn-primary" id="btnSubmitImport">
+                                            <i class="fa fa-upload me-1"></i> Import
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

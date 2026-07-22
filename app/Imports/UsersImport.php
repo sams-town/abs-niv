@@ -35,13 +35,20 @@ class UsersImport implements ToModel, WithHeadingRow
             $password = trim($this->getValue($row, ['password', 'pass', 'katasandi']));
             $telepon = trim($this->getValue($row, ['telepon', 'phone', 'nohp', 'hp']));
             $lokasiName = trim($this->getValue($row, ['lokasi', 'lokasi']));
-            $tglLahir = $this->getValue($row, ['tanggallahir', 'tgllahir', 'tgl_lahir', 'tanggal_lahir']);
+            $tglLahir = $this->getValue($row, ['tanggallahir', 'tgllahir', 'tgl_lahir', 'tanggal_lahir']));
             $jenisKelamin = trim($this->getValue($row, ['jeniskelamin', 'gender', 'jk', 'jenis_kelamin']));
-            $tglMasuk = $this->getValue($row, ['tanggalmasuk', 'tglmasuk', 'tgl_join', 'tanggal_masuk']);
+            $tglMasuk = $this->getValue($row, ['tanggalmasuk', 'tglmasuk', 'tgl_join', 'tanggal_masuk']));
             $roleName = trim($this->getValue($row, ['role', 'peran', 'akses']));
             $jabatanName = trim($this->getValue($row, ['divisi', 'jabatan', 'namajabatan', 'nama_jabatan']));
             $isAdmin = trim($this->getValue($row, ['isadmin', 'is_admin', 'admin']));
             $namaIbuKandung = trim($this->getValue($row, ['namaibukandung', 'nama_ibu_kandung']));
+            $tipeUser = trim($this->getValue($row, ['tipeuser', 'tipe_user', 'tipe', 'typeuser', 'type_user'], $this->defaultTipeUser));
+            // Normalize tipeUser to either 'pegawai' or 'dosen'
+            if (in_array(strtolower($tipeUser), ['dosen', 'lecturer', 'd', 'dos'])) {
+                $tipeUser = 'dosen';
+            } else {
+                $tipeUser = 'pegawai';
+            }
 
             // Validate required fields
             if (empty($name) || empty($email) || empty($username) || empty($password) || empty($telepon) || 
@@ -90,6 +97,7 @@ class UsersImport implements ToModel, WithHeadingRow
                 'tgl_join' => $this->transformDate($tglMasuk),
                 'is_admin' => in_array(strtolower($isAdmin), ['admin', '1', 'yes']) ? 'admin' : 'user',
                 'nama_ibu_kandung' => $namaIbuKandung,
+                'tipe_user' => $tipeUser,
                 'status_pajak_id' => $this->transformNumber($this->getValue($row, ['statuspajak', 'statuspajakid', 'status_pajak_id']), null),
                 'alamat' => $this->getValue($row, ['alamat', 'alamat']),
                 'alamat_domisili' => $this->getValue($row, ['alamatdomisili', 'alamat_domisili']),
