@@ -35,9 +35,9 @@ class UsersImport implements ToModel, WithHeadingRow
             $password = trim($this->getValue($row, ['password', 'pass', 'katasandi']));
             $telepon = trim($this->getValue($row, ['telepon', 'phone', 'nohp', 'hp']));
             $lokasiName = trim($this->getValue($row, ['lokasi', 'lokasi']));
-            $tglLahir = $this->getValue($row, ['tanggallahir', 'tgllahir', 'tgl_lahir', 'tanggal_lahir']));
+            $tglLahir = $this->getValue($row, ['tanggallahir', 'tgllahir', 'tgl_lahir', 'tanggal_lahir']);
             $jenisKelamin = trim($this->getValue($row, ['jeniskelamin', 'gender', 'jk', 'jenis_kelamin']));
-            $tglMasuk = $this->getValue($row, ['tanggalmasuk', 'tglmasuk', 'tgl_join', 'tanggal_masuk']));
+            $tglMasuk = $this->getValue($row, ['tanggalmasuk', 'tglmasuk', 'tgl_join', 'tanggal_masuk']);
             $roleName = trim($this->getValue($row, ['role', 'peran', 'akses']));
             $jabatanName = trim($this->getValue($row, ['divisi', 'jabatan', 'namajabatan', 'nama_jabatan']));
             $isAdmin = trim($this->getValue($row, ['isadmin', 'is_admin', 'admin']));
