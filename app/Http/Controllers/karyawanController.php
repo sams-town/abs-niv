@@ -32,7 +32,9 @@ class karyawanController extends Controller
 {
     public function importMassal()
     {
-        return view('karyawan.import-massal');
+        return view('karyawan.import-massal', [
+            'title' => 'Import Massal'
+        ]);
     }
     
     public function index()
@@ -263,24 +265,14 @@ class karyawanController extends Controller
             return back()->with('error', $validator->errors()->first());
         }
 
-        $filePath = null;
         try {
-            $file = $request->file('file_excel');
-            $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getClientOriginalName());
-            $filePath = $file->storeAs('temp_imports', $fileName);
-            $fullPath = storage_path('app/' . $filePath);
-
-            Excel::import(new UsersImport($request->tipe_user), $fullPath);
+            Excel::import(new UsersImport($request->tipe_user), $request->file('file_excel'));
             
             Alert::success('Berhasil', 'Data Pegawai Berhasil Di Import');
             return back()->with('success', 'Data Pegawai Berhasil Di Import');
         } catch (\Throwable $e) {
             Alert::error('Gagal', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
             return back()->with('error', 'Gagal mengimpor data: ' . $e->getMessage());
-        } finally {
-            if ($filePath && Storage::exists($filePath)) {
-                Storage::delete($filePath);
-            }
         }
     }
 
