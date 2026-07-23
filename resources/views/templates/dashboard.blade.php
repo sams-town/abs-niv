@@ -204,6 +204,12 @@
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('mata-kuliah*') ? 'active' : '' }}" href="{{ url('/mata-kuliah') }}"><i data-feather="book"> </i><span>Mata Kuliah</span></a>
                         </li>
+                        <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="upload"></i><span>Import Massal</span></a>
+                          <ul class="sidebar-submenu">
+                            <li><a href="{{ url('/pegawai/import-massal') }}">Import Pegawai</a></li>
+                            <li><a href="{{ url('/dosen') }}">Import Dosen</a></li>
+                          </ul>
+                        </li>
                       @endif
 
                       <li class="sidebar-list">
