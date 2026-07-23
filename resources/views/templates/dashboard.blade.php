@@ -598,10 +598,10 @@
 
         // Notification Polling Logic
         (function() {
-            let lastNotifCount = {{ auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0 }};
+            let lastNotifCount = @json(auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0);
             
             function checkNotifications() {
-                fetch('{{ url("/ajax-unread-notifications-count") }}')
+                fetch(@json(url("/ajax-unread-notifications-count")))
                     .then(response => response.json())
                     .then(data => {
                         const newCount = parseInt(data.count) || 0;
