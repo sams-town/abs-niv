@@ -296,37 +296,6 @@ class DosenController extends Controller
         ];
 
         $columns = [
-            'Nama*', 'NIDN*', 'NIP', 'Email', 'Username*', 'Password*', 'Telepon', 'Divisi', 'Lokasi', 'Role',
-            'Jabatan Akademik', 'Mata Kuliah', 'Gelar Depan', 'Gelar Belakang', 'Program Studi',
-            'Pendidikan Terakhir', 'Status Kepegawaian', 'Tipe Honorarium', 'Nominal Honor',
-            'Tanggal Lahir (YYYY-MM-DD)', 'Gender (L/P)', 'Tanggal Masuk (YYYY-MM-DD)'
-        ];
-
-        $callback = function() use($columns) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
-            fputcsv($file, [
-                'Dr. Ahmad Fauzi, M.T.', '0012345601', '198001012005011001', 'ahmad@univ.ac.id', 'ahmad_dosen', '12345678', '08198765432', 'Teknik Informatika', 'Kampus Utama', 'dosen',
-                'Lektor', 'Pemrograman Web, Algoritma', 'Dr.', 'M.T.', 'Teknik Informatika',
-                'S3', 'Dosen Tetap', 'Per Sesi', '150000',
-                '1980-01-01', 'L', '2015-08-01'
-            ]);
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
-    }
-    public function downloadTemplate()
-    {
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=Template_Import_Dosen.csv",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-
-        $columns = [
             'Nama*', 'Email*', 'Username*', 'Password*', 'Telepon*', 'Lokasi*', 'Tanggal Lahir*',
             'Jenis Kelamin* (Laki-Laki/Perempuan)', 'Tanggal Masuk*', 'Role*', 'Jabatan*', 'Is Admin (user/admin)',
             'Nama Ibu Kandung*', 'Status Pajak ID', 'Alamat', 'Alamat Domisili', 
