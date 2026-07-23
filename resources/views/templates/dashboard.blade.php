@@ -210,12 +210,6 @@
                                 <li><a href="{{ url('/dosen') }}">Import Dosen</a></li>
                             </ul>
                         </li>
-                        <li class="sidebar-list">
-                            <a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="trending-up"></i><span>Penilaian KPI</span></a>
-                            <ul class="sidebar-submenu">
-                                <li><a href="{{ url('/kpi') }}">Manajemen KPI</a></li>
-                            </ul>
-                        </li>
                       @endif
                       
                       <li class="sidebar-list"><a class="sidebar-link sidebar-title {{ Request::is('kpi*') ? 'active' : '' }}" href="javascript:void(0)"><i data-feather="activity"></i><span>KPI Corporate</span></a>
