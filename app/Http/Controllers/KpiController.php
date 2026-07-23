@@ -5,47 +5,120 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\KpiTarget;
 use App\Models\KpiEvaluation;
+use App\Models\Jabatan;
+use App\Models\Lokasi;
 use Illuminate\Http\Request;
 use RealRashid\SweetAlert\Facades\Alert;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\KpiTargetsImport;
 
 class KpiController extends Controller
 {
     public function index(Request $request)
     {
         $year = (int) ($request->get('year', date('Y')));
+        $search = $request->get('search', '');
+        $jabatanId = $request->get('jabatan_id', '');
+        $lokasiId = $request->get('lokasi_id', '');
 
-        $pegawai = User::pegawaiDanDosen()
+        // Build query with eager loading
+        $query = User::pegawaiDanDosen()
             ->with([
                 'Jabatan',
                 'Lokasi',
-                'kpiEvaluation' => function ($query) use ($year) {
-                    $query->where('year', $year);
+                'kpiEvaluation' => function ($q) use ($year) {
+                    $q->where('year', $year);
                 },
             ])
             ->withCount([
-                'kpiTargets as imported_targets_count' => function ($query) use ($year) {
-                    $query->where('year', $year);
+                'kpiTargets as imported_targets_count' => function ($q) use ($year) {
+                    $q->where('year', $year);
                 },
-            ])
-            ->orderBy('name')
-            ->paginate(10)
-            ->withQueryString();
+            ]);
 
+        // Apply search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('nip', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply jabatan filter
+        if ($jabatanId) {
+            $query->where('jabatan_id', $jabatanId);
+        }
+
+        // Apply lokasi filter
+        if ($lokasiId) {
+            $query->where('lokasi_id', $lokasiId);
+        }
+
+        // Get paginated data
+        $pegawai = $query->orderBy('name')->paginate(10)->withQueryString();
+
+        // Calculate statistics
         $totalPegawai = User::pegawaiDanDosen()->count();
-        $sudahDinilai = KpiEvaluation::where('year', $year)
-            ->where('status', 'finalized')
-            ->distinct('user_id')
-            ->count('user_id');
+        
+        // Get evaluations for current year
+        $evaluations = KpiEvaluation::with('user')->where('year', $year)->get();
+        $sudahDinilai = $evaluations->where('status', 'finalized')->count();
         $belumDinilai = max($totalPegawai - $sudahDinilai, 0);
 
+        // Calculate average score and highest performer
+        $averageScore = $evaluations->whereNotNull('final_score')->avg('final_score');
+        $highestPerformer = $evaluations->where('status', 'finalized')->sortByDesc('final_score')->first();
+
+        // Get data for charts
+        $gradeDistribution = [
+            'A' => $evaluations->where('grade', 'A')->count(),
+            'B' => $evaluations->where('grade', 'B')->count(),
+            'C' => $evaluations->where('grade', 'C')->count(),
+            'D' => $evaluations->where('grade', 'D')->count(),
+        ];
+
+        // Get jabatan and lokasi for filter dropdowns
+        $jabatanList = Jabatan::orderBy('nama_jabatan')->get();
+        $lokasiList = Lokasi::orderBy('nama_lokasi')->get();
+
         return view('kpi.index', [
-            'title' => 'Manajemen Penilaian KPI',
+            'title' => 'Manajemen KPI Korporat',
             'year' => $year,
             'pegawai' => $pegawai,
             'totalPegawai' => $totalPegawai,
             'sudahDinilai' => $sudahDinilai,
             'belumDinilai' => $belumDinilai,
+            'averageScore' => $averageScore,
+            'highestPerformer' => $highestPerformer,
+            'gradeDistribution' => $gradeDistribution,
+            'jabatanList' => $jabatanList,
+            'lokasiList' => $lokasiList,
+            'search' => $search,
+            'jabatanId' => $jabatanId,
+            'lokasiId' => $lokasiId,
         ]);
+    }
+
+    // Import KPI Targets
+    public function importTargets(Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->is_admin === 'admin', 403);
+
+        $request->validate([
+            'file_excel' => 'required|file|mimes:xlsx,xls,csv|max:20480',
+            'year' => 'required|integer|min:2020',
+        ]);
+
+        try {
+            Excel::import(new KpiTargetsImport((int) $request->year), $request->file('file_excel'));
+
+            Alert::success('Berhasil!', 'Target KPI berhasil diimport secara massal!');
+            return back();
+        } catch (\Exception $e) {
+            Alert::error('Gagal!', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+            return back()->withInput();
+        }
     }
 
     // Show KPI evaluation form for a user
@@ -65,16 +138,16 @@ class KpiController extends Controller
             [
                 'discipline_score' => 0,
                 'initiative_score' => 0,
-                'status' => 'draft'
+                'status' => 'draft',
             ]
         );
 
         return view('kpi.evaluation', [
-            'title' => 'Penilaian KPI',
+            'title' => 'Penilaian KPI - ' . ($user->name ?? 'Pegawai'),
             'user' => $user,
             'year' => $year,
             'kpiTargets' => $kpiTargets,
-            'evaluation' => $evaluation
+            'evaluation' => $evaluation,
         ]);
     }
 
@@ -84,14 +157,14 @@ class KpiController extends Controller
         $target = KpiTarget::findOrFail($targetId);
         
         $request->validate([
-            'realization_value' => 'required|numeric|min:0'
+            'realization_value' => 'required|numeric|min:0',
         ]);
 
         $target->update([
-            'realization_value' => $request->realization_value
+            'realization_value' => $request->realization_value,
         ]);
 
-        Alert::success('Berhasil', 'Realisasi berhasil diperbarui!');
+        Alert::success('Berhasil!', 'Realisasi target berhasil diperbarui!');
         return back();
     }
 
@@ -103,18 +176,18 @@ class KpiController extends Controller
         $request->validate([
             'discipline_score' => 'required|numeric|min:0|max:100',
             'initiative_score' => 'required|numeric|min:0|max:100',
-            'hr_notes' => 'nullable|string',
-            'status' => 'required|in:draft,submitted,approved,finalized'
+            'hr_notes' => 'nullable|string|max:1000',
+            'status' => 'required|in:draft,submitted,approved,finalized',
         ]);
 
         $evaluation->update($request->only([
             'discipline_score',
             'initiative_score',
             'hr_notes',
-            'status'
+            'status',
         ]));
 
-        Alert::success('Berhasil', 'Penilaian KPI berhasil disimpan!');
+        Alert::success('Berhasil!', 'Penilaian KPI berhasil disimpan!');
         return back();
     }
 
@@ -126,12 +199,12 @@ class KpiController extends Controller
             'year' => 'required|integer|min:2020',
             'indicator_name' => 'required|string|max:255',
             'target_value' => 'required|numeric|min:0',
-            'weight' => 'required|numeric|min:0|max:100'
+            'weight' => 'required|numeric|min:0|max:100',
         ]);
 
         KpiTarget::create($request->all());
 
-        Alert::success('Berhasil', 'Target KPI berhasil ditambahkan!');
+        Alert::success('Berhasil!', 'Target KPI berhasil ditambahkan!');
         return back();
     }
 }

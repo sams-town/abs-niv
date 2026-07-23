@@ -561,6 +561,8 @@
       flatpickr("input[type=datetime-local]", config)
       flatpickr("input[type=datetime]", {})
     </script>
+    @yield('scripts')
+    @stack('scripts')
     @stack('script')
     @include('sweetalert::alert')
     <script>

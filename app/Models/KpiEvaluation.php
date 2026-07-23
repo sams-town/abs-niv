@@ -30,19 +30,27 @@ class KpiEvaluation extends Model
             ->where('year', $this->year);
     }
 
-    // Calculate final score and grade when saving
+    // Calculate final score and grade when saving (Corporate Logic)
     protected static function boot()
     {
         parent::boot();
 
         static::saving(function (KpiEvaluation $evaluation) {
             // Get total quantitative score from kpi targets
-            $totalQuantitative = $evaluation->kpiTargets()->sum('calculated_score');
-            $totalQualitative = ($evaluation->discipline_score ?? 0) + ($evaluation->initiative_score ?? 0);
-            // Assuming qualitative has total weight of 40 (20 each), quantitative 60
-            $evaluation->final_score = $totalQuantitative + ($totalQualitative / 2);
+            $totalQuantitativeRaw = $evaluation->kpiTargets()->sum('calculated_score');
             
-            // Determine grade
+            // Normalize quantitative score to 0-70 range (weight 70%)
+            $totalQuantitative = min(max($totalQuantitativeRaw, 0), 70);
+            
+            // Qualitative: 0-30 range (weight 30% - 15% each for discipline & initiative)
+            $disciplineScore = min(max($evaluation->discipline_score ?? 0, 0), 100);
+            $initiativeScore = min(max($evaluation->initiative_score ?? 0, 0), 100);
+            $totalQualitative = ($disciplineScore * 0.15) + ($initiativeScore * 0.15);
+
+            // Final score: 0-100
+            $evaluation->final_score = round($totalQuantitative + $totalQualitative, 2);
+            
+            // Determine grade (Corporate Standard)
             if ($evaluation->final_score >= 85) {
                 $evaluation->grade = 'A';
             } elseif ($evaluation->final_score >= 70) {
