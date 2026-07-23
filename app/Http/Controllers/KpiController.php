@@ -121,26 +121,40 @@ class KpiController extends Controller
         }
     }
 
-    // Show KPI evaluation form for a user
-    public function showEvaluationForm($userId, $year = null)
+    // Show KPI evaluation form for a user (handles both /evaluation/{id} and /evaluation/{userId}/{year?})
+    public function showEvaluationForm($param1, $param2 = null)
     {
-        $year = $year ?? request('year', date('Y'));
-        $user = User::findOrFail($userId);
+        $year = date('Y');
+        $user = null;
+        $evaluation = null;
         
-        // Get or create KPI targets for the user
-        $kpiTargets = KpiTarget::where('user_id', $userId)
+        // Coba cari user berdasarkan param1 terlebih dahulu
+        $user = User::find($param1);
+        
+        if ($user) {
+            // Param1 adalah userId
+            $year = $param2 ?? request('year', date('Y'));
+            
+            // Get or create KPI evaluation
+            $evaluation = KpiEvaluation::firstOrCreate(
+                ['user_id' => $user->id, 'year' => $year],
+                [
+                    'discipline_score' => 0,
+                    'initiative_score' => 0,
+                    'status' => 'draft',
+                ]
+            );
+        } else {
+            // Coba cari evaluation berdasarkan param1 (evaluationId)
+            $evaluation = KpiEvaluation::findOrFail($param1);
+            $user = $evaluation->user;
+            $year = $evaluation->year;
+        }
+        
+        // Get KPI targets for the user
+        $kpiTargets = KpiTarget::where('user_id', $user->id)
             ->where('year', $year)
             ->get();
-        
-        // Get or create KPI evaluation
-        $evaluation = KpiEvaluation::firstOrCreate(
-            ['user_id' => $userId, 'year' => $year],
-            [
-                'discipline_score' => 0,
-                'initiative_score' => 0,
-                'status' => 'draft',
-            ]
-        );
 
         return view('kpi.evaluation', [
             'title' => 'Penilaian KPI - ' . ($user->name ?? 'Pegawai'),
