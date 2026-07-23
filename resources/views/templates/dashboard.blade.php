@@ -12,7 +12,7 @@
     <meta name="author" content="pixelstrap">
     <link rel="shortcut icon" href="{{ $logoUrl }}" />
     <link rel="apple-touch-icon-precomposed" href="{{ $logoUrl }}" />
-    <title>{{ $title }}</title>
+    <title>{{ $title ?? 'UNIBA HRIS' }}</title>
     <link rel="stylesheet" type="text/css" href="{{ url('clock/dist/bootstrap-clockpicker.min.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -121,10 +121,10 @@
               </li>
               <li class="profile-nav onhover-dropdown p-0 me-0">
                 <div class="d-flex profile-media">
-                  @if (auth()->user()->foto_karyawan)
+                  @if (auth()->user()->foto_karyawan && \Illuminate\Support\Facades\Storage::disk('public')->exists(auth()->user()->foto_karyawan))
                     <img class="b-r-50" src="{{ url('/storage/'.auth()->user()->foto_karyawan) }}" alt="" style="width: 50px">
                   @else
-                    <img class="b-r-50" src="{{ url('/html/assets/images/dashboard/profile.jpg') }}" alt="">
+                    <img class="b-r-50" src="{{ url('assets/img/foto_default.jpg') }}" alt="" style="width: 50px">
                   @endif
                   <div class="flex-grow-1"><span>{{ auth()->user()->name }}</span>
                     <p class="mb-0 font-roboto">{{ auth()->user()->Jabatan->nama_jabatan }} <i class="middle fa fa-angle-down"></i></p>
@@ -203,6 +203,18 @@
                         </li>
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('mata-kuliah*') ? 'active' : '' }}" href="{{ url('/mata-kuliah') }}"><i data-feather="book"> </i><span>Mata Kuliah</span></a>
+                        </li>
+                        <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="upload"></i><span>Import Massal</span></a>
+                            <ul class="sidebar-submenu">
+                                <li><a href="{{ url('/pegawai/import-massal') }}">Import Pegawai</a></li>
+                                <li><a href="{{ url('/dosen') }}">Import Dosen</a></li>
+                            </ul>
+                        </li>
+                        <li class="sidebar-list">
+                            <a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="trending-up"></i><span>Penilaian KPI</span></a>
+                            <ul class="sidebar-submenu">
+                                <li><a href="{{ url('/kpi') }}">Manajemen KPI</a></li>
+                            </ul>
                         </li>
                       @endif
                       
@@ -444,7 +456,7 @@
     <script type="text/javascript" src="{{ url('/clock/dist/bootstrap-clockpicker.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- push.js dihapus: tidak menggunakan browser push notification --}}
-    <script src="{{ url('/js/app.js') }}"></script>
+    {{-- <script src="{{ url('/js/app.js') }}"></script> --}}
     {{-- <script>
         window.Echo.channel("messages").listen("NotifApproval", (event) => {
             var user_id = {{ auth()->user()->id }};
@@ -534,9 +546,11 @@
             }, 150);
         };
       $(function(){
-          $('form').on('submit', function(){
-              $(':input[type="submit"]').prop('disabled', true);
-          });
+          // Disabled global form submit handler to prevent modal flickering!
+          // $('form').on('submit', function(){
+          //     // Only disable submit buttons inside this form, not all on the page!
+          //     $(this).find(':input[type="submit"]').prop('disabled', true);
+          // });
           preloader();
       })
       $(function () {
@@ -562,6 +576,8 @@
       flatpickr("input[type=datetime-local]", config)
       flatpickr("input[type=datetime]", {})
     </script>
+    @yield('scripts')
+    @stack('scripts')
     @stack('script')
     @include('sweetalert::alert')
     <script>
@@ -611,10 +627,10 @@
 
         // Notification Polling Logic
         (function() {
-            let lastNotifCount = {{ auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0 }};
+            let lastNotifCount = @json(auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0);
             
             function checkNotifications() {
-                fetch('{{ url("/ajax-unread-notifications-count") }}')
+                fetch(@json(url("/ajax-unread-notifications-count")))
                     .then(response => response.json())
                     .then(data => {
                         const newCount = parseInt(data.count) || 0;

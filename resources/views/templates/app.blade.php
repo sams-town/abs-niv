@@ -13,7 +13,7 @@
     <!-- Mobile Specific Metas -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title }}</title>
+    <title>{{ $title ?? 'Dashboard' }}</title>
     <!-- Favicon and Touch Icons  -->
     <link rel="shortcut icon" href="{{ $logoUrl }}" />
     <link rel="apple-touch-icon-precomposed" href="{{ $logoUrl }}" />
@@ -402,7 +402,7 @@
     <script src="{{ url('/html/assets/js/select2/select2.full.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- push.js dihapus: tidak menggunakan browser push notification --}}
-    <script src="{{ url('/js/app.js') }}"></script>
+    {{-- <script src="{{ url('/js/app.js') }}"></script> --}}
     {{-- <script>
         window.Echo.channel("messages").listen("NotifApproval", (event) => {
             var user_id = {{ auth()->user()->id }};
@@ -514,10 +514,10 @@
 
         // Notification Polling Logic
         (function() {
-            let lastNotifCount = {{ auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0 }};
+            let lastNotifCount = @json(auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0);
             
             function checkNotifications() {
-                fetch('{{ url("/ajax-unread-notifications-count") }}')
+                fetch(@json(url("/ajax-unread-notifications-count")))
                     .then(response => response.json())
                     .then(data => {
                         const newCount = parseInt(data.count) || 0;

@@ -30,6 +30,13 @@ use RealRashid\SweetAlert\Facades\Alert;
 
 class karyawanController extends Controller
 {
+    public function importMassal()
+    {
+        return view('karyawan.import-massal', [
+            'title' => 'Import Massal'
+        ]);
+    }
+    
     public function index()
     {
         $search = request()->input('search');
@@ -258,24 +265,14 @@ class karyawanController extends Controller
             return back()->with('error', $validator->errors()->first());
         }
 
-        $filePath = null;
         try {
-            $file = $request->file('file_excel');
-            $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getClientOriginalName());
-            $filePath = $file->storeAs('temp_imports', $fileName);
-            $fullPath = storage_path('app/' . $filePath);
-
-            Excel::import(new UsersImport('pegawai'), $fullPath);
+            Excel::import(new UsersImport($request->tipe_user), $request->file('file_excel'));
             
             Alert::success('Berhasil', 'Data Pegawai Berhasil Di Import');
             return back()->with('success', 'Data Pegawai Berhasil Di Import');
         } catch (\Throwable $e) {
             Alert::error('Gagal', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
             return back()->with('error', 'Gagal mengimpor data: ' . $e->getMessage());
-        } finally {
-            if ($filePath && Storage::exists($filePath)) {
-                Storage::delete($filePath);
-            }
         }
     }
 
@@ -290,17 +287,30 @@ class karyawanController extends Controller
         ];
 
         $columns = [
-            'Nama*', 'Email', 'Username*', 'Password*', 'Telepon', 'Divisi', 'Lokasi', 'Role',
-            'Tanggal Lahir (YYYY-MM-DD)', 'Gender (L/P)', 'Tanggal Masuk (YYYY-MM-DD)', 'Status Pernikahan',
-            'Alamat', 'Cuti', 'Izin Masuk', 'Izin Telat', 'Izin Pulang Cepat', 'KTP', 'Gaji Pokok'
+            'Nama*', 'Email*', 'Username*', 'Password*', 'Telepon*', 'Lokasi*', 'Tanggal Lahir*',
+            'Jenis Kelamin* (Laki-Laki/Perempuan)', 'Tanggal Masuk*', 'Role*', 'Divisi*', 'Is Admin (user/admin)',
+            'Nama Ibu Kandung*', 'Tipe User (pegawai/dosen)', 'Status Pajak ID', 'Alamat', 'Alamat Domisili', 
+            'Kontak Darurat Nama', 'Kontak Darurat HP', 'Kontak Darurat Hubungan', 'KTP', 'Kartu Keluarga', 
+            'BPJS Kesehatan', 'BPJS Ketenagakerjaan', 'NPWP', 'SIM', 'NIP', 'No Kontrak', 'Tanggal Mulai Kontrak',
+            'Tanggal Berakhir Kontrak', 'No Rekening', 'Nama Rekening', 'Cuti', 'Izin Masuk',
+            'Izin Telat', 'Izin Pulang Cepat', 'Cuti Melahirkan', 'Cuti Kematian', 'Gaji Pokok',
+            'Tunjangan Makan', 'Tunjangan Transport', 'Tunjangan BPJS Kesehatan', 'Tunjangan BPJS Ketenagakerjaan',
+            'Lembur', 'Kehadiran', 'THR', 'Bonus Pribadi', 'Bonus Team', 'Bonus Jackpot', 'Terlambat',
+            'Batas Terlambat', 'Mangkir', 'Potongan BPJS Kesehatan', 'Potongan Koperasi', 'Kode Pos'
         ];
 
         $callback = function() use($columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
             fputcsv($file, [
-                'Budi Santoso', 'budi@example.com', 'budi123', '12345678', '08123456789', 'IT Support', 'Kantor Pusat', 'pegawai',
-                '1995-05-20', 'L', '2023-01-10', 'Lajang', 'Jl. Merdeka No. 10', '12', '3', '3', '3', '3171234567890001', '5000000'
+                'Budi Santoso', 'budi@example.com', 'budi123', '12345678', '08123456789', 'Kantor Pusat',
+                '1995-05-20', 'Laki-Laki', '2023-01-10', 'pegawai', 'IT Support', 'user', 'Siti Aminah',
+                'pegawai', '1', 'Jl. Merdeka No. 123, Jakarta', 'Jl. Merdeka No. 123, Jakarta', 'Siti Aminah',
+                '08123456789', 'Orang Tua', '3171234567890001', '3171234567890001', '1234567890',
+                '1234567890', '1234567890', 'A12345678', '123456', 'KTR-001', '2023-01-10',
+                '2024-01-10', '1234567890', 'Budi Santoso', '12', '3', '3', '3', '90', '3',
+                '5000000', '500000', '300000', '200000', '200000', '100000', '100000', '500000',
+                '200000', '100000', '50000', '5', '100000', '50000', '12345'
             ]);
             fclose($file);
         };

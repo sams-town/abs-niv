@@ -101,6 +101,7 @@ Route::post('/login-proses', [authController::class, 'loginProses'])->middleware
 Route::post('/login-proses-user', [authController::class, 'loginProsesUser'])->middleware('guest');
 Route::get('/dashboard', [dashboardController::class, 'index'])->middleware('auth');
 Route::get('/logout', [authController::class, 'logout'])->middleware('auth');
+Route::get('/pegawai/import-massal', [karyawanController::class, 'importMassal'])->middleware('admin');
 Route::get('/pegawai', [karyawanController::class, 'index'])->middleware('auth');
 Route::get('/euforia', [karyawanController::class, 'euforia'])->middleware('auth');
 Route::get('/pegawai/tambah-pegawai', [karyawanController::class, 'tambahKaryawan'])->middleware('admin');
@@ -550,6 +551,17 @@ Route::get('/reset', function () {
     Artisan::call('route:clear');
     Artisan::call('migrate:fresh --seed');
     Artisan::call('storage:link');
+});
+
+// ===== MODUL KPI =====
+use App\Http\Controllers\KpiController;
+Route::prefix('kpi')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+    Route::get('/', [KpiController::class, 'index']);
+    Route::post('/import', [KpiController::class, 'importTargets'])->name('kpi.import');
+    Route::get('/evaluation/{id}', [KpiController::class, 'evaluation']);
+    Route::post('/target/{targetId}/update', [KpiController::class, 'updateTarget']);
+    Route::post('/evaluation/{evaluationId}/save', [KpiController::class, 'saveEvaluation']);
+    Route::post('/target/add', [KpiController::class, 'addTarget']);
 });
 
 Route::get('/ajax-unread-notifications-count', function() {

@@ -397,59 +397,12 @@
                         <a href="{{ url('/pegawai/export') }}{{ $_GET ? '?'.$_SERVER['QUERY_STRING'] : '' }}" class="btn btn-outline-export">
                             <i class="fa fa-download me-2"></i> Export
                         </a>
-                        <button class="btn btn-outline-import" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                            <i class="fa fa-upload me-2"></i> Import
-                        </button>
                         <a href="{{ url('/shift') }}" class="btn btn-outline-shift">
                             <i class="fa fa-clock me-2"></i> Shift
                         </a>
                         <a href="{{ url('/pegawai/tambah-pegawai') }}" class="btn btn-solid-tambah">
                             <i class="fa fa-plus me-2"></i> Tambah Pegawai
                         </a>
-                    </div>
-
-                    <!-- Import Modal -->
-                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="exampleModalLabel">Import Users</h5>
-                                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <form id="formImportPegawai" action="{{ url('/pegawai/import') }}" method="POST" enctype="multipart/form-data">
-                                    <div class="modal-body text-start">
-                                        @csrf
-                                        <div class="mb-3">
-                                            <a href="{{ url('/pegawai/template') }}" class="btn btn-outline-info btn-sm">
-                                                <i class="fa fa-download me-1"></i> Download Template Excel Pegawai
-                                            </a>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="file_excel">File Excel / CSV</label>
-                                            <input type="file" name="file_excel" id="file_excel" class="form-control @error('file_excel') is-invalid @enderror" required>
-                                            @error('file_excel')
-                                                <div class="invalid-feedback">
-                                                    {{ $message }}
-                                                </div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal" id="btnBatalImport">Batal</button>
-                                        <button class="btn btn-primary" type="submit" id="btnSubmitImport">Import Pegawai</button>
-                                    </div>
-                                </form>
-                                <script>
-                                    document.getElementById('formImportPegawai').addEventListener('submit', function() {
-                                        var btn = document.getElementById('btnSubmitImport');
-                                        var btnBatal = document.getElementById('btnBatalImport');
-                                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Sedang Mengupload...';
-                                        btn.disabled = true;
-                                        btnBatal.disabled = true;
-                                    });
-                                </script>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -548,11 +501,11 @@
                                             <td class="text-center" style="position: sticky; left: 0; background-color: rgb(235, 235, 235); z-index: 1;">{{ ($data_user->currentpage() - 1) * $data_user->perpage() + $key + 1 }}.</td>
                                             <td style="position: sticky; left: 40px; background-color: rgb(235, 235, 235); z-index: 1;">{{ $du->name }}</td>
                                             <td class="text-center">
-                                                @if($du->foto_karyawan == null)
-                                                    <img style="width: 80px; border-radius: 50px" src="{{ url('assets/img/foto_default.jpg') }}" alt="{{ $du->name ?? '-' }}">
-                                                @else
-                                                    <img style="width: 80px; border-radius: 50px" src="{{ url('/storage/'.$du->foto_karyawan) }}" alt="{{ $du->name ?? '-' }}">
-                                                @endif
+                                                @if($du->foto_karyawan && \Illuminate\Support\Facades\Storage::disk('public')->exists($du->foto_karyawan))
+                                    <img style="width: 80px; border-radius: 50px" src="{{ url('/storage/'.$du->foto_karyawan) }}" alt="{{ $du->name ?? '-' }}">
+                                @else
+                                    <img style="width: 80px; border-radius: 50px" src="{{ url('assets/img/foto_default.jpg') }}" alt="{{ $du->name ?? '-' }}">
+                                @endif
                                             </td>
                                             <td class="text-center">{{ $du->username ?? '-' }}</td>
                                             <td>{{ $du->Lokasi->nama_lokasi ?? '-' }}</td>
