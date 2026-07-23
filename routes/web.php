@@ -553,6 +553,15 @@ Route::get('/reset', function () {
     Artisan::call('storage:link');
 });
 
+// ===== MODUL KPI =====
+use App\Http\Controllers\KpiController;
+Route::prefix('kpi')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+    Route::get('/evaluation/{userId}/{year?}', [KpiController::class, 'showEvaluationForm']);
+    Route::post('/target/{targetId}/update', [KpiController::class, 'updateTarget']);
+    Route::post('/evaluation/{evaluationId}/save', [KpiController::class, 'saveEvaluation']);
+    Route::post('/target/add', [KpiController::class, 'addTarget']);
+});
+
 Route::get('/ajax-unread-notifications-count', function() {
     return response()->json([
         'count' => auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0

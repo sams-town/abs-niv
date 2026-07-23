@@ -205,10 +205,18 @@
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('mata-kuliah*') ? 'active' : '' }}" href="{{ url('/mata-kuliah') }}"><i data-feather="book"> </i><span>Mata Kuliah</span></a>
                         </li>
                         <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="upload"></i><span>Import Massal</span></a>
-                          <ul class="sidebar-submenu">
-                            <li><a href="{{ url('/pegawai/import-massal') }}">Import Pegawai</a></li>
-                            <li><a href="{{ url('/dosen') }}">Import Dosen</a></li>
-                          </ul>
+                            <ul class="sidebar-submenu">
+                                <li><a href="{{ url('/pegawai/import-massal') }}">Import Pegawai</a></li>
+                                <li><a href="{{ url('/dosen') }}">Import Dosen</a></li>
+                            </ul>
+                        </li>
+                        <li class="sidebar-list">
+                            <a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="trending-up"></i><span>Penilaian KPI</span></a>
+                            <ul class="sidebar-submenu">
+                                @foreach(\App\Models\User::whereIn('tipe_user', ['pegawai', 'dosen'])->take(5)->get() as $u)
+                                    <li><a href="{{ url('/kpi/evaluation/' . $u->id) }}">{{ $u->name }}</a></li>
+                                @endforeach
+                            </ul>
                         </li>
                       @endif
 
