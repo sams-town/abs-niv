@@ -22,7 +22,6 @@ class KpiController extends Controller
             $jabatanId = $request->get('jabatan_id', '');
             $lokasiId = $request->get('lokasi_id', '');
 
-            // Build query with eager loading
             $query = User::pegawaiDanDosen()
                 ->with([
                     'Jabatan',
@@ -37,7 +36,6 @@ class KpiController extends Controller
                     },
                 ]);
 
-            // Apply search filter
             if ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -46,32 +44,24 @@ class KpiController extends Controller
                 });
             }
 
-            // Apply jabatan filter
             if ($jabatanId) {
                 $query->where('jabatan_id', $jabatanId);
             }
 
-            // Apply lokasi filter
             if ($lokasiId) {
                 $query->where('lokasi_id', $lokasiId);
             }
 
-            // Get paginated data
             $pegawai = $query->orderBy('name')->paginate(10)->withQueryString();
-
-            // Calculate statistics
             $totalPegawai = User::pegawaiDanDosen()->count();
             
-            // Get evaluations for current year
             $evaluations = KpiEvaluation::with('user')->where('year', $year)->get();
             $sudahDinilai = $evaluations->where('status', 'finalized')->count();
             $belumDinilai = max($totalPegawai - $sudahDinilai, 0);
 
-            // Calculate average score and highest performer
             $averageScore = $evaluations->whereNotNull('final_score')->avg('final_score') ?? 0;
             $highestPerformer = $evaluations->where('status', 'finalized')->sortByDesc('final_score')->first();
 
-            // Get data for charts
             $gradeDistribution = [
                 'A' => $evaluations->where('grade', 'A')->count(),
                 'B' => $evaluations->where('grade', 'B')->count(),
@@ -79,7 +69,6 @@ class KpiController extends Controller
                 'D' => $evaluations->where('grade', 'D')->count(),
             ];
 
-            // Get jabatan and lokasi for filter dropdowns
             $jabatanList = Jabatan::orderBy('nama_jabatan')->get();
             $lokasiList = Lokasi::orderBy('nama_lokasi')->get();
 
@@ -100,13 +89,52 @@ class KpiController extends Controller
                 'lokasiId' => $lokasiId,
             ]);
         } catch (\Exception $e) {
-            // Jika terjadi error, tampilkan pesan error dan redirect kembali
             Alert::error('Error!', 'Terjadi kesalahan: ' . $e->getMessage());
             return redirect('/dashboard');
         }
     }
 
-    // Import KPI Targets
+    public function evaluation($id)
+    {
+        try {
+            $year = date('Y');
+            $user = null;
+            $evaluation = null;
+
+            $user = User::find($id);
+            
+            if ($user) {
+                $evaluation = KpiEvaluation::firstOrCreate(
+                    ['user_id' => $user->id, 'year' => $year],
+                    [
+                        'discipline_score' => 0,
+                        'initiative_score' => 0,
+                        'status' => 'draft',
+                    ]
+                );
+            } else {
+                $evaluation = KpiEvaluation::findOrFail($id);
+                $user = $evaluation->user;
+                $year = $evaluation->year;
+            }
+
+            $kpiTargets = KpiTarget::where('user_id', $user->id)
+                ->where('year', $year)
+                ->get();
+
+            return view('kpi.evaluation', [
+                'title' => 'Evaluasi KPI - ' . ($user->name ?? 'Pegawai'),
+                'user' => $user,
+                'year' => $year,
+                'kpiTargets' => $kpiTargets,
+                'evaluation' => $evaluation,
+            ]);
+        } catch (\Exception $e) {
+            Alert::error('Error!', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect('/kpi');
+        }
+    }
+
     public function importTargets(Request $request)
     {
         abort_unless(auth()->check() && auth()->user()->is_admin === 'admin', 403);
@@ -118,7 +146,6 @@ class KpiController extends Controller
 
         try {
             Excel::import(new KpiTargetsImport((int) $request->year), $request->file('file_excel'));
-
             Alert::success('Berhasil!', 'Target KPI berhasil diimport secara massal!');
             return back();
         } catch (\Exception $e) {
@@ -127,51 +154,6 @@ class KpiController extends Controller
         }
     }
 
-    // Show KPI evaluation form for a user (handles both /evaluation/{id} and /evaluation/{userId}/{year?})
-    public function showEvaluationForm($param1, $param2 = null)
-    {
-        $year = date('Y');
-        $user = null;
-        $evaluation = null;
-        
-        // Coba cari user berdasarkan param1 terlebih dahulu
-        $user = User::find($param1);
-        
-        if ($user) {
-            // Param1 adalah userId
-            $year = $param2 ?? request('year', date('Y'));
-            
-            // Get or create KPI evaluation
-            $evaluation = KpiEvaluation::firstOrCreate(
-                ['user_id' => $user->id, 'year' => $year],
-                [
-                    'discipline_score' => 0,
-                    'initiative_score' => 0,
-                    'status' => 'draft',
-                ]
-            );
-        } else {
-            // Coba cari evaluation berdasarkan param1 (evaluationId)
-            $evaluation = KpiEvaluation::findOrFail($param1);
-            $user = $evaluation->user;
-            $year = $evaluation->year;
-        }
-        
-        // Get KPI targets for the user
-        $kpiTargets = KpiTarget::where('user_id', $user->id)
-            ->where('year', $year)
-            ->get();
-
-        return view('kpi.evaluation', [
-            'title' => 'Penilaian KPI - ' . ($user->name ?? 'Pegawai'),
-            'user' => $user,
-            'year' => $year,
-            'kpiTargets' => $kpiTargets,
-            'evaluation' => $evaluation,
-        ]);
-    }
-
-    // Update KPI target realization
     public function updateTarget(Request $request, $targetId)
     {
         $target = KpiTarget::findOrFail($targetId);
@@ -188,7 +170,6 @@ class KpiController extends Controller
         return back();
     }
 
-    // Save KPI evaluation (HR assessment)
     public function saveEvaluation(Request $request, $evaluationId)
     {
         $evaluation = KpiEvaluation::findOrFail($evaluationId);
@@ -211,7 +192,6 @@ class KpiController extends Controller
         return back();
     }
 
-    // Add KPI target
     public function addTarget(Request $request)
     {
         $request->validate([

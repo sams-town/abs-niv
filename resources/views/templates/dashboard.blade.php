@@ -12,7 +12,7 @@
     <meta name="author" content="pixelstrap">
     <link rel="shortcut icon" href="{{ $logoUrl }}" />
     <link rel="apple-touch-icon-precomposed" href="{{ $logoUrl }}" />
-    <title>{{ $title ?? 'Dashboard' }}</title>
+    <title>{{ $title ?? 'UNIBA HRIS' }}</title>
     <link rel="stylesheet" type="text/css" href="{{ url('clock/dist/bootstrap-clockpicker.min.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
