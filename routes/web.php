@@ -110,6 +110,7 @@ Route::post('/pegawai/face/ajaxPhoto', [karyawanController::class, 'ajaxPhoto'])
 Route::post('/pegawai/face/ajaxDescrip', [karyawanController::class, 'ajaxDescrip'])->middleware('admin');
 Route::post('/pegawai/import', [karyawanController::class, 'importUsers'])->middleware('admin');
 Route::get('/pegawai/template', [karyawanController::class, 'downloadTemplate'])->middleware('admin');
+Route::get('/dosen/template', [DosenController::class, 'downloadTemplate'])->middleware('admin');
 Route::get('/pegawai/detail/{id}', [karyawanController::class, 'detail'])->middleware('admin');
 Route::get('/pegawai/kontrak/{id}', [karyawanController::class, 'kontrak'])->middleware('admin');
 Route::get('/pegawai/show/{id}', [karyawanController::class, 'show'])->middleware('auth');

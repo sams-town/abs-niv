@@ -316,4 +316,30 @@ class DosenController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+    public function downloadTemplate()
+    {
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=Template_Import_Dosen.csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = [
+            'Nama*', 'Email*', 'Username*', 'Password*', 'Telepon*', 'Lokasi*', 'Tanggal Lahir*',
+            'Jenis Kelamin* (Laki-Laki/Perempuan)', 'Tanggal Masuk*', 'Role*', 'Jabatan*', 'Is Admin (user/admin)',
+            'Nama Ibu Kandung*', 'Status Pajak ID', 'Alamat', 'Alamat Domisili', 
+            'NIDN*', 'NIP', 'Gelar Depan', 'Gelar Belakang', 'Program Studi', 'Pendidikan Terakhir',
+            'Status Kepegawaian', 'Tipe Honorarium', 'Nominal Honor', 'Jabatan Akademik', 'Mata Kuliah'
+        ];
+
+        $callback = function() use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

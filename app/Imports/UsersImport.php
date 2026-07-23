@@ -140,6 +140,21 @@ class UsersImport implements ToModel, WithHeadingRow
                 'potongan_koperasi' => $this->transformNumber($this->getValue($row, ['potongankoperasi', 'potongan_koperasi']), 0)
             ];
 
+            if ($tipeUser === 'dosen') {
+                $data['nidn'] = (string)$this->getValue($row, ['nidn', 'no_nidn']);
+                $data['nip'] = (string)$this->getValue($row, ['nip']);
+                $data['gelar_depan'] = $this->getValue($row, ['gelar_depan', 'gelardepan']);
+                $data['gelar_belakang'] = $this->getValue($row, ['gelar_belakang', 'gelarbelakang']);
+                $data['program_studi'] = $this->getValue($row, ['program_studi', 'programstudi', 'prodi']);
+                $data['pendidikan_terakhir'] = $this->getValue($row, ['pendidikan_terakhir', 'pendidikanterakhir']);
+                $data['status_kepegawaian'] = $this->getValue($row, ['status_kepegawaian', 'statuskepegawaian']);
+                $data['tipe_honorarium'] = $this->getValue($row, ['tipe_honorarium', 'tipehonorarium']);
+                $data['nominal_honor'] = $this->transformNumber($this->getValue($row, ['nominal_honor', 'nominalhonor']), 0);
+                $data['jabatan_akademik'] = $this->getValue($row, ['jabatan_akademik', 'jabatanakademik']);
+                $data['mata_kuliah'] = $this->getValue($row, ['mata_kuliah', 'matakuliah']);
+                $data['status_aktif'] = true;
+            }
+
             // --- Step 4: Check if user exists, update or create ---
             $user = User::where('email', $email)->orWhere('username', $username)->first();
             if ($user) {

@@ -124,7 +124,7 @@
                 </div>
                 
                 <div class="mb-4">
-                    <a href="{{ url('/pegawai/template') }}" class="btn-download btn">
+                    <a href="{{ url('/pegawai/template') }}" id="btn-download-template" class="btn-download btn">
                         <i class="fa fa-download me-2"></i> Download Template Excel
                     </a>
                 </div>
@@ -157,6 +157,13 @@
             document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
             document.getElementById('tipe_user_input').value = type;
+            
+            let downloadBtn = document.getElementById('btn-download-template');
+            if(type === 'pegawai') {
+                downloadBtn.href = "{{ url('/pegawai/template') }}";
+            } else {
+                downloadBtn.href = "{{ url('/dosen/template') }}";
+            }
         }
         
         function updateFileName(input) {
