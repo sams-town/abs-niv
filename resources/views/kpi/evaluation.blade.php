@@ -102,6 +102,7 @@
                                     <option value="draft" {{ $evaluation->status == 'draft' ? 'selected' : '' }}>Draft</option>
                                     <option value="submitted" {{ $evaluation->status == 'submitted' ? 'selected' : '' }}>Dikirim</option>
                                     <option value="approved" {{ $evaluation->status == 'approved' ? 'selected' : '' }}>Disetujui</option>
+                                    <option value="finalized" {{ $evaluation->status == 'finalized' ? 'selected' : '' }}>Finalized</option>
                                 </select>
                             </div>
 

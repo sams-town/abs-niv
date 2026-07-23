@@ -213,9 +213,7 @@
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="trending-up"></i><span>Penilaian KPI</span></a>
                             <ul class="sidebar-submenu">
-                                @foreach(\App\Models\User::whereIn('tipe_user', ['pegawai', 'dosen'])->take(5)->get() as $u)
-                                    <li><a href="{{ url('/kpi/evaluation/' . $u->id) }}">{{ $u->name }}</a></li>
-                                @endforeach
+                                <li><a href="{{ url('/kpi') }}">Manajemen KPI</a></li>
                             </ul>
                         </li>
                       @endif

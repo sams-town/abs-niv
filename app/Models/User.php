@@ -188,4 +188,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\TransaksiMengajar::class, 'dosen_id');
     }
+
+    public function kpiEvaluation()
+    {
+        return $this->hasOne(KpiEvaluation::class);
+    }
+
+    public function kpiEvaluations()
+    {
+        return $this->hasMany(KpiEvaluation::class);
+    }
+
+    public function kpiTargets()
+    {
+        return $this->hasMany(KpiTarget::class);
+    }
 }

@@ -10,10 +10,48 @@ use RealRashid\SweetAlert\Facades\Alert;
 
 class KpiController extends Controller
 {
+    public function index(Request $request)
+    {
+        $year = (int) ($request->get('year', date('Y')));
+
+        $pegawai = User::pegawaiDanDosen()
+            ->with([
+                'Jabatan',
+                'Lokasi',
+                'kpiEvaluation' => function ($query) use ($year) {
+                    $query->where('year', $year);
+                },
+            ])
+            ->withCount([
+                'kpiTargets as imported_targets_count' => function ($query) use ($year) {
+                    $query->where('year', $year);
+                },
+            ])
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
+
+        $totalPegawai = User::pegawaiDanDosen()->count();
+        $sudahDinilai = KpiEvaluation::where('year', $year)
+            ->where('status', 'finalized')
+            ->distinct('user_id')
+            ->count('user_id');
+        $belumDinilai = max($totalPegawai - $sudahDinilai, 0);
+
+        return view('kpi.index', [
+            'title' => 'Manajemen Penilaian KPI',
+            'year' => $year,
+            'pegawai' => $pegawai,
+            'totalPegawai' => $totalPegawai,
+            'sudahDinilai' => $sudahDinilai,
+            'belumDinilai' => $belumDinilai,
+        ]);
+    }
+
     // Show KPI evaluation form for a user
     public function showEvaluationForm($userId, $year = null)
     {
-        $year = $year ?? date('Y');
+        $year = $year ?? request('year', date('Y'));
         $user = User::findOrFail($userId);
         
         // Get or create KPI targets for the user
@@ -66,7 +104,7 @@ class KpiController extends Controller
             'discipline_score' => 'required|numeric|min:0|max:100',
             'initiative_score' => 'required|numeric|min:0|max:100',
             'hr_notes' => 'nullable|string',
-            'status' => 'required|in:draft,submitted,approved'
+            'status' => 'required|in:draft,submitted,approved,finalized'
         ]);
 
         $evaluation->update($request->only([

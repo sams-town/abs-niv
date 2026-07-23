@@ -556,6 +556,7 @@ Route::get('/reset', function () {
 // ===== MODUL KPI =====
 use App\Http\Controllers\KpiController;
 Route::prefix('kpi')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+    Route::get('/', [KpiController::class, 'index']);
     Route::get('/evaluation/{userId}/{year?}', [KpiController::class, 'showEvaluationForm']);
     Route::post('/target/{targetId}/update', [KpiController::class, 'updateTarget']);
     Route::post('/evaluation/{evaluationId}/save', [KpiController::class, 'saveEvaluation']);
