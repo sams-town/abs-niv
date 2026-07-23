@@ -558,8 +558,7 @@ use App\Http\Controllers\KpiController;
 Route::prefix('kpi')->middleware(['auth', 'role:admin|hrd'])->group(function () {
     Route::get('/', [KpiController::class, 'index']);
     Route::post('/import', [KpiController::class, 'importTargets'])->name('kpi.import');
-    Route::get('/evaluation/{userId}/{year?}', [KpiController::class, 'showEvaluationForm']);
-    Route::get('/evaluation/{id}', [KpiController::class, 'showEvaluationForm']); // Alias untuk kompatibilitas
+    Route::get('/evaluation/{param1}/{param2?}', [KpiController::class, 'showEvaluationForm']);
     Route::post('/target/{targetId}/update', [KpiController::class, 'updateTarget']);
     Route::post('/evaluation/{evaluationId}/save', [KpiController::class, 'saveEvaluation']);
     Route::post('/target/add', [KpiController::class, 'addTarget']);

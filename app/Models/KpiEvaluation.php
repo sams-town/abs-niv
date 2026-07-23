@@ -26,8 +26,12 @@ class KpiEvaluation extends Model
 
     public function kpiTargets(): HasMany
     {
-        return $this->hasMany(KpiTarget::class, 'user_id', 'user_id')
-            ->where('year', $this->year);
+        // Pastikan year tersedia sebelum menambahkan where clause
+        $query = $this->hasMany(KpiTarget::class, 'user_id', 'user_id');
+        if ($this->year) {
+            $query->where('year', $this->year);
+        }
+        return $query;
     }
 
     // Calculate final score and grade when saving (Corporate Logic)
@@ -36,8 +40,15 @@ class KpiEvaluation extends Model
         parent::boot();
 
         static::saving(function (KpiEvaluation $evaluation) {
+            // Pastikan year dan user_id tersedia sebelum menghitung
+            if (!$evaluation->user_id || !$evaluation->year) {
+                return;
+            }
+
             // Get total quantitative score from kpi targets
-            $totalQuantitativeRaw = $evaluation->kpiTargets()->sum('calculated_score');
+            $totalQuantitativeRaw = KpiTarget::where('user_id', $evaluation->user_id)
+                ->where('year', $evaluation->year)
+                ->sum('calculated_score');
             
             // Normalize quantitative score to 0-70 range (weight 70%)
             $totalQuantitative = min(max($totalQuantitativeRaw, 0), 70);

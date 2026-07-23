@@ -28,8 +28,13 @@ class KpiTarget extends Model
         parent::boot();
 
         static::saving(function (KpiTarget $target) {
-            if ($target->target_value > 0 && $target->realization_value !== null) {
-                $target->calculated_score = ($target->realization_value / $target->target_value) * $target->weight;
+            // Pastikan target_value dan weight tersedia dan valid
+            $targetValue = (float) ($target->target_value ?? 0);
+            $weight = (float) ($target->weight ?? 0);
+            $realizationValue = $target->realization_value;
+
+            if ($targetValue > 0 && $realizationValue !== null && is_numeric($realizationValue)) {
+                $target->calculated_score = ((float) $realizationValue / $targetValue) * $weight;
             } else {
                 $target->calculated_score = 0;
             }

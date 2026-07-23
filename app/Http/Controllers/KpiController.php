@@ -16,88 +16,94 @@ class KpiController extends Controller
 {
     public function index(Request $request)
     {
-        $year = (int) ($request->get('year', date('Y')));
-        $search = $request->get('search', '');
-        $jabatanId = $request->get('jabatan_id', '');
-        $lokasiId = $request->get('lokasi_id', '');
+        try {
+            $year = (int) ($request->get('year', date('Y')));
+            $search = $request->get('search', '');
+            $jabatanId = $request->get('jabatan_id', '');
+            $lokasiId = $request->get('lokasi_id', '');
 
-        // Build query with eager loading
-        $query = User::pegawaiDanDosen()
-            ->with([
-                'Jabatan',
-                'Lokasi',
-                'kpiEvaluation' => function ($q) use ($year) {
-                    $q->where('year', $year);
-                },
-            ])
-            ->withCount([
-                'kpiTargets as imported_targets_count' => function ($q) use ($year) {
-                    $q->where('year', $year);
-                },
+            // Build query with eager loading
+            $query = User::pegawaiDanDosen()
+                ->with([
+                    'Jabatan',
+                    'Lokasi',
+                    'kpiEvaluation' => function ($q) use ($year) {
+                        $q->where('year', $year);
+                    },
+                ])
+                ->withCount([
+                    'kpiTargets as imported_targets_count' => function ($q) use ($year) {
+                        $q->where('year', $year);
+                    },
+                ]);
+
+            // Apply search filter
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('nip', 'like', "%{$search}%");
+                });
+            }
+
+            // Apply jabatan filter
+            if ($jabatanId) {
+                $query->where('jabatan_id', $jabatanId);
+            }
+
+            // Apply lokasi filter
+            if ($lokasiId) {
+                $query->where('lokasi_id', $lokasiId);
+            }
+
+            // Get paginated data
+            $pegawai = $query->orderBy('name')->paginate(10)->withQueryString();
+
+            // Calculate statistics
+            $totalPegawai = User::pegawaiDanDosen()->count();
+            
+            // Get evaluations for current year
+            $evaluations = KpiEvaluation::with('user')->where('year', $year)->get();
+            $sudahDinilai = $evaluations->where('status', 'finalized')->count();
+            $belumDinilai = max($totalPegawai - $sudahDinilai, 0);
+
+            // Calculate average score and highest performer
+            $averageScore = $evaluations->whereNotNull('final_score')->avg('final_score') ?? 0;
+            $highestPerformer = $evaluations->where('status', 'finalized')->sortByDesc('final_score')->first();
+
+            // Get data for charts
+            $gradeDistribution = [
+                'A' => $evaluations->where('grade', 'A')->count(),
+                'B' => $evaluations->where('grade', 'B')->count(),
+                'C' => $evaluations->where('grade', 'C')->count(),
+                'D' => $evaluations->where('grade', 'D')->count(),
+            ];
+
+            // Get jabatan and lokasi for filter dropdowns
+            $jabatanList = Jabatan::orderBy('nama_jabatan')->get();
+            $lokasiList = Lokasi::orderBy('nama_lokasi')->get();
+
+            return view('kpi.index', [
+                'title' => 'Manajemen KPI Korporat',
+                'year' => $year,
+                'pegawai' => $pegawai,
+                'totalPegawai' => $totalPegawai,
+                'sudahDinilai' => $sudahDinilai,
+                'belumDinilai' => $belumDinilai,
+                'averageScore' => $averageScore,
+                'highestPerformer' => $highestPerformer,
+                'gradeDistribution' => $gradeDistribution,
+                'jabatanList' => $jabatanList,
+                'lokasiList' => $lokasiList,
+                'search' => $search,
+                'jabatanId' => $jabatanId,
+                'lokasiId' => $lokasiId,
             ]);
-
-        // Apply search filter
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('nip', 'like', "%{$search}%");
-            });
+        } catch (\Exception $e) {
+            // Jika terjadi error, tampilkan pesan error dan redirect kembali
+            Alert::error('Error!', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect('/dashboard');
         }
-
-        // Apply jabatan filter
-        if ($jabatanId) {
-            $query->where('jabatan_id', $jabatanId);
-        }
-
-        // Apply lokasi filter
-        if ($lokasiId) {
-            $query->where('lokasi_id', $lokasiId);
-        }
-
-        // Get paginated data
-        $pegawai = $query->orderBy('name')->paginate(10)->withQueryString();
-
-        // Calculate statistics
-        $totalPegawai = User::pegawaiDanDosen()->count();
-        
-        // Get evaluations for current year
-        $evaluations = KpiEvaluation::with('user')->where('year', $year)->get();
-        $sudahDinilai = $evaluations->where('status', 'finalized')->count();
-        $belumDinilai = max($totalPegawai - $sudahDinilai, 0);
-
-        // Calculate average score and highest performer
-        $averageScore = $evaluations->whereNotNull('final_score')->avg('final_score');
-        $highestPerformer = $evaluations->where('status', 'finalized')->sortByDesc('final_score')->first();
-
-        // Get data for charts
-        $gradeDistribution = [
-            'A' => $evaluations->where('grade', 'A')->count(),
-            'B' => $evaluations->where('grade', 'B')->count(),
-            'C' => $evaluations->where('grade', 'C')->count(),
-            'D' => $evaluations->where('grade', 'D')->count(),
-        ];
-
-        // Get jabatan and lokasi for filter dropdowns
-        $jabatanList = Jabatan::orderBy('nama_jabatan')->get();
-        $lokasiList = Lokasi::orderBy('nama_lokasi')->get();
-
-        return view('kpi.index', [
-            'title' => 'Manajemen KPI Korporat',
-            'year' => $year,
-            'pegawai' => $pegawai,
-            'totalPegawai' => $totalPegawai,
-            'sudahDinilai' => $sudahDinilai,
-            'belumDinilai' => $belumDinilai,
-            'averageScore' => $averageScore,
-            'highestPerformer' => $highestPerformer,
-            'gradeDistribution' => $gradeDistribution,
-            'jabatanList' => $jabatanList,
-            'lokasiList' => $lokasiList,
-            'search' => $search,
-            'jabatanId' => $jabatanId,
-            'lokasiId' => $lokasiId,
-        ]);
     }
 
     // Import KPI Targets
