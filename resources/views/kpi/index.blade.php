@@ -346,7 +346,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Grade Chart
             const gradeCtx = document.getElementById('gradeChart').getContext('2d');
-            const gradeData = @json($gradeDistribution ?? ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0]);
+            @php
+                $gradeDataDefault = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0];
+                $finalGradeData = $gradeDistribution ?? $gradeDataDefault;
+            @endphp
+            const gradeData = {!! json_encode($finalGradeData) !!};
             new Chart(gradeCtx, {
                 type: 'doughnut',
                 data: {
@@ -369,9 +373,9 @@
 
             // Status Chart
             const statusCtx = document.getElementById('statusChart').getContext('2d');
-            const totalPegawai = {{ $totalPegawai ?? 0 }};
-            const sudahDinilai = {{ $sudahDinilai ?? 0 }};
-            const belumDinilai = {{ $belumDinilai ?? 0 }};
+            const totalPegawai = {{ (int) ($totalPegawai ?? 0) }};
+            const sudahDinilai = {{ (int) ($sudahDinilai ?? 0) }};
+            const belumDinilai = {{ (int) ($belumDinilai ?? 0) }};
             new Chart(statusCtx, {
                 type: 'bar',
                 data: {
