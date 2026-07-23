@@ -18,35 +18,6 @@
     </div>
 
     <div class="container-fluid">
-        <!-- Top Card: Filters & Import -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
-                            <div class="w-100">
-                                <span class="badge bg-light text-primary border mb-2">Tahun Penilaian: {{ $year }}</span>
-                                <h4 class="mb-1">Monitoring Kinerja Keseluruhan Perusahaan</h4>
-                                <p class="text-muted mb-0 small">Kelola target, penilaian, dan laporan KPI karyawan secara terpusat</p>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="d-flex flex-wrap gap-2">
-                                @if(auth()->check() && auth()->user()->is_admin === 'admin')
-                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#importModal">
-                                        <i class="fa fa-file-excel-o me-2"></i>Import Target KPI Excel
-                                    </button>
-                                @endif
-                                <button class="btn btn-primary" type="button" disabled>
-                                    <i class="fa fa-download me-2"></i>Export Rekap Tahunan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Statistic Cards -->
         <div class="row">
             <div class="col-md-3">
@@ -120,33 +91,6 @@
             </div>
         </div>
 
-        <!-- Charts Row -->
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-bottom-0 pb-0">
-                        <h5 class="mb-1">Distribusi Grade Karyawan</h5>
-                        <span class="text-muted small">Tahun {{ $year }}</span>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="gradeChart" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-bottom-0 pb-0">
-                        <h5 class="mb-1">Status Penilaian</h5>
-                        <span class="text-muted small">Tahun {{ $year }}</span>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="statusChart" height="300"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Main Table -->
         <div class="row mt-4">
             <div class="col-12">
@@ -162,14 +106,14 @@
                                 <select class="form-select" name="jabatan_id" style="max-width: 200px;">
                                     <option value="">Semua Jabatan</option>
                                     @foreach($jabatanList ?? [] as $j)
-                                        <option value="{{ $j->id }}" {{ $jabatanId == $j->id ? 'selected' : '' }}>{{ $j->nama_jabatan }}</option>
+                                        <option value="{{ $j->id }}" {{ ($jabatanId ?? '') == $j->id ? 'selected' : '' }}>{{ $j->nama_jabatan }}</option>
                                     @endforeach
                                 </select>
 
                                 <select class="form-select" name="lokasi_id" style="max-width: 200px;">
                                     <option value="">Semua Lokasi</option>
                                     @foreach($lokasiList ?? [] as $l)
-                                        <option value="{{ $l->id }}" {{ $lokasiId == $l->id ? 'selected' : '' }}>{{ $l->nama_lokasi }}</option>
+                                        <option value="{{ $l->id }}" {{ ($lokasiId ?? '') == $l->id ? 'selected' : '' }}>{{ $l->nama_lokasi }}</option>
                                     @endforeach
                                 </select>
 
@@ -189,7 +133,7 @@
                                 <thead>
                                     <tr>
                                         <th class="text-center">No</th>
-                                        <th>Nama &amp; Email</th>
+                                        <th>Nama & Email</th>
                                         <th>Jabatan / Unit</th>
                                         <th class="text-center">Status Target</th>
                                         <th class="text-center">Skor Akhir</th>
@@ -215,6 +159,18 @@
                                                 $statusBadgeClass = 'warning';
                                             }
                                             $statusText = ucwords(str_replace('_', ' ', $statusPenilaian));
+                                            
+                                            $grade = $evaluation->grade ?? '-';
+                                            $gradeBadgeClass = 'secondary';
+                                            if ($grade === 'A') {
+                                                $gradeBadgeClass = 'success';
+                                            } elseif ($grade === 'B') {
+                                                $gradeBadgeClass = 'primary';
+                                            } elseif ($grade === 'C') {
+                                                $gradeBadgeClass = 'warning';
+                                            } elseif ($grade === 'D') {
+                                                $gradeBadgeClass = 'danger';
+                                            }
                                         @endphp
                                         <tr>
                                             <td class="text-center">{{ $pegawai->firstItem() + $index }}</td>
@@ -239,19 +195,6 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                @php
-                                                    $grade = $evaluation->grade ?? '-';
-                                                    $gradeBadgeClass = 'secondary';
-                                                    if ($grade === 'A') {
-                                                        $gradeBadgeClass = 'success';
-                                                    } elseif ($grade === 'B') {
-                                                        $gradeBadgeClass = 'primary';
-                                                    } elseif ($grade === 'C') {
-                                                        $gradeBadgeClass = 'warning';
-                                                    } elseif ($grade === 'D') {
-                                                        $gradeBadgeClass = 'danger';
-                                                    }
-                                                @endphp
                                                 <span class="badge bg-light-{{ $gradeBadgeClass }} text-{{ $gradeBadgeClass }}">
                                                     {{ $grade }}
                                                 </span>
@@ -279,128 +222,19 @@
                         </div>
 
                         <!-- Pagination -->
-                        <div class="d-flex justify-content-between align-items-center flex-column flex-md-row gap-3 mt-4">
-                            <div class="text-muted small">
-                                Menampilkan {{ $pegawai->firstItem() ?? 0 }} - {{ $pegawai->lastItem() ?? 0 }} dari {{ $pegawai->total() }} data.
+                        @if(isset($pegawai) && method_exists($pegawai, 'links'))
+                            <div class="d-flex justify-content-between align-items-center flex-column flex-md-row gap-3 mt-4">
+                                <div class="text-muted small">
+                                    Menampilkan {{ $pegawai->firstItem() ?? 0 }} - {{ $pegawai->lastItem() ?? 0 }} dari {{ $pegawai->total() }} data.
+                                </div>
+                                <div>
+                                    {{ $pegawai->links() }}
+                                </div>
                             </div>
-                            <div>
-                                {{ $pegawai->links() }}
-                            </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Import Modal -->
-    @if(auth()->check() && auth()->user()->is_admin === 'admin')
-        <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form action="{{ route('kpi.import') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="modal-header">
-                            <h5 class="modal-title">Import Target KPI Massal</h5>
-                            <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Tahun Penilaian</label>
-                                <input type="number" class="form-control" name="year" value="{{ $year }}" min="2020" max="2100" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">File Excel (XLSX, XLS, CSV)</label>
-                                <input type="file" class="form-control" name="file_excel" accept=".xlsx,.xls,.csv" required>
-                            </div>
-
-                            <div class="alert alert-info">
-                                <h6 class="fw-semibold mb-1">Format Kolom Excel:</h6>
-                                <p class="mb-0 small">
-                                    <code>email</code> / <code>nip</code> / <code>nama_lengkap</code>,
-                                    <code>indicator_name</code>,
-                                    <code>target_value</code>,
-                                    <code>weight</code> (0-100),
-                                    <code>realization_value</code> (opsional)
-                                </p>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Batal</button>
-                            <button class="btn btn-primary" type="submit">Import Sekarang</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    @endif
-@endsection
-
-@section('scripts')
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-    <script>
-        // Grade Distribution Chart
-        document.addEventListener('DOMContentLoaded', function() {
-            // Grade Chart
-            const gradeCtx = document.getElementById('gradeChart').getContext('2d');
-            @php
-                $gradeDataDefault = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0];
-                $finalGradeData = $gradeDistribution ?? $gradeDataDefault;
-            @endphp
-            const gradeData = {!! json_encode($finalGradeData) !!};
-            new Chart(gradeCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Grade A', 'Grade B', 'Grade C', 'Grade D'],
-                    datasets: [{
-                        data: [gradeData.A, gradeData.B, gradeData.C, gradeData.D],
-                        backgroundColor: ['#28a745', '#007bff', '#ffc107', '#dc3545'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-
-            // Status Chart
-            const statusCtx = document.getElementById('statusChart').getContext('2d');
-            const totalPegawai = {{ (int) ($totalPegawai ?? 0) }};
-            const sudahDinilai = {{ (int) ($sudahDinilai ?? 0) }};
-            const belumDinilai = {{ (int) ($belumDinilai ?? 0) }};
-            new Chart(statusCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Sudah Dinilai (Finalized)', 'Belum Dinilai'],
-                    datasets: [{
-                        data: [sudahDinilai, belumDinilai],
-                        backgroundColor: ['#10c469', '#3b3e66'],
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
 @endsection
