@@ -187,9 +187,11 @@
                         </a>
                       </li>
 
+                      {{--
                       <li class="sidebar-list">
                         <a class="sidebar-link sidebar-title link-nav" href="{{ url('/my-profile') }}"><i data-feather="user-check"> </i><span>My Profile</span></a>
                       </li>
+                      --}}
 
                       @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
                         <li class="sidebar-list">

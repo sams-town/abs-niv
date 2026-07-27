@@ -184,12 +184,14 @@
                                     <span style="{{ Request::is('dashboard*') ? 'color: blue' : '' }}">Home</span>
                                 </a>
                             </li>
+                            {{--
                             <li>
                                 <a href="{{ url('/my-profile') }}" class="nav-link">
                                     <i class="fas fa-user" style="{{ Request::is('my-profile*') ? 'color: blue' : 'color: black' }}"></i>
                                     <span style="{{ Request::is('my-profile*') ? 'color: blue' : '' }}">My Profile</span>
                                 </a>
                             </li>
+                            --}}
                             <li>
                                 <a href="{{ url('/pegawai') }}" class="nav-link">
                                     <i class="fas fa-users" style="{{ Request::is('pegawai*') ? 'color: blue' : 'color: black' }}"></i>
