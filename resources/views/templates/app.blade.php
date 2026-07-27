@@ -56,6 +56,197 @@
         .select2-selection__choice {
             line-height: 45px;
         }
+
+        /* ========================================================
+           MODERN PROFESSIONAL DASHBOARD & MENU THEME (CONTRAST & AESTHETICS)
+           ======================================================== */
+        body, .bg_surface_color, #app-wrap.style1, .app-section {
+            background-color: #F3F4F6 !important; /* Soft neutral gray */
+            color: #1F2937 !important; /* Dark charcoal / hitam pekat */
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        }
+
+        /* 1. Skema Warna Profesional & Kontras Tinggi - Teks Tajam dan Jelas */
+        h1, h2, h3, h4, h5, h6, .fw_6, p.text-dark-charcoal {
+            color: #111827 !important;
+            font-weight: 700;
+        }
+
+        /* Teks dalam container header/dark tetap putih & jernih */
+        .app-header h3, .app-header h4, .app-header p, .app-header span, .app-header i,
+        .app-header .white_color, .app-header a.user-info *, .header.is-fixed * {
+            color: #FFFFFF !important;
+        }
+
+        /* Background Utama Header Atas - Gradasi Deep Blue / Indigo Profesional */
+        .app-header, .header.is-fixed, .app-header.st1 {
+            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #1E40AF 100%) !important;
+            box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.3) !important;
+            border-bottom-left-radius: 24px !important;
+            border-bottom-right-radius: 24px !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Efek glass dekoratif halus di header */
+        .app-header::after {
+            content: "";
+            position: absolute;
+            top: -60px;
+            right: -40px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* 2. Background Ikon/Card & Glassmorphism */
+        .tf-balance-box {
+            background: rgba(255, 255, 255, 0.96) !important;
+            backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.8) !important;
+            border-radius: 22px !important;
+            box-shadow: 0 14px 35px -5px rgba(0, 0, 0, 0.08), 0 8px 15px -6px rgba(0, 0, 0, 0.04) !important;
+            padding: 24px !important;
+            margin-top: -35px !important;
+            position: relative;
+            z-index: 10;
+        }
+
+        .tf-balance-box .inner-left h4, .tf-balance-box center h4, .tf-balance-box .inner-right h4 {
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            color: #6B7280 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 4px !important;
+        }
+
+        .tf-balance-box .inner-left span, .tf-balance-box center span, .tf-balance-box .inner-right span {
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            color: #111827 !important;
+        }
+
+        .br-right {
+            border-right: 1px solid #E5E7EB !important;
+        }
+
+        /* Wallet Footer (Payroll, Reimbursement, Kasbon) */
+        .wallet-footer {
+            border-top: 1px solid #F3F4F6 !important;
+            padding-top: 18px !important;
+            margin-top: 18px !important;
+        }
+
+        .wallet-card-item a {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 10px 8px !important;
+            border-radius: 16px !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            text-decoration: none !important;
+            color: #111827 !important;
+        }
+
+        .wallet-card-item p {
+            font-weight: 700 !important;
+            margin-bottom: 2px !important;
+            font-size: 13px !important;
+            color: #111827 !important;
+        }
+
+        /* 3. Modern Iconography & Service Grid */
+        .box-service {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 16px 14px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            list-style: none !important;
+        }
+
+        @media (max-width: 520px) {
+            .box-service {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 14px 10px !important;
+            }
+        }
+
+        .box-service li {
+            display: flex;
+            justify-content: center;
+        }
+
+        .box-service li a {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            padding: 16px 10px 14px !important;
+            background: #FFFFFF !important;
+            border: 1px solid #E5E7EB !important;
+            border-radius: 20px !important;
+            box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02) !important;
+            text-align: center !important;
+            text-decoration: none !important;
+            color: #1F2937 !important;
+            font-size: 12.5px !important;
+            font-weight: 700 !important;
+            line-height: 1.35 !important;
+            /* Interactive Micro-Animations */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        /* Efek Animasi Hover (Desktop) - Scale up 1.05 & Bayangan lebih dalam */
+        @media (hover: hover) and (pointer: fine) {
+            .box-service li a:hover, .wallet-card-item a:hover {
+                transform: scale(1.05) !important;
+                box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15), 0 10px 12px -6px rgba(0, 0, 0, 0.05) !important;
+                border-color: #3B82F6 !important;
+                background: #FAFAFA !important;
+                color: #2563EB !important;
+            }
+            .box-service li a:hover .modern-icon-box {
+                transform: scale(1.08) translateY(-2px);
+            }
+        }
+
+        /* Efek Active/Click (Mobile Feedback) - Smooth Shrink */
+        .box-service li a:active, .wallet-card-item a:active {
+            transform: scale(0.95) !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+            transition: transform 0.1s ease-out !important;
+            background: #F3F4F6 !important;
+        }
+
+        /* Background Ikon - Warna Pastel Lembut & Dimensi 3D */
+        .modern-icon-box {
+            width: 54px !important;
+            height: 54px !important;
+            border-radius: 18px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin-bottom: 12px !important;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.65), 0 6px 12px -2px rgba(0, 0, 0, 0.08) !important;
+            transition: all 0.3s ease-in-out !important;
+            font-size: 24px !important;
+        }
+
+        /* Professional Typography & Layout Spacing */
+        .tf-title h3 {
+            font-size: 18px !important;
+            font-weight: 800 !important;
+            color: #111827 !important;
+            border-left: 4px solid #2563EB;
+            padding-left: 12px;
+            letter-spacing: -0.3px;
+        }
     </style>
     @stack('style')
 </head>
