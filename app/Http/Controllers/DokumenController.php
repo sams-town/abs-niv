@@ -15,10 +15,7 @@ class DokumenController extends Controller
     public function index()
     {
         $search = request()->input('search');
-        $users = User::where('is_admin', '!=', 'superadmin')
-            ->whereDoesntHave('roles', function ($q) {
-                $q->where('name', 'Super Admin');
-            })
+        $users = User::pegawaiDanDosen()
             ->withCount(['Sip', 'files'])
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'LIKE', '%' . $search . '%')
@@ -38,7 +35,7 @@ class DokumenController extends Controller
     {
         return view('dokumen.tambah', [
             'title' => 'Tambah Data Dokumen',
-            'data_user' => User::all()
+            'data_user' => User::pegawaiDanDosen()->orderBy('name', 'ASC')->get()
         ]);
     }
     
@@ -64,7 +61,7 @@ class DokumenController extends Controller
     {
         return view('dokumen.edit', [
             'title' => "Edit Data Dokumen",
-            'data_user' => User::all(),
+            'data_user' => User::pegawaiDanDosen()->orderBy('name', 'ASC')->get(),
             'data_dokumen' => Sip::findOrFail($id)
         ]);
     }

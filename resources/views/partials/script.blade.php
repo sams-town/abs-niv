@@ -130,7 +130,7 @@
           $jmlh_bulan = cal_days_in_month(CAL_GREGORIAN,$bulan_skrg,$tahun_skrg);
           $tgl_mulai = date('1945-01-01');
           $tgl_akhir = date('Y-m-'.$jmlh_bulan);
-          $data_user = App\Models\User::select('name', 'tgl_lahir')->whereBetween('tgl_lahir', [$tgl_mulai, $tgl_akhir])->get();
+          $data_user = App\Models\User::pegawaiDanDosen()->select('name', 'tgl_lahir')->whereBetween('tgl_lahir', [$tgl_mulai, $tgl_akhir])->get();
         @endphp
         @foreach($data_user as $du)
           @php

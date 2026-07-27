@@ -31,7 +31,7 @@ class RekapDataController extends Controller
 
         date_default_timezone_set('Asia/Jakarta');
 
-        $user = User::orderBy('name', 'ASC')->paginate(10)->withQueryString();
+        $user = User::pegawaiDanDosen()->orderBy('name', 'ASC')->paginate(10)->withQueryString();
 
         $mulai = request()->input('mulai');
         $akhir = request()->input('akhir');
@@ -196,7 +196,7 @@ class RekapDataController extends Controller
     {
         $pdf = Pdf::loadView('rekapdata.rekapPdf', [
             'title' => 'Rekap PDF',
-            'data' => User::orderBy('name', 'ASC')->get()
+            'data' => User::pegawaiDanDosen()->orderBy('name', 'ASC')->get()
         ]);
 
         return $pdf->stream();

@@ -127,12 +127,15 @@ class User extends Authenticatable
         return $query->where('tipe_user', 'dosen')
                      ->where(function($q) {
                          $q->whereNull('is_admin')
-                           ->orWhereNotIn('is_admin', ['superadmin', 'admin']);
+                           ->orWhereNotIn('is_admin', ['superadmin', 'admin', 'Super Admin']);
                      })
+                     ->whereRaw("LOWER(name) NOT LIKE '%super admin%'")
+                     ->whereRaw("LOWER(name) NOT LIKE '%superadmin%'")
+                     ->whereRaw("LOWER(username) NOT LIKE '%super admin%'")
+                     ->whereRaw("LOWER(username) NOT LIKE '%superadmin%'")
                      ->where('username', '!=', 'admin')
-                     ->where('username', '!=', 'superadmin')
                      ->whereDoesntHave('roles', function ($q) {
-                         $q->where('name', 'Super Admin');
+                         $q->whereIn('name', ['Super Admin', 'superadmin', 'SuperAdmin']);
                      });
     }
 
@@ -141,12 +144,15 @@ class User extends Authenticatable
         return $query->where('tipe_user', 'pegawai')
                      ->where(function($q) {
                          $q->whereNull('is_admin')
-                           ->orWhereNotIn('is_admin', ['superadmin', 'admin']);
+                           ->orWhereNotIn('is_admin', ['superadmin', 'admin', 'Super Admin']);
                      })
+                     ->whereRaw("LOWER(name) NOT LIKE '%super admin%'")
+                     ->whereRaw("LOWER(name) NOT LIKE '%superadmin%'")
+                     ->whereRaw("LOWER(username) NOT LIKE '%super admin%'")
+                     ->whereRaw("LOWER(username) NOT LIKE '%superadmin%'")
                      ->where('username', '!=', 'admin')
-                     ->where('username', '!=', 'superadmin')
                      ->whereDoesntHave('roles', function ($q) {
-                         $q->where('name', 'Super Admin');
+                         $q->whereIn('name', ['Super Admin', 'superadmin', 'SuperAdmin']);
                      });
     }
 
@@ -155,12 +161,15 @@ class User extends Authenticatable
         return $query->whereIn('tipe_user', ['pegawai', 'dosen'])
                      ->where(function($q) {
                          $q->whereNull('is_admin')
-                           ->orWhereNotIn('is_admin', ['superadmin', 'admin']);
+                           ->orWhereNotIn('is_admin', ['superadmin', 'admin', 'Super Admin']);
                      })
+                     ->whereRaw("LOWER(name) NOT LIKE '%super admin%'")
+                     ->whereRaw("LOWER(name) NOT LIKE '%superadmin%'")
+                     ->whereRaw("LOWER(username) NOT LIKE '%super admin%'")
+                     ->whereRaw("LOWER(username) NOT LIKE '%superadmin%'")
                      ->where('username', '!=', 'admin')
-                     ->where('username', '!=', 'superadmin')
                      ->whereDoesntHave('roles', function ($q) {
-                         $q->where('name', 'Super Admin');
+                         $q->whereIn('name', ['Super Admin', 'superadmin', 'SuperAdmin']);
                      });
     }
 

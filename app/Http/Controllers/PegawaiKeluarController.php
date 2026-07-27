@@ -69,7 +69,7 @@ class PegawaiKeluarController extends Controller
 
         // Rata-rata karyawan aktif (awal bulan + akhir bulan) / 2
         // Karyawan aktif = tidak punya masa_berlaku atau masa_berlaku > hari ini
-        $totalKaryawanAktif = User::where('is_admin', '!=', 'superadmin')
+        $totalKaryawanAktif = User::pegawaiDanDosen()
             ->where(function($q) {
                 $q->whereNull('masa_berlaku')
                   ->orWhere('masa_berlaku', '>', date('Y-m-d'));
@@ -157,7 +157,7 @@ class PegawaiKeluarController extends Controller
     public function tambah()
     {
         $title = 'Pegawai Keluar';
-        $users = User::orderBy('name')->get();
+        $users = User::pegawaiDanDosen()->orderBy('name')->get();
 
         if (auth()->user()->is_admin == 'admin') {
             return view('pegawai-keluar.tambah', compact(
@@ -215,7 +215,7 @@ class PegawaiKeluarController extends Controller
     public function edit($id)
     {
         $title = 'Pegawai Keluar';
-        $users = User::orderBy('name')->get();
+        $users = User::pegawaiDanDosen()->orderBy('name')->get();
         $pegawai_keluar = PegawaiKeluar::find($id);
 
         if (auth()->user()->is_admin == 'admin') {
