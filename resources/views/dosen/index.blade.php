@@ -91,6 +91,13 @@
                                                 <button title="Nonaktifkan Dosen" class="border-0" style="background-color: transparent;" onclick="return confirm('Nonaktifkan dosen ini?')"><i class="icon-trash"></i></button>
                                             </form>
                                         </li>
+                                        @else
+                                        <li class="delete">
+                                            <form action="{{ url('/dosen/destroy/'.$d->id) }}" method="POST" class="d-inline">
+                                                @csrf @method('DELETE')
+                                                <button title="Hapus Permanen Dosen" class="border-0" style="background-color: transparent;" onclick="return confirm('Yakin ingin menghapus permanen data dosen ini?')"><i class="icon-trash" style="color: red;"></i></button>
+                                            </form>
+                                        </li>
                                         @endif
                                     </ul>
                                 </td>

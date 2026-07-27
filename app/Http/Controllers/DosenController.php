@@ -263,6 +263,37 @@ class DosenController extends Controller
         return redirect('/dosen')->with('success', 'Dosen Berhasil Dinonaktifkan');
     }
 
+    public function destroy($id)
+    {
+        $user = User::dosen()->findOrFail($id);
+
+        \App\Models\MappingShift::where('user_id', $id)->delete();
+        \App\Models\Lembur::where('user_id', $id)->delete();
+        \App\Models\Cuti::where('user_id', $id)->delete();
+        \App\Models\Sip::where('user_id', $id)->delete();
+        \App\Models\Payroll::where('user_id', $id)->delete();
+        \App\Models\File::where('user_id', $id)->delete();
+
+        if ($user->foto_karyawan) {
+            Storage::delete($user->foto_karyawan);
+        }
+
+        $path = public_path('neural.json');
+        if (\Illuminate\Support\Facades\File::exists($path)) {
+            $neural = \Illuminate\Support\Facades\File::get($path);
+            $dataface = json_decode($neural, true);
+            if (is_array($dataface)) {
+                $filterface = array_filter($dataface, function($item) use ($user) {
+                    return isset($item['label']) && $item['label'] !== $user->username;
+                });
+                \Illuminate\Support\Facades\File::put($path, json_encode(array_values($filterface), JSON_PRETTY_PRINT));
+            }
+        }
+
+        $user->delete();
+        return redirect('/dosen')->with('success', 'Data Dosen Berhasil Dihapus Permanen');
+    }
+
     public function importDosen(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [

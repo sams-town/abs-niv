@@ -488,6 +488,7 @@ Route::prefix('dosen')->middleware(['auth', 'role:admin|hrd'])->group(function (
     Route::get('/edit/{id}', [DosenController::class, 'edit']);
     Route::put('/update/{id}', [DosenController::class, 'update']);
     Route::delete('/delete/{id}', [DosenController::class, 'deactivate']);
+    Route::delete('/destroy/{id}', [DosenController::class, 'destroy']);
     Route::get('/template', [DosenController::class, 'downloadTemplate']);
     Route::post('/import', [DosenController::class, 'importDosen']);
 });
