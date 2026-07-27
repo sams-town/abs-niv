@@ -264,6 +264,7 @@ class LokasiController extends Controller
             'nama_lokasi' => 'required',
             'lat_kantor' => 'required',
             'long_kantor' => 'required',
+            'radius' => 'required',
             'keterangan' => 'required',
         ]);
 
