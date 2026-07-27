@@ -65,8 +65,17 @@ class NotificationController extends Controller
     public function readMessage($id)
     {
         $notifikasi = auth()->user()->notifications()->where('id', $id)->whereNull('read_at')->first();
-        $notifikasi->markAsRead();
-        return redirect($notifikasi->data["action"]);
+        if ($notifikasi) {
+            $notifikasi->markAsRead();
+            return redirect($notifikasi->data["action"] ?? '/notifications');
+        }
+        return redirect('/notifications');
+    }
+
+    public function markAllRead()
+    {
+        auth()->user()->unreadNotifications->markAsRead();
+        return redirect()->back()->with('success', 'Semua notifikasi telah ditandai dibaca dan alarm suara dinonaktifkan.');
     }
 
 }

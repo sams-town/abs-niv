@@ -19,6 +19,78 @@
     </div>
   </div>
 
+  <!-- Monitoring Kontrak Kerja (Deteksi Dini 3 Bulan) -->
+  @if(isset($kontrak_expiring))
+  <div class="row mb-4">
+    <div class="col-12">
+      <h4 class="mb-3" style="font-weight: 600; color: #1e293b;"><i data-feather="shield" class="mr-2 text-warning"></i> Monitoring Masa Aktif Kontrak Kerja (Deteksi Dini 3 Bulan)</h4>
+      <div class="card" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid {{ count($kontrak_expiring) > 0 ? '#f59e0b' : '#10b981' }};">
+        <div class="card-body p-4">
+          @if(count($kontrak_expiring) > 0)
+            <div class="alert alert-warning d-flex align-items-center mb-3" style="border-radius: 8px; background-color: #fffbeb; border: 1px solid #fcd34d; color: #92400e;">
+              <i data-feather="alert-triangle" class="mr-2" style="width: 24px; height: 24px; color: #d97706;"></i>
+              <div>
+                <strong>Peringatan Sistem:</strong> Ditemukan <strong>{{ count($kontrak_expiring) }} Pegawai/Dosen</strong> yang masa kontrak kerjanya akan habis dalam waktu kurang dari 3 bulan (atau sudah habis). <br>
+                <small>Suara alarm notifikasi tidak akan berhenti (berulang otomatis) hingga Anda membuka dan memeriksa notifikasi terkait!</small>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover table-striped align-middle mb-0">
+                <thead style="background-color: #f8fafc;">
+                  <tr>
+                    <th>No</th>
+                    <th>Nama Pegawai / Dosen</th>
+                    <th>Tipe User</th>
+                    <th>Jabatan / Divisi</th>
+                    <th>Tanggal Habis Kontrak</th>
+                    <th>Status & Sisa Waktu</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($kontrak_expiring as $index => $item)
+                    @php
+                      $tglHabis = \Carbon\Carbon::parse($item['tanggal_selesai']);
+                      $diffDays = \Carbon\Carbon::now()->startOfDay()->diffInDays($tglHabis->startOfDay(), false);
+                    @endphp
+                    <tr>
+                      <td>{{ $index + 1 }}</td>
+                      <td class="font-weight-bold" style="color: #1e293b;">{{ $item['name'] }}</td>
+                      <td><span class="badge badge-info" style="font-size: 11px;">{{ ucfirst($item['tipe_user']) }}</span></td>
+                      <td>{{ $item['jabatan'] ?? '-' }}</td>
+                      <td><span class="text-danger font-weight-bold">{{ $tglHabis->translatedFormat('d F Y') }}</span></td>
+                      <td>
+                        @if($diffDays < 0)
+                          <span class="badge badge-danger p-2" style="font-size: 12px;"><i data-feather="x-circle" style="width:14px;height:14px;margin-right:4px;"></i> Habis {{ abs($diffDays) }} hari lalu</span>
+                        @elseif($diffDays == 0)
+                          <span class="badge badge-danger p-2" style="font-size: 12px;"><i data-feather="alert-octagon" style="width:14px;height:14px;margin-right:4px;"></i> Habis Hari Ini!</span>
+                        @else
+                          <span class="badge badge-warning text-dark p-2" style="font-size: 12px; background-color: #fef08a;"><i data-feather="clock" style="width:14px;height:14px;margin-right:4px;"></i> {{ $diffDays }} Hari Lagi</span>
+                        @endif
+                      </td>
+                      <td>
+                        <a href="{{ url('/kontrak') }}" class="btn btn-sm btn-primary" style="border-radius: 6px;">
+                          <i data-feather="external-link" style="width: 14px; height: 14px;"></i> Kelola Kontrak
+                        </a>
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          @else
+            <div class="text-center py-4">
+              <div class="mb-2" style="color: #10b981;"><i data-feather="check-circle" style="width: 48px; height: 48px;"></i></div>
+              <h5 style="font-weight: 600; color: #1e293b;">Semua Kontrak Kerja Pegawai Aman</h5>
+              <p class="text-muted mb-0">Saat ini tidak ada pegawai atau dosen yang masa kontrak atau masa aktifnya habis dalam waktu 3 bulan ke depan.</p>
+            </div>
+          @endif
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+
   <!-- Kehadiran Section -->
   <div class="row mb-4">
     <div class="col-12">

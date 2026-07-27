@@ -34,6 +34,13 @@
                             </div>
                         </div>
                     </form>
+                    @if(auth()->user()->unreadNotifications->count() > 0)
+                    <div class="mt-3 text-center">
+                        <a href="{{ url('/notifications/mark-all-read') }}" class="btn btn-warning text-dark w-100 py-2 d-inline-flex align-items-center justify-content-center" style="font-weight: 600; border-radius: 8px; font-size: 13px;">
+                            <i class="fa fa-bell-slash mr-2"></i> ✔️ Baca Semua & Matikan Suara Alarm
+                        </a>
+                    </div>
+                    @endif
                 </div>
                 <div class="tf-spacing-16"></div>
             </div>

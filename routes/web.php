@@ -169,6 +169,7 @@ Route::get('/dinas-luar', [DinasLuar::class, 'index'])->middleware('auth');
 Route::get('/notifications', [NotificationController::class, 'index'])->middleware('auth');
 Route::get('/notifications/read', [NotificationController::class, 'read'])->middleware('auth');
 Route::get('/notifications/unread', [NotificationController::class, 'unread'])->middleware('auth');
+Route::get('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->middleware('auth');
 Route::get('/notifications/read-message/{id}', [NotificationController::class, 'readMessage'])->middleware('auth');
 
 Route::get('/menu', [dashboardController::class, 'menu'])->middleware('auth');
@@ -567,8 +568,61 @@ Route::prefix('kpi')->middleware(['auth', 'role:admin|hrd'])->group(function () 
 });
 
 Route::get('/ajax-unread-notifications-count', function() {
+    $user = auth()->user();
+    if ($user) {
+        // Otomatis deteksi dini kontrak habis (3 bulan sebelum habis) untuk Superadmin / Admin
+        if ($user->is_admin == 'admin' || $user->hasRole('admin') || $user->hasRole('hrd') || $user->hasRole('Super Admin')) {
+            try {
+                $tgl_3_bulan = \Carbon\Carbon::now()->addMonths(3)->format('Y-m-d');
+                $tgl_lampau = \Carbon\Carbon::now()->subMonths(6)->format('Y-m-d');
+
+                $cntKontrak = \App\Models\Kontrak::whereNotNull('tanggal_selesai')
+                    ->whereBetween('tanggal_selesai', [$tgl_lampau, $tgl_3_bulan])
+                    ->count();
+
+                $cntUser = \App\Models\User::whereIn('tipe_user', ['pegawai', 'dosen'])
+                    ->whereNotNull('masa_berlaku')
+                    ->whereBetween('masa_berlaku', [$tgl_lampau, $tgl_3_bulan])
+                    ->count();
+
+                if ($cntKontrak > 0 || $cntUser > 0) {
+                    $totalExpiring = max($cntKontrak, $cntUser);
+                    // Cek apakah admin memiliki notifikasi aktif yang belum dibaca tentang kontrak
+                    $existingUnread = $user->notifications()
+                        ->whereNull('read_at')
+                        ->where(function($q) {
+                            $q->where('data->action', 'LIKE', '%/kontrak%')
+                              ->orWhere('data->message', 'LIKE', '%masa kontrak%');
+                        })
+                        ->exists();
+
+                    // Cek juga apakah hari ini sudah pernah dibuatkan notifikasi
+                    $createdToday = $user->notifications()
+                        ->whereDate('created_at', \Carbon\Carbon::today())
+                        ->where(function($q) {
+                            $q->where('data->action', 'LIKE', '%/kontrak%')
+                              ->orWhere('data->message', 'LIKE', '%masa kontrak%');
+                        })
+                        ->exists();
+
+                    if (!$existingUnread && !$createdToday) {
+                        $user->messages = [
+                            'user_id'   => $user->id,
+                            'from'      => 'Monitoring Kontrak (Deteksi Dini)',
+                            'message'   => "⚠️ Peringatan: Terdapat {$totalExpiring} Pegawai/Dosen yang masa kontraknya akan habis dalam rentang 3 bulan! Segera periksa di dashboard.",
+                            'action'    => '/kontrak'
+                        ];
+                        $user->notify(new \App\Notifications\UserNotification);
+                    }
+                }
+            } catch (\Exception $e) {
+                // Abaikan jika terjadi error query agar ajax tetap berjalan lancar
+            }
+        }
+    }
+    
     return response()->json([
-        'count' => auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0
+        'count' => $user ? $user->notifications()->whereNull('read_at')->count() : 0
     ]);
 })->middleware('auth');
 

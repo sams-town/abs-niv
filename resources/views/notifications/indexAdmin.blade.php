@@ -22,16 +22,21 @@
                   <div class="email-top">
                     <div class="row">
                       <div class="col-12">
-                        <div class="d-flex">
-                          <div class="flex-grow-1">                                                                       
-                            <div class="dropdown">
-                              <button class="btn btn-primary dropdown-toggle" id="dropdownMenuButton" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action</button>
-
+                        <div class="d-flex align-items-center">
+                          <div class="flex-grow-1 d-flex flex-wrap align-items-center gap-2">                                                                       
+                            <div class="dropdown mr-2">
+                              <button class="btn btn-primary dropdown-toggle" id="dropdownMenuButton" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Filter</button>
                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="{{ url('/notifications') }}">All</a>
                                 <a class="dropdown-item" href="{{ url('/notifications/read') }}">Read</a>
                                 <a class="dropdown-item" href="{{ url('/notifications/unread') }}">Unread</a>
+                              </div>
                             </div>
-                            </div>
+                            @if(auth()->user()->unreadNotifications->count() > 0)
+                            <a href="{{ url('/notifications/mark-all-read') }}" class="btn btn-warning text-dark ml-2 d-inline-flex align-items-center" style="font-weight: 600; border-radius: 6px;">
+                              <i class="fa fa-bell-slash-o mr-2"></i> ✔️ Tandai Semua Sudah Dibaca & Matikan Suara Alarm
+                            </a>
+                            @endif
                           </div>
                         </div>
                       </div>

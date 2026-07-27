@@ -9,6 +9,8 @@ use App\Models\Lembur;
 use App\Models\Payroll;
 use App\Models\ResetCuti;
 use App\Models\MappingShift;
+use App\Models\Kontrak;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Reimbursement;
 
@@ -25,8 +27,52 @@ class dashboardController extends Controller
         $tgl_akhir = date('Y-m-'.$jmlh_bulan);
 
         if(auth()->user()->is_admin == "admin"){
+            // Deteksi Dini Kontrak Kerja (habis dalam 3 bulan)
+            $tgl_3_bulan = Carbon::now()->addMonths(3)->format('Y-m-d');
+            $tgl_lampau = Carbon::now()->subMonths(6)->format('Y-m-d');
+            
+            $expiring_users = collect();
+            $users_exp = User::pegawaiDanDosen()
+                ->with(['Jabatan', 'Divisi'])
+                ->whereNotNull('masa_berlaku')
+                ->whereBetween('masa_berlaku', [$tgl_lampau, $tgl_3_bulan])
+                ->get();
+                
+            foreach ($users_exp as $u) {
+                $expiring_users->push([
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'tipe_user' => $u->tipe_user,
+                    'jabatan' => $u->Jabatan ? $u->Jabatan->nama_jabatan : ($u->Divisi ? $u->Divisi->nama_divisi : '-'),
+                    'tanggal_selesai' => $u->masa_berlaku
+                ]);
+            }
+            
+            $kontraks_exp = Kontrak::with('user.Jabatan', 'user.Divisi')
+                ->whereNotNull('tanggal_selesai')
+                ->whereBetween('tanggal_selesai', [$tgl_lampau, $tgl_3_bulan])
+                ->whereHas('user', function($q) {
+                    $q->whereIn('tipe_user', ['pegawai', 'dosen']);
+                })
+                ->get();
+                
+            foreach ($kontraks_exp as $k) {
+                if ($k->user && !$expiring_users->contains('id', $k->user->id)) {
+                    $expiring_users->push([
+                        'id' => $k->user->id,
+                        'name' => $k->user->name,
+                        'tipe_user' => $k->user->tipe_user,
+                        'jabatan' => $k->user->Jabatan ? $k->user->Jabatan->nama_jabatan : ($k->user->Divisi ? $k->user->Divisi->nama_divisi : '-'),
+                        'tanggal_selesai' => $k->tanggal_selesai
+                    ]);
+                }
+            }
+            
+            $expiring_users = $expiring_users->sortBy('tanggal_selesai')->values()->all();
+
             return view('dashboard.index', [
                 'title' => 'Dashboard',
+                'kontrak_expiring' => $expiring_users,
                 'jumlah_user' => User::pegawaiDanDosen()->count(),
                 'jumlah_masuk' => MappingShift::where('tanggal', $tgl_skrg)->where('status_absen', 'Masuk')->count(),
                 'jumlah_libur' => MappingShift::where('tanggal', $tgl_skrg)->where('status_absen', 'Libur')->count(),

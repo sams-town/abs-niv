@@ -480,45 +480,70 @@
         }
     </script>
     <script>
-        // Web Audio API Synthesizer for high-quality notification sound (no asset files required)
-        function playNotificationSound() {
-            try {
-                const context = new (window.AudioContext || window.webkitAudioContext)();
-                const now = context.currentTime;
-                
-                // Note 1 (G5)
-                const osc1 = context.createOscillator();
-                const gain1 = context.createGain();
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(783.99, now); // G5
-                gain1.gain.setValueAtTime(0.2, now);
-                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-                osc1.connect(gain1);
-                gain1.connect(context.destination);
-                osc1.start(now);
-                osc1.stop(now + 0.35);
-                
-                // Note 2 (C6)
-                const osc2 = context.createOscillator();
-                const gain2 = context.createGain();
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(1046.50, now + 0.12); // C6
-                gain2.gain.setValueAtTime(0.2, now + 0.12);
-                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                osc2.connect(gain2);
-                gain2.connect(context.destination);
-                osc2.start(now + 0.12);
-                osc2.stop(now + 0.5);
-            } catch (e) {
-                console.warn("Web Audio API blocked or not supported: ", e);
-            }
-        }
-
-        // Notification Polling Logic
+        // Sistem Notifikasi Audio Kontinu (Looping Suara saat ada Notifikasi Belum Dibaca untuk Karyawan/Dosen)
         (function() {
-            let lastNotifCount = @json(auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0);
-            
-            function checkNotifications() {
+            let currentUnreadCount = @json(auth()->user() ? auth()->user()->notifications()->whereNull('read_at')->count() : 0);
+            let userInteracted = false;
+
+            // Mencegah pemblokiran audio autoplay oleh browser modern
+            function unlockAudio() {
+                if (!userInteracted) {
+                    userInteracted = true;
+                    if (currentUnreadCount > 0) {
+                        playAlarmSound();
+                    }
+                    window.removeEventListener('click', unlockAudio);
+                    window.removeEventListener('keydown', unlockAudio);
+                    window.removeEventListener('touchstart', unlockAudio);
+                }
+            }
+            window.addEventListener('click', unlockAudio);
+            window.addEventListener('keydown', unlockAudio);
+            window.addEventListener('touchstart', unlockAudio);
+
+            // Web Audio API Synthesizer (bunyi alarm peringatan jelas & elegan)
+            function playAlarmSound() {
+                if (!userInteracted) return;
+                try {
+                    const context = new (window.AudioContext || window.webkitAudioContext)();
+                    const now = context.currentTime;
+                    
+                    // Nada Peringatan Beruntun (G5 - C6 - G5 - C6)
+                    const tones = [783.99, 1046.50, 783.99, 1046.50];
+                    tones.forEach((freq, idx) => {
+                        const osc = context.createOscillator();
+                        const gain = context.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + (idx * 0.15));
+                        gain.gain.setValueAtTime(0.25, now + (idx * 0.15));
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + (idx * 0.15) + 0.12);
+                        osc.connect(gain);
+                        gain.connect(context.destination);
+                        osc.start(now + (idx * 0.15));
+                        osc.stop(now + (idx * 0.15) + 0.12);
+                    });
+                } catch (e) {
+                    console.warn("Audio error:", e);
+                }
+            }
+
+            // Loop Kontinu: Suara notifikasi terus berulang setiap 4,5 detik selama belum dibuka/dibaca!
+            setInterval(function() {
+                if (currentUnreadCount > 0) {
+                    playAlarmSound();
+                    
+                    // Efek visual pulsa pada tombol lonceng notifikasi
+                    const notifBox = document.getElementById('bell-notif-box');
+                    if (notifBox) {
+                        notifBox.style.transition = 'transform 0.2s';
+                        notifBox.style.transform = 'scale(1.25)';
+                        setTimeout(() => { notifBox.style.transform = 'scale(1)'; }, 300);
+                    }
+                }
+            }, 4500);
+
+            // Polling Ajax untuk cek jumlah notifikasi unread terbaru dari server
+            function checkUnreadFromServer() {
                 fetch(@json(url("/ajax-unread-notifications-count")))
                     .then(response => response.json())
                     .then(data => {
@@ -534,18 +559,20 @@
                             }
                         }
                         
-                        // Play sound if new notification arrives
-                        if (newCount > lastNotifCount) {
-                            playNotificationSound();
+                        // Jika sebelumnya 0 lalu ada notifikasi baru masuk, langsung bunyikan
+                        if (newCount > 0 && newCount > currentUnreadCount) {
+                            playAlarmSound();
                         }
                         
-                        lastNotifCount = newCount;
+                        currentUnreadCount = newCount;
                     })
                     .catch(err => console.error("Error fetching notification count:", err));
             }
             
-            // Check every 10 seconds
-            setInterval(checkNotifications, 10000);
+            // Cek ke server setiap 8 detik
+            setInterval(checkUnreadFromServer, 8000);
+            
+            setTimeout(() => { if (currentUnreadCount > 0 && userInteracted) playAlarmSound(); }, 1000);
         })();
     </script>
 </body>
