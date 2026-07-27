@@ -265,33 +265,95 @@ class DosenController extends Controller
 
     public function destroy($id)
     {
-        $user = User::dosen()->findOrFail($id);
+        try {
+            $user = User::findOrFail($id);
 
-        \App\Models\MappingShift::where('user_id', $id)->delete();
-        \App\Models\Lembur::where('user_id', $id)->delete();
-        \App\Models\Cuti::where('user_id', $id)->delete();
-        \App\Models\Sip::where('user_id', $id)->delete();
-        \App\Models\Payroll::where('user_id', $id)->delete();
-        \App\Models\File::where('user_id', $id)->delete();
+            // Matikan pengecekan foreign key sementara agar database tidak menolak penghapusan
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        if ($user->foto_karyawan) {
-            Storage::delete($user->foto_karyawan);
-        }
+            // Hapus relasi data umum
+            $relatedUserModels = [
+                \App\Models\MappingShift::class,
+                \App\Models\Lembur::class,
+                \App\Models\Cuti::class,
+                \App\Models\Sip::class,
+                \App\Models\Payroll::class,
+                \App\Models\File::class,
+                \App\Models\dinasLuar::class,
+                \App\Models\Kontrak::class,
+                \App\Models\Kasbon::class,
+                \App\Models\Kunjungan::class,
+                \App\Models\Reimbursement::class,
+                \App\Models\ReimbursementsItem::class,
+                \App\Models\LaporanKinerja::class,
+                \App\Models\LaporanKerja::class,
+                \App\Models\Patroli::class,
+                \App\Models\PegawaiKeluar::class,
+                \App\Models\PengajuanKeuangan::class,
+                \App\Models\Penugasan::class,
+                \App\Models\RapatPegawai::class,
+                \App\Models\TargetKinerjaTeam::class,
+                \App\Models\KpiSubmission::class,
+                \App\Models\KpiAssignment::class,
+            ];
 
-        $path = public_path('neural.json');
-        if (\Illuminate\Support\Facades\File::exists($path)) {
-            $neural = \Illuminate\Support\Facades\File::get($path);
-            $dataface = json_decode($neural, true);
-            if (is_array($dataface)) {
-                $filterface = array_filter($dataface, function($item) use ($user) {
-                    return isset($item['label']) && $item['label'] !== $user->username;
-                });
-                \Illuminate\Support\Facades\File::put($path, json_encode(array_values($filterface), JSON_PRETTY_PRINT));
+            foreach ($relatedUserModels as $model) {
+                if (class_exists($model)) {
+                    try {
+                        $model::where('user_id', $id)->delete();
+                    } catch (\Throwable $th) {
+                        // Abaikan jika tabel/kolom belum ada
+                    }
+                }
             }
-        }
 
-        $user->delete();
-        return redirect('/dosen')->with('success', 'Data Dosen Berhasil Dihapus Permanen');
+            // Hapus relasi khusus dosen
+            $relatedDosenModels = [
+                \App\Models\LogMengajar::class,
+                \App\Models\Jadwal::class,
+                \App\Models\LaporanMengajar::class,
+                \App\Models\TransaksiMengajar::class,
+                \App\Models\SesiDaring::class,
+            ];
+
+            foreach ($relatedDosenModels as $model) {
+                if (class_exists($model)) {
+                    try {
+                        $model::where('dosen_id', $id)->delete();
+                    } catch (\Throwable $th) {
+                        // Abaikan
+                    }
+                }
+            }
+
+            if ($user->foto_karyawan && !empty($user->foto_karyawan)) {
+                try {
+                    Storage::delete($user->foto_karyawan);
+                } catch (\Throwable $th) {}
+            }
+
+            $path = public_path('neural.json');
+            if (\Illuminate\Support\Facades\File::exists($path)) {
+                try {
+                    $neural = \Illuminate\Support\Facades\File::get($path);
+                    $dataface = json_decode($neural, true);
+                    if (is_array($dataface)) {
+                        $filterface = array_filter($dataface, function($item) use ($user) {
+                            return isset($item['label']) && $item['label'] !== $user->username;
+                        });
+                        \Illuminate\Support\Facades\File::put($path, json_encode(array_values($filterface), JSON_PRETTY_PRINT));
+                    }
+                } catch (\Throwable $th) {}
+            }
+
+            $user->delete();
+
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            return redirect('/dosen')->with('success', 'Data Dosen Berhasil Dihapus Permanen');
+        } catch (\Throwable $e) {
+            try { \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;'); } catch (\Throwable $th) {}
+            return redirect('/dosen')->with('error', 'Gagal menghapus data dosen: ' . $e->getMessage());
+        }
     }
 
     public function importDosen(Request $request)

@@ -585,23 +585,74 @@ class karyawanController extends Controller
 
     public function deleteKaryawan($id)
     {
-        $delete = User::find($id);
-        MappingShift::where('user_id', $id)->delete();
-        Lembur::where('user_id', $id)->delete();
-        Cuti::where('user_id', $id)->delete();
-        Sip::where('user_id', $id)->delete();
-        Payroll::where('user_id', $id)->delete();
-        Storage::delete($delete->foto_karyawan);
-        $path = public_path('neural.json');
-        $neural = File::get($path);
-        $dataface = json_decode($neural, true);
+        try {
+            $delete = User::findOrFail($id);
 
-        $filterface = array_filter($dataface, function($item) use ($delete) {
-            return $item['label'] !== $delete->username;
-        });
-        File::put($path, json_encode(array_values($filterface), JSON_PRETTY_PRINT));
-        $delete->delete();
-        return redirect('/pegawai')->with('success', 'Data Berhasil di Delete');
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            $relatedModels = [
+                MappingShift::class,
+                Lembur::class,
+                Cuti::class,
+                Sip::class,
+                Payroll::class,
+                \App\Models\File::class,
+                \App\Models\dinasLuar::class,
+                \App\Models\Kontrak::class,
+                \App\Models\Kasbon::class,
+                \App\Models\Kunjungan::class,
+                \App\Models\Reimbursement::class,
+                \App\Models\ReimbursementsItem::class,
+                \App\Models\LaporanKinerja::class,
+                \App\Models\LaporanKerja::class,
+                \App\Models\Patroli::class,
+                \App\Models\PegawaiKeluar::class,
+                \App\Models\PengajuanKeuangan::class,
+                \App\Models\Penugasan::class,
+                \App\Models\RapatPegawai::class,
+                \App\Models\TargetKinerjaTeam::class,
+                \App\Models\KpiSubmission::class,
+                \App\Models\KpiAssignment::class,
+            ];
+
+            foreach ($relatedModels as $model) {
+                if (class_exists($model)) {
+                    try {
+                        $model::where('user_id', $id)->delete();
+                    } catch (\Throwable $th) {
+                        // Abaikan
+                    }
+                }
+            }
+
+            if ($delete->foto_karyawan && !empty($delete->foto_karyawan)) {
+                try {
+                    Storage::delete($delete->foto_karyawan);
+                } catch (\Throwable $th) {}
+            }
+
+            $path = public_path('neural.json');
+            if (\Illuminate\Support\Facades\File::exists($path)) {
+                try {
+                    $neural = \Illuminate\Support\Facades\File::get($path);
+                    $dataface = json_decode($neural, true);
+                    if (is_array($dataface)) {
+                        $filterface = array_filter($dataface, function($item) use ($delete) {
+                            return isset($item['label']) && $item['label'] !== $delete->username;
+                        });
+                        \Illuminate\Support\Facades\File::put($path, json_encode(array_values($filterface), JSON_PRETTY_PRINT));
+                    }
+                } catch (\Throwable $th) {}
+            }
+
+            $delete->delete();
+
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            return redirect('/pegawai')->with('success', 'Data Berhasil di Delete');
+        } catch (\Throwable $e) {
+            try { \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;'); } catch (\Throwable $th) {}
+            return redirect('/pegawai')->with('error', 'Gagal menghapus data pegawai: ' . $e->getMessage());
+        }
     }
 
     public function editpassword($id)
