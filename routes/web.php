@@ -321,6 +321,8 @@ Route::get('/payroll/{id}/edit', [PayrollController::class, 'edit'])->middleware
 Route::get('/payroll/{id}/download', [PayrollController::class, 'download'])->middleware('auth');
 Route::put('/payroll/{id}/update', [PayrollController::class, 'update'])->middleware('admin');
 Route::delete('/payroll/{id}/delete', [PayrollController::class, 'delete'])->middleware('admin');
+Route::post('/payroll/import', [PayrollController::class, 'import'])->middleware('admin');
+Route::get('/payroll/template', [PayrollController::class, 'downloadTemplate'])->middleware('admin');
 
 Route::get('/kasbon', [KasbonController::class, 'index'])->middleware('auth');
 Route::get('/kasbon/tambah', [KasbonController::class, 'tambah'])->middleware('auth');

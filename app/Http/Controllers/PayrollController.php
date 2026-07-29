@@ -285,4 +285,22 @@ class PayrollController extends Controller
     {
         return view('slip-gaji.karyawan', ['title' => 'Slip Gaji Karyawan']);
     }
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv'
+        ]);
+
+        try {
+            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\PayrollImport, $request->file('file'));
+            return redirect('/payroll')->with('success', 'Data Payroll Berhasil Diimport');
+        } catch (\Exception $e) {
+            return redirect('/payroll')->with('error', 'Gagal mengimport data: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadTemplate()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\PayrollTemplateExport, 'Template_Payroll.xlsx');
+    }
 }

@@ -46,6 +46,9 @@
                 <i data-feather="file" style="width:15px"></i> Export PDF
             </a>
             @can('admin')
+            <button type="button" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i data-feather="upload" style="width:15px"></i> Import Excel
+            </button>
             <a href="{{ url('/rekap-data') }}" class="btn btn-sm d-flex align-items-center gap-1" style="background:#1a7a4a;color:white;border-radius:8px">
                 <i data-feather="lock" style="width:15px"></i> Generate &amp; Lock Payroll
             </a>
@@ -179,6 +182,44 @@
     </div>
 
 </div>
+
+@can('admin')
+<!-- Modal Import Excel -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="importModalLabel">Import Data Payroll</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url('/payroll/import') }}" method="POST" enctype="multipart/form-data">
+          @csrf
+          <div class="modal-body">
+              <p class="text-muted" style="font-size:14px">Silakan unggah file Excel (.xlsx atau .xls) yang berisi data payroll. Pastikan format kolom sesuai dengan template standar.</p>
+              
+              <div class="mb-4">
+                  <a href="{{ url('/payroll/template') }}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                      <i data-feather="download" style="width:15px"></i> Download Template Excel
+                  </a>
+              </div>
+
+              <div class="mb-3">
+                  <label for="fileExcel" class="form-label fw-semibold">Pilih File Excel <span class="text-danger">*</span></label>
+                  <input class="form-control" type="file" id="fileExcel" name="file" accept=".xlsx, .xls, .csv" required>
+              </div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+              <button type="submit" class="btn btn-success d-inline-flex align-items-center gap-1">
+                  <i data-feather="check" style="width:16px"></i> Proses Import
+              </button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endcan
+
 
 @push('script')
 <script>
