@@ -147,10 +147,53 @@ class CutiController extends Controller
         return redirect('/cuti')->with('success', 'Data Berhasil di Tambahkan');
     }
 
+    private function deleteRelatedNotifications($delete)
+    {
+        $user_id = $delete->user_id;
+        $tanggal = $delete->tanggal;
+        $id = $delete->id;
+
+        $notifications = \Illuminate\Support\Facades\DB::table('notifications')
+            ->where('data', 'LIKE', '%"action":"/data-cuti?user_id='.$user_id.'%')
+            ->orWhere('data', 'LIKE', '%"action":"/cuti?mulai=%')
+            ->get();
+            
+        foreach ($notifications as $notification) {
+            $data = json_decode($notification->data, true);
+            $action = $data['action'] ?? '';
+            $parsed_url = parse_url($action);
+            
+            if (isset($parsed_url['query'])) {
+                parse_str($parsed_url['query'], $params);
+                $mulai = $params['mulai'] ?? null;
+                $akhir = $params['akhir'] ?? null;
+                $notif_user_id = $params['user_id'] ?? null;
+                
+                if (!$notif_user_id && str_contains($action, '/cuti?mulai=')) {
+                    $notif_user_id = $notification->notifiable_id;
+                }
+                
+                if ($notif_user_id == $user_id && $mulai && $akhir && $tanggal >= $mulai && $tanggal <= $akhir) {
+                    $remaining = \App\Models\Cuti::where('user_id', $user_id)
+                        ->whereBetween('tanggal', [$mulai, $akhir])
+                        ->where('id', '!=', $id)
+                        ->exists();
+                        
+                    if (!$remaining) {
+                        \Illuminate\Support\Facades\DB::table('notifications')->where('id', $notification->id)->delete();
+                    }
+                }
+            }
+        }
+    }
+
     public function delete($id)
     {
         $delete = Cuti::find($id);
-        $delete->delete();
+        if ($delete) {
+            $this->deleteRelatedNotifications($delete);
+            $delete->delete();
+        }
         return redirect('/cuti')->with('success', 'Data Berhasil di Delete');
     }
 
@@ -421,8 +464,10 @@ class CutiController extends Controller
     public function deleteAdmin($id)
     {
         $delete = Cuti::find($id);
-        // Storage::delete($delete->foto_cuti);
-        $delete->delete();
+        if ($delete) {
+            $this->deleteRelatedNotifications($delete);
+            $delete->delete();
+        }
         return redirect('/data-cuti')->with('success', 'Data Berhasil di Delete');
     }
 
