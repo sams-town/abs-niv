@@ -554,24 +554,72 @@ Route::get('/slip-gaji/dosen', [App\Http\Controllers\PayrollController::class, '
 
 Route::get('/slip-gaji/karyawan', [App\Http\Controllers\PayrollController::class, 'slipGajiKaryawan'])->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
 
+Route::get('/patroli/scan/{lokasi_id}/{token}', [\App\Http\Controllers\PatroliController::class, 'scanQrcode'])->middleware('auth');
+
 Route::get('/run-permission-seeder', function () {
     try {
-        // Clear cache dulu agar autoload terbaru digunakan
-        \Illuminate\Support\Facades\Artisan::call('config:clear');
-        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        $permissions = [
+            'pegawai.view','pegawai.create','pegawai.edit','pegawai.delete',
+            'dosen.view','dosen.create','dosen.edit','dosen.delete',
+            'role.view','role.create','role.edit','role.delete',
+            'shift.view','shift.create','shift.edit','shift.delete',
+            'lokasi.view','lokasi.create','lokasi.edit','lokasi.delete',
+            'jabatan.view','jabatan.create','jabatan.edit','jabatan.delete',
+            'golongan.view','golongan.create','golongan.edit','golongan.delete',
+            'tunjangan.view','tunjangan.create','tunjangan.edit','tunjangan.delete',
+            'rekap.view','laporan.view','laporan.export',
+            'jadwal.view','jadwal.create','jadwal.edit','jadwal.delete',
+            'absen.view','absen.create','absen.edit','absen.delete','absen.data',
+            'dinas_luar.view','dinas_luar.create','dinas_luar.edit','dinas_luar.delete','dinas_luar.data',
+            'lembur.view','lembur.create','lembur.edit','lembur.delete','lembur.data',
+            'cuti.view','cuti.create','cuti.edit','cuti.delete','cuti.data',
+            'payroll.view','payroll.create','payroll.edit','payroll.delete','payroll.export',
+            'kasbon.view','kasbon.create','kasbon.edit','kasbon.delete',
+            'dokumen.view','dokumen.create','dokumen.edit','dokumen.delete',
+            'kpi.view','kpi.create','kpi.edit','kpi.delete','kpi.approve',
+            'patroli.view','patroli.create','patroli.data',
+            'reimbursement.view','reimbursement.create','reimbursement.edit','reimbursement.delete',
+            'kontrak.view','kontrak.create','kontrak.edit','kontrak.delete',
+            'pengajuan_keuangan.view','pengajuan_keuangan.create','pengajuan_keuangan.edit',
+            'mata_kuliah.view','mata_kuliah.create','mata_kuliah.edit',
+            'laporan_kinerja.view','laporan_kinerja.create',
+            'berita.view','berita.create','berita.edit','berita.delete',
+            'inventory.view','inventory.create','inventory.edit','inventory.delete',
+            'rapat.view','rapat.create','rapat.edit','rapat.delete',
+        ];
 
-        // Jalankan seeder
-        \Illuminate\Support\Facades\Artisan::call('db:seed', [
-            '--class' => \Database\Seeders\PermissionSeeder::class,
-            '--force' => true,
-        ]);
+        $now = now();
+        $inserted = 0;
 
-        $output = \Illuminate\Support\Facades\Artisan::output();
-        return response('✅ Permissions seeded successfully!<br><pre>' . $output . '</pre>', 200)
-               ->header('Content-Type', 'text/html');
+        foreach ($permissions as $perm) {
+            $exists = \Spatie\Permission\Models\Permission::where('name', $perm)->where('guard_name', 'web')->exists();
+            if (!$exists) {
+                \Spatie\Permission\Models\Permission::create(['name' => $perm, 'guard_name' => 'web']);
+                $inserted++;
+            }
+        }
+
+        // Assign semua permission ke role admin
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $allPerms  = \Spatie\Permission\Models\Permission::where('guard_name', 'web')->pluck('name');
+        $adminRole->syncPermissions($allPerms);
+
+        // Clear permission cache
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $html  = '<h2 style="color:green">✅ Permissions seeded!</h2>';
+        $html .= '<p>Permission baru ditambahkan: <strong>' . $inserted . '</strong></p>';
+        $html .= '<p>Total permission di database: <strong>' . \Spatie\Permission\Models\Permission::count() . '</strong></p>';
+        $html .= '<p>Permission ditetapkan ke role <strong>admin</strong>: <strong>' . $adminRole->permissions()->count() . '</strong></p>';
+        $html .= '<br><a href="/role" style="color:blue">→ Kembali ke halaman Role</a>';
+
+        return response($html, 200)->header('Content-Type', 'text/html');
+
     } catch (\Exception $e) {
-        return response('❌ Error: ' . $e->getMessage() . '<br><pre>' . $e->getTraceAsString() . '</pre>', 500)
-               ->header('Content-Type', 'text/html');
+        return response(
+            '<h2 style="color:red">❌ Error</h2><pre>' . $e->getMessage() . "\n\n" . $e->getTraceAsString() . '</pre>',
+            500
+        )->header('Content-Type', 'text/html');
     }
 });
 

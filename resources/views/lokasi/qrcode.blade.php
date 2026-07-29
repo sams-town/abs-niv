@@ -16,10 +16,11 @@
         <div class="col-md-12">
             <center>
                 @php
+                    $link = url('/patroli/scan/'.$lokasi->id.'/'.$lokasi->getOrCreateQrToken());
                     $result = Endroid\QrCode\Builder\Builder::create()
                    ->writer(new Endroid\QrCode\Writer\PngWriter())
                    ->writerOptions([])
-                   ->data($lokasi->nama_lokasi)
+                   ->data($link)
                    ->encoding(new Endroid\QrCode\Encoding\Encoding('UTF-8'))
                    ->errorCorrectionLevel(new Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh())
                    ->size(300)
@@ -28,13 +29,13 @@
                    ->validateResult(false)
                    ->build();
 
-                   $result->saveToFile(public_path('/assets/qrcode/'.$lokasi->nama_lokasi.'.png'));
+                   $result->saveToFile(public_path('/assets/qrcode/patroli_'.$lokasi->id.'.png'));
                    $dataUri = $result->getDataUri();
                @endphp
 
                <div class="kartu mb-4">
                     <div class="barcode">
-                        <img src="{{ url('/assets/qrcode/'.$lokasi->nama_lokasi.'.png') }}" alt="{{ $lokasi->nama_lokasi }}.png" class="mt-3" style="width: 160px">
+                        <img src="{{ url('/assets/qrcode/patroli_'.$lokasi->id.'.png') }}" alt="{{ $lokasi->nama_lokasi }}.png" class="mt-3" style="width: 160px">
                     </div>
                    <h2 class="member-name">{{ $lokasi->nama_lokasi }}</h2>
                </div>
