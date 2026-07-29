@@ -39,12 +39,23 @@
             </div>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ url('/payroll?bulan='.$bulanAktif.'&tahun='.$tahunAktif.'&export=excel') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
-                <i data-feather="file-text" style="width:15px"></i> Export Excel
-            </a>
-            <a href="{{ url('/payroll?bulan='.$bulanAktif.'&tahun='.$tahunAktif.'&export=pdf') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
-                <i data-feather="file" style="width:15px"></i> Export PDF
-            </a>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i data-feather="download" style="width:15px"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url('/payroll?bulan='.$bulanAktif.'&tahun='.$tahunAktif.'&export=excel') }}">
+                            <i data-feather="file-text" style="width:14px"></i> Export Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url('/payroll?bulan='.$bulanAktif.'&tahun='.$tahunAktif.'&export=pdf') }}">
+                            <i data-feather="file" style="width:14px"></i> Export PDF
+                        </a>
+                    </li>
+                </ul>
+            </div>
             @can('admin')
             <button type="button" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#importModal">
                 <i data-feather="upload" style="width:15px"></i> Import Excel
