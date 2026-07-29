@@ -550,12 +550,9 @@ Route::get('/slip-gaji/dosen', [App\Http\Controllers\PayrollController::class, '
 
 Route::get('/slip-gaji/karyawan', [App\Http\Controllers\PayrollController::class, 'slipGajiKaryawan'])->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
 
-Route::get('/reset', function () {
-    Artisan::call('optimize');
-    Artisan::call('config:cache');
-    Artisan::call('route:clear');
-    Artisan::call('migrate:fresh --seed');
-    Artisan::call('storage:link');
+Route::get('/run-permission-seeder', function () {
+    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\Seeders\PermissionSeeder']);
+    return 'Permissions seeded!';
 });
 
 // ===== MODUL KPI =====
