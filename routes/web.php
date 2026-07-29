@@ -555,8 +555,24 @@ Route::get('/slip-gaji/dosen', [App\Http\Controllers\PayrollController::class, '
 Route::get('/slip-gaji/karyawan', [App\Http\Controllers\PayrollController::class, 'slipGajiKaryawan'])->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
 
 Route::get('/run-permission-seeder', function () {
-    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\Seeders\PermissionSeeder']);
-    return 'Permissions seeded!';
+    try {
+        // Clear cache dulu agar autoload terbaru digunakan
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+
+        // Jalankan seeder
+        \Illuminate\Support\Facades\Artisan::call('db:seed', [
+            '--class' => \Database\Seeders\PermissionSeeder::class,
+            '--force' => true,
+        ]);
+
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return response('✅ Permissions seeded successfully!<br><pre>' . $output . '</pre>', 200)
+               ->header('Content-Type', 'text/html');
+    } catch (\Exception $e) {
+        return response('❌ Error: ' . $e->getMessage() . '<br><pre>' . $e->getTraceAsString() . '</pre>', 500)
+               ->header('Content-Type', 'text/html');
+    }
 });
 
 // ===== MODUL KPI =====
