@@ -496,6 +496,10 @@ Route::prefix('dosen')->middleware(['auth', 'role:admin|hrd'])->group(function (
     Route::post('/import', [DosenController::class, 'importDosen']);
 });
 
+// ===== REGISTRASI WAJAH DOSEN (Self-service, bisa diakses dosen sendiri) =====
+Route::get('/dosen/registrasi-wajah', [karyawanController::class, 'dosenRegistrasiWajah'])->middleware('auth');
+Route::post('/dosen/registrasi-wajah/simpan', [karyawanController::class, 'dosenSimpanWajah'])->middleware('auth');
+
 // ===== MODUL MATA KULIAH =====
 Route::prefix('mata-kuliah')->middleware(['auth', 'role:admin|hrd'])->group(function () {
     Route::get('/', [MataKuliahController::class, 'index']);

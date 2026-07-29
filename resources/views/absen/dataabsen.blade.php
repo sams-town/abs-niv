@@ -152,13 +152,15 @@
                                         <span class="badge badge-warning">Sedang Sakit</span>
                                     @elseif($da->jam_absen == null)
                                         <span class="badge badge-danger">Belum Absen</span>
-                                    @else
-                                        @if ($da->foto_jam_absen)
-                                            <img src="{{ url('storage/' . $da->foto_jam_absen) }}" style="width: 60px;border-radius:60px">
-                                        @else
-                                            -
-                                        @endif
-                                    @endif
+                                     @else
+                                         @if ($da->foto_jam_absen)
+                                             <a href="javascript:void(0)" onclick="showPhoto('{{ url('storage/' . $da->foto_jam_absen) }}', 'Foto Masuk - {{ $da->name }}')">
+                                                 <img src="{{ url('storage/' . $da->foto_jam_absen) }}" style="width: 60px; height:60px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid #28a745; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Klik untuk perbesar">
+                                             </a>
+                                         @else
+                                             -
+                                         @endif
+                                     @endif
                                 </td>
                                 <td>
                                     @if($da->status_absen == 'Libur')
@@ -257,13 +259,15 @@
                                         <span class="badge badge-danger">Belum Absen</span>
                                     @elseif($da->jam_pulang == null)
                                         <span class="badge badge-warning">Belum Pulang</span>
-                                    @else
-                                        @if ($da->foto_jam_pulang)
-                                            <img src="{{ url('storage/' . $da->foto_jam_pulang) }}" style="width: 60px;border-radius:60px">
-                                        @else
-                                            -
-                                        @endif
-                                    @endif
+                                     @else
+                                         @if ($da->foto_jam_pulang)
+                                             <a href="javascript:void(0)" onclick="showPhoto('{{ url('storage/' . $da->foto_jam_pulang) }}', 'Foto Pulang - {{ $da->name }}')">
+                                                 <img src="{{ url('storage/' . $da->foto_jam_pulang) }}" style="width: 60px; height:60px; border-radius:50%; object-fit:cover; cursor:pointer; border:2px solid #dc3545; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Klik untuk perbesar">
+                                             </a>
+                                         @else
+                                             -
+                                         @endif
+                                     @endif
                                 </td>
                                 <td>
                                     @if($da->status_absen == 'Libur')
@@ -378,6 +382,30 @@
                 $('#akhir').val(mulai);
                 });
             });
+
+            // Lightbox function for photo preview
+            function showPhoto(src, title) {
+                document.getElementById('lightboxPhoto').src = src;
+                document.getElementById('lightboxTitle').innerText = title;
+                var modal = new bootstrap.Modal(document.getElementById('photoLightboxModal'));
+                modal.show();
+            }
         </script>
     @endpush
+
+    <!-- Photo Lightbox Modal -->
+    <div class="modal fade" id="photoLightboxModal" tabindex="-1" aria-labelledby="photoLightboxLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background: transparent; border: none;">
+                <div class="modal-header" style="background:#1a1a2e; border-bottom: 1px solid #444;">
+                    <h5 class="modal-title text-white" id="lightboxTitle">Foto Absen</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center" style="background:#1a1a2e; padding: 20px;">
+                    <img id="lightboxPhoto" src="" alt="Foto Absen"
+                         style="max-width: 100%; max-height: 75vh; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);">
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection

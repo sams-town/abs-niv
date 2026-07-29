@@ -972,6 +972,11 @@ class karyawanController extends Controller
 
     public function myProfileUpdate(Request $request, $id)
     {
+        // Security guard: user biasa hanya boleh update profil miliknya sendiri
+        if (auth()->user()->is_admin !== 'admin' && auth()->user()->id != $id) {
+            abort(403, 'Anda tidak memiliki izin untuk mengubah data pengguna lain.');
+        }
+
         $rules = [
             'name' => 'required|max:255',
             'telepon' => 'required',
@@ -1104,5 +1109,35 @@ class karyawanController extends Controller
         ]);
 
         return redirect('/dashboard')->with('success', 'Berhasil Pindah Dashboard Admin');
+    }
+
+    public function dosenRegistrasiWajah()
+    {
+        $user = auth()->user();
+
+        // Hanya dosen yang boleh akses halaman ini
+        if ($user->tipe_user !== 'dosen') {
+            return redirect('/dashboard')->with('error', 'Halaman ini hanya untuk dosen.');
+        }
+
+        return view('karyawan.face', [
+            'title'         => 'Registrasi Wajah',
+            'karyawan'      => $user,
+            'self_register' => true,
+        ]);
+    }
+
+    public function dosenSimpanWajah(Request $request)
+    {
+        $user = auth()->user();
+
+        // Hanya dosen yang boleh simpan dari halaman ini
+        if ($user->tipe_user !== 'dosen') {
+            return response()->json(['error' => 'Tidak diizinkan'], 403);
+        }
+
+        // Gunakan username dosen yang login, lalu delegate ke ajaxPhoto
+        $request->merge(['path' => $user->username]);
+        return $this->ajaxPhoto($request);
     }
 }

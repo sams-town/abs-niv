@@ -44,14 +44,22 @@ class AbsenPivotController extends Controller
             $dates[] = $d->format('Y-m-d');
         }
 
-        // Query users
+        // Query users — super admin always excluded
         $usersQuery = User::with(['MappingShift' => function ($q) use ($mulai, $akhir) {
             $q->whereBetween('tanggal', [$mulai, $akhir]);
-        }])
-        ->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
-        ->when($tipe_user === 'dosen',   fn($q) => $q->dosen())
-        ->when($tipe_user === 'pegawai', fn($q) => $q->pegawai())
-        ->orderBy('name');
+        }]);
+
+        if ($tipe_user === 'dosen') {
+            $usersQuery = $usersQuery->dosen();
+        } elseif ($tipe_user === 'pegawai') {
+            $usersQuery = $usersQuery->pegawai();
+        } else {
+            // 'semua' — gunakan scope pegawaiDanDosen agar super admin dikecualikan
+            $usersQuery = $usersQuery->pegawaiDanDosen();
+        }
+
+        $usersQuery = $usersQuery->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
+                                 ->orderBy('name');
 
         $users = $usersQuery->with(['Jabatan', 'Lokasi'])->get();
 
@@ -102,13 +110,18 @@ class AbsenPivotController extends Controller
             $dates[] = $d->format('Y-m-d');
         }
 
-        $users = User::with(['MappingShift' => function ($q) use ($mulai, $akhir) {
+        $usersExport = User::with(['MappingShift' => function ($q) use ($mulai, $akhir) {
             $q->whereBetween('tanggal', [$mulai, $akhir]);
-        }])
-        ->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
-        ->when($tipe_user === 'dosen',   fn($q) => $q->dosen())
-        ->when($tipe_user === 'pegawai', fn($q) => $q->pegawai())
-        ->orderBy('name')->get();
+        }]);
+        if ($tipe_user === 'dosen') {
+            $usersExport = $usersExport->dosen();
+        } elseif ($tipe_user === 'pegawai') {
+            $usersExport = $usersExport->pegawai();
+        } else {
+            $usersExport = $usersExport->pegawaiDanDosen();
+        }
+        $users = $usersExport->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
+                             ->orderBy('name')->get();
 
         $rows = [];
         foreach ($users as $user) {
@@ -142,13 +155,18 @@ class AbsenPivotController extends Controller
             $dates[] = $d->format('Y-m-d');
         }
 
-        $users = User::with(['MappingShift' => function ($q) use ($mulai, $akhir) {
+        $usersPdf = User::with(['MappingShift' => function ($q) use ($mulai, $akhir) {
             $q->whereBetween('tanggal', [$mulai, $akhir]);
-        }])
-        ->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
-        ->when($tipe_user === 'dosen',   fn($q) => $q->dosen())
-        ->when($tipe_user === 'pegawai', fn($q) => $q->pegawai())
-        ->orderBy('name')->get();
+        }]);
+        if ($tipe_user === 'dosen') {
+            $usersPdf = $usersPdf->dosen();
+        } elseif ($tipe_user === 'pegawai') {
+            $usersPdf = $usersPdf->pegawai();
+        } else {
+            $usersPdf = $usersPdf->pegawaiDanDosen();
+        }
+        $users = $usersPdf->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
+                          ->orderBy('name')->get();
 
         $rows = [];
         foreach ($users as $user) {
@@ -176,14 +194,19 @@ class AbsenPivotController extends Controller
         $tipe_user = $request->tipe_user ?? 'semua';
         $bulan_list = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
-        $users = User::with(['MappingShift' => function ($q) use ($tahun) {
+        $usersBulanan = User::with(['MappingShift' => function ($q) use ($tahun) {
             $q->whereYear('tanggal', $tahun)
               ->whereIn('status_absen', ['Masuk', 'Izin Telat', 'Izin Pulang Cepat']);
-        }, 'Jabatan', 'Lokasi'])
-        ->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
-        ->when($tipe_user === 'dosen',   fn($q) => $q->dosen())
-        ->when($tipe_user === 'pegawai', fn($q) => $q->pegawai())
-        ->orderBy('name')->get();
+        }, 'Jabatan', 'Lokasi']);
+        if ($tipe_user === 'dosen') {
+            $usersBulanan = $usersBulanan->dosen();
+        } elseif ($tipe_user === 'pegawai') {
+            $usersBulanan = $usersBulanan->pegawai();
+        } else {
+            $usersBulanan = $usersBulanan->pegawaiDanDosen();
+        }
+        $users = $usersBulanan->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
+                              ->orderBy('name')->get();
 
         $lokasi = Lokasi::where('status', 'approved')->orderBy('nama_lokasi')->get();
 

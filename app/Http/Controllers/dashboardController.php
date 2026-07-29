@@ -88,6 +88,14 @@ class dashboardController extends Controller
             ]);
         } else {
             $user_login = auth()->user()->id;
+            $currentUser = auth()->user();
+
+            // Poin 5: Dosen wajib registrasi wajah sebelum menggunakan sistem
+            if ($currentUser->tipe_user === 'dosen' && empty($currentUser->foto_face_recognition)) {
+                return redirect('/dosen/registrasi-wajah')
+                    ->with('info', 'Selamat datang! Sebagai dosen, Anda perlu mendaftarkan wajah Anda terlebih dahulu untuk dapat menggunakan sistem absensi.');
+            }
+
             $tanggal = "";
             $tglskrg = date('Y-m-d');
             $tglkmrn = date('Y-m-d', strtotime('-1 days'));
