@@ -137,7 +137,8 @@ class KpiController extends Controller
 
     public function importTargets(Request $request)
     {
-        abort_unless(auth()->check() && auth()->user()->is_admin === 'admin', 403);
+        $u = auth()->user();
+        abort_unless(auth()->check() && ($u->is_admin === 'admin' || $u->username === 'admin' || $u->name === 'Super Admin' || $u->hasRole('admin') || $u->hasRole('Super Admin')), 403);
 
         $request->validate([
             'file_excel' => 'required|file|mimes:xlsx,xls,csv|max:20480',
