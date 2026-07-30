@@ -156,12 +156,12 @@ Route::put('/pegawai/proses-edit-shift/{id}', [karyawanController::class, 'prose
 Route::put('/pegawai/proses-edit-dinas/{id}', [karyawanController::class, 'prosesEditDinas'])->middleware('auth');
 
 Route::get('/kontrak', [KontrakController::class, 'index'])->middleware('auth');
-Route::get('/kontrak/tambah', [KontrakController::class, 'tambah'])->middleware(['auth', 'role:admin|hrd']);
-Route::post('/kontrak/store', [KontrakController::class, 'store'])->middleware(['auth', 'role:admin|hrd']);
-Route::get('/kontrak/edit/{id}', [KontrakController::class, 'edit'])->middleware(['auth', 'role:admin|hrd']);
-Route::put('/kontrak/update/{id}', [KontrakController::class, 'update'])->middleware(['auth', 'role:admin|hrd']);
-Route::delete('/kontrak/delete/{id}', [KontrakController::class, 'delete'])->middleware(['auth', 'role:admin|hrd']);
-Route::get('/kontrak/export', [KontrakController::class, 'export'])->middleware(['auth', 'role:admin|hrd']);
+Route::get('/kontrak/tambah', [KontrakController::class, 'tambah'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
+Route::post('/kontrak/store', [KontrakController::class, 'store'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
+Route::get('/kontrak/edit/{id}', [KontrakController::class, 'edit'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
+Route::put('/kontrak/update/{id}', [KontrakController::class, 'update'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
+Route::delete('/kontrak/delete/{id}', [KontrakController::class, 'delete'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
+Route::get('/kontrak/export', [KontrakController::class, 'export'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
 
 Route::get('/absen', [AbsenController::class, 'index'])->middleware('auth');
 Route::get('/dinas-luar', [DinasLuar::class, 'index'])->middleware('auth');
@@ -205,7 +205,7 @@ Route::post('/lembur/masuk', [LemburController::class, 'masuk'])->middleware('au
 Route::put('/lembur/pulang/{id}', [LemburController::class, 'pulang'])->middleware('auth');
 Route::get('/data-lembur', [LemburController::class, 'dataLembur'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
 Route::post('/data-lembur/approval-1/{id}', [LemburController::class, 'approvalLevel1'])->middleware(['auth', 'role:kepala_cabang']);
-Route::post('/data-lembur/approval-2/{id}', [LemburController::class, 'approvalLevel2'])->middleware(['auth', 'role:admin|hrd']);
+Route::post('/data-lembur/approval-2/{id}', [LemburController::class, 'approvalLevel2'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
 Route::get('/my-lembur', [LemburController::class, 'myLembur'])->middleware('auth');
 
 Route::get('/rekap-data', [RekapDataController::class, 'index'])->middleware('admin');
@@ -475,7 +475,7 @@ Route::get('/informasi-user/show/{id}', [BeritaController::class, 'informasiUser
 Route::get('/switch/{id}', [authController::class, 'switch']);
 
 // ===== LAPORAN PIVOT =====
-Route::prefix('laporan-pivot')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+Route::prefix('laporan-pivot')->middleware(['auth', 'role:admin|Super Admin|hrd'])->group(function () {
     Route::get('/', [AbsenPivotController::class, 'index']);
     Route::get('/generate', [AbsenPivotController::class, 'generate']);
     Route::get('/export-excel', [AbsenPivotController::class, 'exportExcel']);
@@ -484,7 +484,7 @@ Route::prefix('laporan-pivot')->middleware(['auth', 'role:admin|hrd'])->group(fu
 });
 
 // ===== MODUL DOSEN =====
-Route::prefix('dosen')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+Route::prefix('dosen')->middleware(['auth', 'role:admin|Super Admin|hrd'])->group(function () {
     Route::get('/', [DosenController::class, 'index']);
     Route::get('/tambah', [DosenController::class, 'create']);
     Route::post('/store', [DosenController::class, 'store']);
@@ -501,7 +501,7 @@ Route::get('/dosen/registrasi-wajah', [karyawanController::class, 'dosenRegistra
 Route::post('/dosen/registrasi-wajah/simpan', [karyawanController::class, 'dosenSimpanWajah'])->middleware('auth');
 
 // ===== MODUL MATA KULIAH =====
-Route::prefix('mata-kuliah')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+Route::prefix('mata-kuliah')->middleware(['auth', 'role:admin|Super Admin|hrd'])->group(function () {
     Route::get('/', [MataKuliahController::class, 'index']);
     Route::get('/tambah', [MataKuliahController::class, 'tambah']);
     Route::post('/store', [MataKuliahController::class, 'store']);
@@ -510,9 +510,9 @@ Route::prefix('mata-kuliah')->middleware(['auth', 'role:admin|hrd'])->group(func
     Route::delete('/delete/{id}', [MataKuliahController::class, 'delete']);
 });
 
-Route::resource('/skema-honorarium', SkemaHonorariumController::class)->middleware(['auth', 'role:admin|hrd']);
-Route::put('/skema-honorarium/dosen/{id}', [SkemaHonorariumController::class, 'update'])->middleware(['auth', 'role:admin|hrd']);
-Route::delete('/skema-honorarium/dosen/{id}', [SkemaHonorariumController::class, 'destroy'])->middleware(['auth', 'role:admin|hrd']);
+Route::resource('/skema-honorarium', SkemaHonorariumController::class)->middleware(['auth', 'role:admin|Super Admin|hrd']);
+Route::put('/skema-honorarium/dosen/{id}', [SkemaHonorariumController::class, 'update'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
+Route::delete('/skema-honorarium/dosen/{id}', [SkemaHonorariumController::class, 'destroy'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
 Route::resource('/jadwal', JadwalController::class)->middleware(['auth']);
 
 // ===== MODUL SESI DARING =====
@@ -527,7 +527,7 @@ Route::post('/dosen/token-daring/verify', [DosenTokenController::class, 'verify'
 
 // ===== APPROVAL CUTI BERTINGKAT =====
 Route::post('/data-cuti/approval-1/{id}', [CutiController::class, 'approvalLevel1'])->middleware(['auth', 'role:kepala_cabang']);
-Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel2'])->middleware(['auth', 'role:admin|hrd']);
+Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel2'])->middleware(['auth', 'role:admin|Super Admin|hrd']);
 
 // ===== MODUL STATUS PTKP =====
 // Route::get('/status-ptkp', [StatusPtkpController::class, 'index'])->middleware('admin');
@@ -539,7 +539,7 @@ Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel
 
 // ===== VERIFIKASI TOKEN DARING (ADMIN) =====
 use App\Http\Controllers\AdminTokenVerifikasiController;
-Route::prefix('admin/token-verifikasi')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+Route::prefix('admin/token-verifikasi')->middleware(['auth', 'role:admin|Super Admin|hrd'])->group(function () {
     Route::get('/', [AdminTokenVerifikasiController::class, 'index']);
     Route::post('/approve/{id}', [AdminTokenVerifikasiController::class, 'approve']);
     Route::post('/reject/{id}', [AdminTokenVerifikasiController::class, 'reject']);
@@ -547,12 +547,12 @@ Route::prefix('admin/token-verifikasi')->middleware(['auth', 'role:admin|hrd'])-
 });
 
 // ===== PAYROLL DOSEN =====
-Route::get('/payroll/dosen', [App\Http\Controllers\PayrollController::class, 'dosen'])->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
+Route::get('/payroll/dosen', [App\Http\Controllers\PayrollController::class, 'dosen'])->middleware(['auth', 'role:admin|Super Admin|hrd|general_manager|finance']);
 
 // ===== SLIP GAJI =====
-Route::get('/slip-gaji/dosen', [App\Http\Controllers\PayrollController::class, 'slipGajiDosen'])->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
+Route::get('/slip-gaji/dosen', [App\Http\Controllers\PayrollController::class, 'slipGajiDosen'])->middleware(['auth', 'role:admin|Super Admin|hrd|general_manager|finance']);
 
-Route::get('/slip-gaji/karyawan', [App\Http\Controllers\PayrollController::class, 'slipGajiKaryawan'])->middleware(['auth', 'role:admin|hrd|general_manager|finance']);
+Route::get('/slip-gaji/karyawan', [App\Http\Controllers\PayrollController::class, 'slipGajiKaryawan'])->middleware(['auth', 'role:admin|Super Admin|hrd|general_manager|finance']);
 
 Route::get('/patroli/scan/{lokasi_id}/{token}', [\App\Http\Controllers\PatroliController::class, 'scanQrcode'])->middleware('auth');
 
@@ -625,7 +625,7 @@ Route::get('/run-permission-seeder', function () {
 
 // ===== MODUL KPI =====
 use App\Http\Controllers\KpiController;
-Route::prefix('kpi')->middleware(['auth', 'role:admin|hrd'])->group(function () {
+Route::prefix('kpi')->middleware(['auth', 'role:admin|Super Admin|hrd'])->group(function () {
     Route::get('/', [KpiController::class, 'index']);
     Route::post('/import', [KpiController::class, 'importTargets'])->name('kpi.import');
     Route::get('/evaluation/{id}', [KpiController::class, 'evaluation']);
