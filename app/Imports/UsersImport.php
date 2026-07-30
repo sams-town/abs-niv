@@ -51,12 +51,17 @@ class UsersImport implements ToModel, WithHeadingRow
             }
 
             // Validate required fields
-            if (empty($name) || empty($email) || empty($username) || empty($password) || empty($telepon) || 
-                empty($lokasiName) || empty($tglLahir) || empty($jenisKelamin) || empty($tglMasuk) || 
-                empty($roleName) || empty($jabatanName) || empty($namaIbuKandung)) {
-                Log::warning('Skipping row: Missing required fields', $row);
+            if (empty($name) || empty($username)) {
+                Log::warning('Skipping row: Missing required fields (name or username)', $row);
                 return null;
             }
+
+            // Defaults if missing
+            $email = empty($email) ? $username . '@univbatam.ac.id' : $email;
+            $password = empty($password) ? 'uniba123' : $password;
+            $roleName = empty($roleName) ? 'pegawai' : $roleName;
+            $jabatanName = empty($jabatanName) ? 'Staff' : $jabatanName;
+            $lokasiName = empty($lokasiName) ? 'Kantor Pusat' : $lokasiName;
 
             // --- Step 2: Resolve related models (Lokasi, Jabatan, Role) ---
             $lokasi = Lokasi::where('nama_lokasi', 'LIKE', "%$lokasiName%")->first();
