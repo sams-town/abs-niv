@@ -25,6 +25,13 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        // Super Admin mendapatkan semua akses tanpa perlu Spatie role
+        Gate::before(function ($user, $ability) {
+            if ($user->username === 'admin'
+                || in_array($user->is_admin, ['admin', 'superadmin', 'Super Admin'])
+                || $user->name === 'Super Admin') {
+                return true;
+            }
+        });
     }
 }
