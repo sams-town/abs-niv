@@ -12,7 +12,43 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable;
+    use HasRoles {
+        hasRole as traitHasRole;
+        hasAnyRole as traitHasAnyRole;
+        hasAllRoles as traitHasAllRoles;
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->username === 'admin'
+            || in_array($this->is_admin, ['admin', 'superadmin', 'Super Admin'])
+            || $this->name === 'Super Admin';
+    }
+
+    public function hasRole($roles, string $guard = null): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+        return $this->traitHasRole($roles, $guard);
+    }
+
+    public function hasAnyRole(...$roles): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+        return $this->traitHasAnyRole(...$roles);
+    }
+
+    public function hasAllRoles($roles, string $guard = null): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+        return $this->traitHasAllRoles($roles, $guard);
+    }
 
     /**
      * The attributes that are mass assignable.
