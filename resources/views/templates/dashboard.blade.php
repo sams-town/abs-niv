@@ -193,13 +193,13 @@
                       </li>
                       --}}
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/pegawai') }}"><i data-feather="users"> </i><span>Pegawai</span></a>
                         </li>
                       @endif
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('dosen*') ? 'active' : '' }}" href="{{ url('/dosen') }}"><i data-feather="book-open"> </i><span>Data Dosen</span></a>
                         </li>
@@ -217,13 +217,13 @@
                       <li class="sidebar-list"><a class="sidebar-link sidebar-title {{ Request::is('kpi*') ? 'active' : '' }}" href="javascript:void(0)"><i data-feather="activity"></i><span>KPI Corporate</span></a>
                           <ul class="sidebar-submenu">
                             <li><a href="{{ url('/kpi/dashboard') }}" class="{{ Request::is('kpi/dashboard') ? 'active' : '' }}">Dashboard KPI</a></li>
-                            @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
+                            @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
                               <li><a href="{{ url('/kpi/kategori') }}" class="{{ Request::is('kpi/kategori') ? 'active' : '' }}">Master Kategori</a></li>
                               <li><a href="{{ url('/kpi/periode') }}" class="{{ Request::is('kpi/periode') ? 'active' : '' }}">Master Periode</a></li>
                               <li><a href="{{ url('/kpi/manajemen') }}" class="{{ Request::is('kpi/manajemen*') ? 'active' : '' }}">Manajemen KPI</a></li>
                             @endif
                             <li><a href="{{ url('/kpi/penilaian') }}" class="{{ Request::is('kpi/penilaian') ? 'active' : '' }}">Penilaian KPI</a></li>
-                            @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
+                            @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
                               <li><a href="{{ url('/kpi/approval') }}" class="{{ Request::is('kpi/approval') ? 'active' : '' }}">Approval KPI</a></li>
                             @endif
                           </ul>
@@ -233,19 +233,19 @@
                           <a class="sidebar-link sidebar-title link-nav {{ Request::is('jadwal*') ? 'active' : '' }}" href="{{ url('/jadwal') }}"><i data-feather="calendar"> </i><span>Jadwal & Sesi Daring</span></a>
                       </li>
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('admin/token-verifikasi*') ? 'active' : '' }}" href="{{ url('/admin/token-verifikasi') }}"><i data-feather="shield"> </i><span>Verifikasi Token</span></a>
                         </li>
                       @endif
 
-                      @if (auth()->user()->hasRole('admin'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/role') }}"><i data-feather="airplay"> </i><span>Role</span></a>
                         </li>
                       @endif
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/kontrak') }}"><i data-feather="trending-up"> </i><span>Kontrak</span></a>
                         </li>
@@ -265,7 +265,7 @@
                         </li>
                       @endif
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('kepala_cabang') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('kepala_cabang') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/lokasi-kantor') }}"><i data-feather="map-pin"> </i><span>Lokasi</span></a>
                         </li>
@@ -273,13 +273,13 @@
 
 
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('laporan-pivot*') ? 'active' : '' }}" href="{{ url('/laporan-pivot') }}"><i data-feather="bar-chart-2"> </i><span>Laporan Pivot</span></a>
                         </li>
                       @endif
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('hrd'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('hrd'))
                         <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav" href="{{ url('/data-cuti') }}"><i data-feather="shuffle"> </i><span>Cuti</span></a>
                         </li>
@@ -301,7 +301,7 @@
                           </ul>
                       </li>
 
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager'))
 
                         <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="map"></i><span>Patroli</span></a>
                             <ul class="sidebar-submenu">
@@ -340,7 +340,7 @@
                       </li> --}}
 
                       {{-- ===== PENGGAJIAN ===== --}}
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('hrd') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance'))
                         <li class="sidebar-list"><a class="sidebar-link sidebar-title {{ Request::is('skema-honorarium*') || Request::is('payroll*') || Request::is('laporan-mengajar*') ? 'active' : '' }}" href="javascript:void(0)"><i data-feather="dollar-sign"></i><span>Penggajian</span></a>
                             <ul class="sidebar-submenu">
                               <li><a class="{{ Request::is('skema-honorarium*') ? 'active' : '' }}" href="{{ url('/skema-honorarium') }}"><i data-feather="settings"></i> Tarif Mengajar</a></li>
@@ -353,7 +353,7 @@
                       @endif
 
                       {{-- ===== KEUANGAN ===== --}}
-                      @if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance') || auth()->user()->hasRole('regional_manager'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']) || auth()->user()->hasRole('general_manager') || auth()->user()->hasRole('finance') || auth()->user()->hasRole('regional_manager'))
                         <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="javascript:void(0)"><i data-feather="briefcase"></i><span>Keuangan</span></a>
                             <ul class="sidebar-submenu">
                             <li><a href="{{ url('/pajak') }}">Pajak</a></li>
@@ -378,7 +378,7 @@
                         <a class="sidebar-link sidebar-title link-nav {{ Request::is('dokumen*') ? 'active' : '' }}" href="{{ url('/dokumen') }}"><i data-feather="folder"> </i><span>Dokumen Pegawai</span></a>
                       </li>
 
-                      @if (auth()->user()->hasRole('admin'))
+                      @if (auth()->user()->hasAnyRole(['admin', 'Super Admin']))
                         {{-- <li class="sidebar-list">
                             <a class="sidebar-link sidebar-title link-nav {{ Request::is('berita*') ? 'active' : '' }}" href="{{ url('/berita') }}"><i data-feather="star"> </i><span>Berita & Informasi</span></a>
                         </li> --}}
