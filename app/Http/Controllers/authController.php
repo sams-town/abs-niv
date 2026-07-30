@@ -558,15 +558,16 @@ class authController extends Controller
                 return back();
             } else {
                 if (Auth::attempt($credentials)) {
-                    if ($user->hasRole('admin')) {
-                        $user->update([
-                            'is_admin' => 'admin'
-                        ]);
-                    } else {
-                        $user->update([
-                            'is_admin' => 'user'
-                        ]);
-                    }
+                    $loggedUser = Auth::user();
+                    $isAdmin = $loggedUser->username === 'admin'
+                        || $loggedUser->name === 'Super Admin'
+                        || in_array($loggedUser->is_admin, ['admin', 'superadmin'])
+                        || $loggedUser->hasRole('admin')
+                        || $loggedUser->hasRole('Super Admin');
+
+                    $loggedUser->update([
+                        'is_admin' => $isAdmin ? 'admin' : 'user'
+                    ]);
 
                     $request->session()->regenerate();
                     return redirect()->intended('/dashboard');
