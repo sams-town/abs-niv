@@ -11,7 +11,7 @@ Route::prefix('kpi')->middleware('auth')->group(function () {
     Route::get('/dashboard', [KpiDashboardController::class, 'index']);
 
     // Master Data (Hanya Admin / HRD)
-    Route::middleware('role:admin|hrd|general_manager')->group(function () {
+    Route::middleware('role:admin|Super Admin|hrd|general_manager')->group(function () {
         // Kategori KPI
         Route::get('/kategori', [KpiMasterController::class, 'indexKategori']);
         Route::post('/kategori', [KpiMasterController::class, 'storeKategori']);
@@ -40,7 +40,7 @@ Route::prefix('kpi')->middleware('auth')->group(function () {
     Route::post('/penilaian/submit', [KpiPenilaianController::class, 'submit']);
     
     // Approval KPI (Untuk Atasan / HRD)
-    Route::middleware('role:admin|hrd|general_manager')->group(function () {
+    Route::middleware('role:admin|Super Admin|hrd|general_manager')->group(function () {
         Route::get('/approval', [KpiApprovalController::class, 'index']);
         Route::post('/approval/{id}/approve', [KpiApprovalController::class, 'approve']);
         Route::post('/approval/{id}/reject', [KpiApprovalController::class, 'reject']);

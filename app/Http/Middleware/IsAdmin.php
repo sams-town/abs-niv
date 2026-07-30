@@ -16,9 +16,23 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!auth()->check() || auth()->user()->is_admin !== 'admin') {
+        if (!auth()->check()) {
             return redirect('/absen');
         }
+
+        $user = auth()->user();
+
+        // Izinkan semua varian Super Admin
+        $isAdmin = $user->username === 'admin'
+            || in_array($user->is_admin, ['admin', 'superadmin', 'Super Admin'])
+            || $user->hasRole('admin')
+            || $user->hasRole('Super Admin')
+            || $user->hasRole('superadmin');
+
+        if (!$isAdmin) {
+            return redirect('/absen');
+        }
+
         return $next($request);
     }
 }

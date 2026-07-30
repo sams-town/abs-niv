@@ -203,7 +203,7 @@ Route::post('/pengajuan-absensi/update/{id}', [AbsenController::class, 'updatePe
 Route::get('/lembur', [LemburController::class, 'index'])->middleware('auth');
 Route::post('/lembur/masuk', [LemburController::class, 'masuk'])->middleware('auth');
 Route::put('/lembur/pulang/{id}', [LemburController::class, 'pulang'])->middleware('auth');
-Route::get('/data-lembur', [LemburController::class, 'dataLembur'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
+Route::get('/data-lembur', [LemburController::class, 'dataLembur'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
 Route::post('/data-lembur/approval-1/{id}', [LemburController::class, 'approvalLevel1'])->middleware(['auth', 'role:kepala_cabang']);
 Route::post('/data-lembur/approval-2/{id}', [LemburController::class, 'approvalLevel2'])->middleware(['auth', 'role:admin|hrd']);
 Route::get('/my-lembur', [LemburController::class, 'myLembur'])->middleware('auth');
@@ -221,15 +221,15 @@ Route::post('/cuti/tambah', [CutiController::class, 'tambah'])->middleware('auth
 Route::delete('/cuti/delete/{id}', [CutiController::class, 'delete'])->middleware('auth');
 Route::get('/cuti/edit/{id}', [CutiController::class, 'edit'])->middleware('auth');
 Route::put('/cuti/proses-edit/{id}', [CutiController::class, 'editProses'])->middleware('auth');
-Route::get('/data-cuti', [CutiController::class, 'dataCuti'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::get('/data-cuti/tambah', [CutiController::class, 'tambahAdmin'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::post('/data-cuti/getuserid', [CutiController::class, 'getUserId'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::post('/data-cuti/proses-tambah', [CutiController::class, 'tambahAdminProses'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::delete('/data-cuti/delete/{id}', [CutiController::class, 'deleteAdmin'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::get('/data-cuti/edit/{id}', [CutiController::class, 'editAdmin'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::put('/data-cuti/edit-proses/{id}', [CutiController::class, 'editAdminProses'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::post('/data-cuti/approval-1/{id}', [CutiController::class, 'approvalLevel1'])->middleware('role:kepala_cabang|general_manager|admin|hrd');
-Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel2'])->middleware('role:admin|hrd|general_manager');
+Route::get('/data-cuti', [CutiController::class, 'dataCuti'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
+Route::get('/data-cuti/tambah', [CutiController::class, 'tambahAdmin'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
+Route::post('/data-cuti/getuserid', [CutiController::class, 'getUserId'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
+Route::post('/data-cuti/proses-tambah', [CutiController::class, 'tambahAdminProses'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
+Route::delete('/data-cuti/delete/{id}', [CutiController::class, 'deleteAdmin'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
+Route::get('/data-cuti/edit/{id}', [CutiController::class, 'editAdmin'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
+Route::put('/data-cuti/edit-proses/{id}', [CutiController::class, 'editAdminProses'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
+Route::post('/data-cuti/approval-1/{id}', [CutiController::class, 'approvalLevel1'])->middleware('role:Super Admin|kepala_cabang|general_manager|admin|hrd');
+Route::post('/data-cuti/approval-2/{id}', [CutiController::class, 'approvalLevel2'])->middleware('role:admin|Super Admin|hrd|general_manager');
 Route::get('/my-profile', [KaryawanController::class, 'myProfile'])->middleware('auth');
 Route::put('/my-profile/update/{id}', [KaryawanController::class, 'myProfileUpdate'])->middleware('auth');
 Route::get('/my-profile/edit-password', [KaryawanController::class, 'editPassMyProfile'])->middleware('auth');
@@ -242,8 +242,8 @@ Route::get('/lokasi-kantor/edit/{id}', [LokasiController::class, 'editLokasi'])-
 Route::put('/lokasi-kantor/update/{id}', [LokasiController::class, 'updateLokasi'])->middleware('admin');
 Route::put('/lokasi-kantor/radius/{id}', [LokasiController::class, 'updateRadiusLokasi'])->middleware('admin');
 Route::delete('/lokasi-kantor/delete/{id}', [LokasiController::class, 'deleteLokasi'])->middleware('admin');
-Route::get('/lokasi-kantor/pending-location', [LokasiController::class, 'pendingLocation'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
-Route::put('/lokasi-kantor/update-pending-location/{id}', [LokasiController::class, 'UpdatePendingLocation'])->middleware('role:admin|hrd|kepala_cabang|general_manager');
+Route::get('/lokasi-kantor/pending-location', [LokasiController::class, 'pendingLocation'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
+Route::put('/lokasi-kantor/update-pending-location/{id}', [LokasiController::class, 'UpdatePendingLocation'])->middleware('role:admin|Super Admin|hrd|kepala_cabang|general_manager');
 Route::get('/lokasi-kantor/qrcode/{id}', [LokasiController::class, 'qrcode'])->middleware('admin');
 Route::get('/lokasi-kantor/print/{id}', [LokasiController::class, 'print'])->middleware('admin');
 
@@ -705,7 +705,7 @@ Route::prefix('kpi')->middleware('auth')->group(function () {
     Route::get('/dashboard', [KpiDashboardController::class, 'index']);
 
     // Master Data (Hanya Admin / HRD)
-    Route::middleware('role:admin|hrd|general_manager')->group(function () {
+    Route::middleware('role:admin|Super Admin|hrd|general_manager')->group(function () {
         // Kategori KPI
         Route::get('/kategori', [KpiMasterController::class, 'indexKategori']);
         Route::post('/kategori', [KpiMasterController::class, 'storeKategori']);
@@ -734,7 +734,7 @@ Route::prefix('kpi')->middleware('auth')->group(function () {
     Route::post('/penilaian/submit', [KpiPenilaianController::class, 'submit']);
     
     // Approval KPI (Untuk Atasan / HRD)
-    Route::middleware('role:admin|hrd|general_manager')->group(function () {
+    Route::middleware('role:admin|Super Admin|hrd|general_manager')->group(function () {
         Route::get('/approval', [KpiApprovalController::class, 'index']);
         Route::post('/approval/{id}/approve', [KpiApprovalController::class, 'approve']);
         Route::post('/approval/{id}/reject', [KpiApprovalController::class, 'reject']);
