@@ -26,7 +26,7 @@ class dashboardController extends Controller
         $tgl_mulai = date('Y-m-01');
         $tgl_akhir = date('Y-m-'.$jmlh_bulan);
 
-        if(in_array(auth()->user()->is_admin, ['admin', 'superadmin', 'Super Admin'])){
+        if(auth()->user()->hasRole(['Super Admin', 'superadmin', 'admin', 'hrd']) || in_array(auth()->user()->is_admin, ['admin', 'superadmin', 'Super Admin'])){
             // Deteksi Dini Kontrak Kerja (habis dalam 3 bulan)
             $tgl_3_bulan = Carbon::now()->addMonths(3)->format('Y-m-d');
             $tgl_lampau = Carbon::now()->subMonths(6)->format('Y-m-d');
