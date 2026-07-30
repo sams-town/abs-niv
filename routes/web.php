@@ -623,6 +623,57 @@ Route::get('/run-permission-seeder', function () {
     }
 });
 
+// Route untuk assign role admin ke Super Admin user
+Route::get('/fix-super-admin', function () {
+    try {
+        // Pastikan role admin ada
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+
+        // Cari user Super Admin
+        $superAdmin = \App\Models\User::where('username', 'admin')
+            ->orWhere('is_admin', 'superadmin')
+            ->orWhere('is_admin', 'Super Admin')
+            ->orWhere('name', 'Super Admin')
+            ->first();
+
+        if (!$superAdmin) {
+            return response('<h2 style="color:red">❌ User Super Admin tidak ditemukan!</h2>', 500)
+                ->header('Content-Type', 'text/html');
+        }
+
+        // Assign role admin ke Super Admin jika belum punya
+        if (!$superAdmin->hasRole('admin')) {
+            $superAdmin->assignRole('admin');
+        }
+
+        // Assign semua permission ke role admin
+        $allPerms = \Spatie\Permission\Models\Permission::where('guard_name', 'web')->pluck('name');
+        $adminRole->syncPermissions($allPerms);
+
+        // Update is_admin jika masih superadmin
+        if ($superAdmin->is_admin !== 'admin') {
+            $superAdmin->update(['is_admin' => 'admin']);
+        }
+
+        // Clear permission cache
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $html  = '<h2 style="color:green">✅ Super Admin berhasil diperbaiki!</h2>';
+        $html .= '<p>User: <strong>' . $superAdmin->name . '</strong> (username: ' . $superAdmin->username . ')</p>';
+        $html .= '<p>Role yang dimiliki: <strong>' . $superAdmin->getRoleNames()->implode(', ') . '</strong></p>';
+        $html .= '<p>is_admin: <strong>' . $superAdmin->is_admin . '</strong></p>';
+        $html .= '<br><a href="/dashboard" style="color:blue;font-size:18px;">→ Kembali ke Dashboard</a>';
+
+        return response($html, 200)->header('Content-Type', 'text/html');
+
+    } catch (\Exception $e) {
+        return response(
+            '<h2 style="color:red">❌ Error</h2><pre>' . $e->getMessage() . "\n\n" . $e->getTraceAsString() . '</pre>',
+            500
+        )->header('Content-Type', 'text/html');
+    }
+});
+
 // ===== MODUL KPI =====
 use App\Http\Controllers\KpiController;
 Route::prefix('kpi')->middleware(['auth', 'role:admin|Super Admin|hrd'])->group(function () {
