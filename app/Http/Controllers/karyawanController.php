@@ -266,10 +266,16 @@ class karyawanController extends Controller
         }
 
         try {
-            Excel::import(new UsersImport($request->tipe_user), $request->file('file_excel'));
+            $import = new UsersImport($request->tipe_user);
+            Excel::import($import, $request->file('file_excel'));
             
-            Alert::success('Berhasil', 'Data Pegawai Berhasil Di Import');
-            return back()->with('success', 'Data Pegawai Berhasil Di Import');
+            if ($import->getImportedCount() == 0) {
+                Alert::error('Gagal', 'Tidak ada data yang diimport. Pastikan format kolom sesuai dengan template.');
+                return back()->with('error', 'Tidak ada data yang diimport. Pastikan format kolom sesuai dengan template.');
+            }
+
+            Alert::success('Berhasil', $import->getImportedCount() . ' Data Pegawai Berhasil Di Import');
+            return back()->with('success', $import->getImportedCount() . ' Data Pegawai Berhasil Di Import');
         } catch (\Throwable $e) {
             Alert::error('Gagal', 'Terjadi kesalahan saat mengimpor data: ' . $e->getMessage());
             return back()->with('error', 'Gagal mengimpor data: ' . $e->getMessage());
@@ -278,44 +284,7 @@ class karyawanController extends Controller
 
     public function downloadTemplate()
     {
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=Template_Import_Pegawai.csv",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-
-        $columns = [
-            'Nama*', 'Email*', 'Username*', 'Password*', 'Telepon*', 'Lokasi*', 'Tanggal Lahir*',
-            'Jenis Kelamin* (Laki-Laki/Perempuan)', 'Tanggal Masuk*', 'Role*', 'Divisi*', 'Is Admin (user/admin)',
-            'Nama Ibu Kandung*', 'Tipe User (pegawai/dosen)', 'Status Pajak ID', 'Alamat', 'Alamat Domisili', 
-            'Kontak Darurat Nama', 'Kontak Darurat HP', 'Kontak Darurat Hubungan', 'KTP', 'Kartu Keluarga', 
-            'BPJS Kesehatan', 'BPJS Ketenagakerjaan', 'NPWP', 'SIM', 'NIP', 'No Kontrak', 'Tanggal Mulai Kontrak',
-            'Tanggal Berakhir Kontrak', 'No Rekening', 'Nama Rekening', 'Cuti', 'Izin Masuk',
-            'Izin Telat', 'Izin Pulang Cepat', 'Cuti Melahirkan', 'Cuti Kematian', 'Gaji Pokok',
-            'Tunjangan Makan', 'Tunjangan Transport', 'Tunjangan BPJS Kesehatan', 'Tunjangan BPJS Ketenagakerjaan',
-            'Lembur', 'Kehadiran', 'THR', 'Bonus Pribadi', 'Bonus Team', 'Bonus Jackpot', 'Terlambat',
-            'Batas Terlambat', 'Mangkir', 'Potongan BPJS Kesehatan', 'Potongan Koperasi', 'Kode Pos'
-        ];
-
-        $callback = function() use($columns) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
-            fputcsv($file, [
-                'Budi Santoso', 'budi@example.com', 'budi123', '12345678', '08123456789', 'Kantor Pusat',
-                '1995-05-20', 'Laki-Laki', '2023-01-10', 'pegawai', 'IT Support', 'user', 'Siti Aminah',
-                'pegawai', '1', 'Jl. Merdeka No. 123, Jakarta', 'Jl. Merdeka No. 123, Jakarta', 'Siti Aminah',
-                '08123456789', 'Orang Tua', '3171234567890001', '3171234567890001', '1234567890',
-                '1234567890', '1234567890', 'A12345678', '123456', 'KTR-001', '2023-01-10',
-                '2024-01-10', '1234567890', 'Budi Santoso', '12', '3', '3', '3', '90', '3',
-                '5000000', '500000', '300000', '200000', '200000', '100000', '100000', '500000',
-                '200000', '100000', '50000', '5', '100000', '50000', '12345'
-            ]);
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(new \App\Exports\TemplatePegawaiExport, 'Template_Import_Pegawai.xlsx');
     }
 
     public function tambahKaryawan()

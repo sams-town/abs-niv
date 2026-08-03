@@ -18,11 +18,17 @@ class UsersImport implements ToModel, WithHeadingRow
 {
     protected $defaultTipeUser;
     protected $validColumns;
+    public $importedCount = 0;
 
     public function __construct($defaultTipeUser = 'pegawai')
     {
         $this->defaultTipeUser = $defaultTipeUser;
         $this->validColumns = Schema::getColumnListing('users');
+    }
+
+    public function getImportedCount()
+    {
+        return $this->importedCount;
     }
 
     public function model(array $row)
@@ -176,6 +182,8 @@ class UsersImport implements ToModel, WithHeadingRow
 
             // --- Step 5: Assign role ---
             $user->syncRoles([$roleName]);
+
+            $this->importedCount++;
 
             return $user;
         } catch (\Throwable $e) {

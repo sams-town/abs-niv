@@ -368,10 +368,16 @@ class DosenController extends Controller
         }
 
         try {
-            Excel::import(new UsersImport('dosen'), $request->file('file_excel'));
+            $import = new UsersImport('dosen');
+            Excel::import($import, $request->file('file_excel'));
 
-            Alert::success('Berhasil', 'Data Dosen Berhasil Di Import');
-            return back()->with('success', 'Data Dosen Berhasil Di Import');
+            if ($import->getImportedCount() == 0) {
+                Alert::error('Gagal', 'Tidak ada data yang diimport. Pastikan format kolom sesuai dengan template.');
+                return back()->with('error', 'Tidak ada data yang diimport. Pastikan format kolom sesuai dengan template.');
+            }
+
+            Alert::success('Berhasil', $import->getImportedCount() . ' Data Dosen Berhasil Di Import');
+            return back()->with('success', $import->getImportedCount() . ' Data Dosen Berhasil Di Import');
         } catch (\Throwable $e) {
             Alert::error('Gagal', 'Terjadi kesalahan saat mengimpor data dosen: ' . $e->getMessage());
             return back()->with('error', 'Gagal mengimpor data dosen: ' . $e->getMessage());
@@ -380,28 +386,6 @@ class DosenController extends Controller
 
     public function downloadTemplate()
     {
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=Template_Import_Dosen.csv",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-
-        $columns = [
-            'Nama*', 'Email*', 'Username*', 'Password*', 'Telepon*', 'Lokasi*', 'Tanggal Lahir*',
-            'Jenis Kelamin* (Laki-Laki/Perempuan)', 'Tanggal Masuk*', 'Role*', 'Jabatan*', 'Is Admin (user/admin)',
-            'Nama Ibu Kandung*', 'Status Pajak ID', 'Alamat', 'Alamat Domisili', 
-            'NIDN*', 'NIP', 'Gelar Depan', 'Gelar Belakang', 'Program Studi', 'Pendidikan Terakhir',
-            'Status Kepegawaian', 'Tipe Honorarium', 'Nominal Honor', 'Jabatan Akademik', 'Mata Kuliah'
-        ];
-
-        $callback = function() use ($columns) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(new \App\Exports\TemplateDosenExport, 'Template_Import_Dosen.xlsx');
     }
 }
