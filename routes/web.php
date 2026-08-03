@@ -494,6 +494,7 @@ Route::prefix('dosen')->middleware(['auth', 'role:admin|Super Admin|hrd'])->grou
     Route::delete('/destroy/{id}', [DosenController::class, 'destroy']);
     Route::get('/template', [DosenController::class, 'downloadTemplate']);
     Route::post('/import', [DosenController::class, 'importDosen']);
+    Route::get('/export', [DosenController::class, 'exportDosen']);
 });
 
 // ===== REGISTRASI WAJAH DOSEN (Self-service, bisa diakses dosen sendiri) =====

@@ -388,4 +388,9 @@ class DosenController extends Controller
     {
         return Excel::download(new \App\Exports\TemplateDosenExport, 'Template_Import_Dosen.xlsx');
     }
+
+    public function exportDosen()
+    {
+        return Excel::download(new \App\Exports\DosenExport, 'Data_Dosen.xlsx');
+    }
 }

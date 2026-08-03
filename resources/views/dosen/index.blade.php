@@ -8,6 +8,9 @@
                     <h4>{{ $title }}</h4>
                 </div>
                 <div class="col-md-6 p-0 text-right">
+                    <a class="btn btn-success btn-sm me-2" href="{{ url('/dosen/export') }}">
+                        <i class="fa fa-download me-1"></i> Export Dosen
+                    </a>
                     <button type="button" class="btn btn-outline-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#importDosenModal">
                         <i class="fa fa-upload me-1"></i> Import Dosen
                     </button>
