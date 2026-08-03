@@ -35,20 +35,20 @@ class UsersImport implements ToModel, WithHeadingRow
     {
         try {
             // --- Step 1: Get and validate required fields ---
-            $name = trim($this->getValue($row, ['nama', 'name', 'namalengkap']));
+            $name = trim($this->getValue($row, ['nama', 'name', 'namalengkap', 'pegawai', 'namapegawai']));
             $email = trim($this->getValue($row, ['email', 'email']));
             $username = trim($this->getValue($row, ['username', 'user']));
             $password = trim($this->getValue($row, ['password', 'pass', 'katasandi']));
             $telepon = trim($this->getValue($row, ['telepon', 'phone', 'nohp', 'hp']));
             $lokasiName = trim($this->getValue($row, ['lokasi', 'lokasi']));
             $tglLahir = $this->getValue($row, ['tanggallahir', 'tgllahir', 'tgl_lahir', 'tanggal_lahir']);
-            $jenisKelamin = trim($this->getValue($row, ['jeniskelamin', 'gender', 'jk', 'jenis_kelamin']));
+            $jenisKelamin = trim($this->getValue($row, ['jeniskelamin', 'gender', 'jk', 'jenis_kelamin', 'jeniskelaminlakilakiperempuan']));
             $tglMasuk = $this->getValue($row, ['tanggalmasuk', 'tglmasuk', 'tgl_join', 'tanggal_masuk']);
             $roleName = trim($this->getValue($row, ['role', 'peran', 'akses']));
             $jabatanName = trim($this->getValue($row, ['divisi', 'jabatan', 'namajabatan', 'nama_jabatan']));
-            $isAdmin = trim($this->getValue($row, ['isadmin', 'is_admin', 'admin']));
+            $isAdmin = trim($this->getValue($row, ['isadmin', 'is_admin', 'admin', 'isadminuseradmin']));
             $namaIbuKandung = trim($this->getValue($row, ['namaibukandung', 'nama_ibu_kandung']));
-            $tipeUser = trim($this->getValue($row, ['tipeuser', 'tipe_user', 'tipe', 'typeuser', 'type_user'], $this->defaultTipeUser));
+            $tipeUser = trim($this->getValue($row, ['tipeuser', 'tipe_user', 'tipe', 'typeuser', 'type_user', 'tipeuserpegawaidosen'], $this->defaultTipeUser));
             // Normalize tipeUser to either 'pegawai' or 'dosen'
             if (in_array(strtolower($tipeUser), ['dosen', 'lecturer', 'd', 'dos'])) {
                 $tipeUser = 'dosen';
@@ -58,11 +58,7 @@ class UsersImport implements ToModel, WithHeadingRow
 
             // Validate required fields
             if (empty($name) || empty($username)) {
-                $normalizedDebug = [];
-                foreach ($row as $k => $v) {
-                    $normalizedDebug[preg_replace('/[^a-z0-9]/', '', strtolower((string)$k))] = $v;
-                }
-                throw new \Exception("Data nama atau username kosong. Row Asli: " . json_encode($row) . " | Row Normal: " . json_encode($normalizedDebug));
+                throw new \Exception("Data nama atau username kosong pada salah satu baris. Pastikan Anda sudah menggunakan format terbaru (Download Template) dan tidak mengubah nama kolom (baris pertama).");
             }
 
             // Defaults if missing
