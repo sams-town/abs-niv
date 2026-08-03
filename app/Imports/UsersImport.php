@@ -58,8 +58,11 @@ class UsersImport implements ToModel, WithHeadingRow
 
             // Validate required fields
             if (empty($name) || empty($username)) {
-                Log::warning('Skipping row: Missing required fields (name or username)', $row);
-                return null;
+                $normalizedDebug = [];
+                foreach ($row as $k => $v) {
+                    $normalizedDebug[preg_replace('/[^a-z0-9]/', '', strtolower((string)$k))] = $v;
+                }
+                throw new \Exception("Data nama atau username kosong. Row Asli: " . json_encode($row) . " | Row Normal: " . json_encode($normalizedDebug));
             }
 
             // Defaults if missing
