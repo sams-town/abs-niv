@@ -25,9 +25,104 @@ class DosenController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $total_pegawai = User::dosen()->count();
+        $aktif_pegawai = User::dosen()->where('status_aktif', true)->count();
+        $cuti_pegawai = \App\Models\Cuti::whereHas('User', function($q){ $q->where('tipe_user', 'dosen'); })
+                            ->where('tanggal', date('Y-m-d'))
+                            ->where('status_cuti', 'Diterima')
+                            ->where('nama_cuti', 'Cuti')
+                            ->count();
+        $baru_bulan_ini = User::dosen()->whereMonth('created_at', date('m'))
+                              ->whereYear('created_at', date('Y'))
+                              ->count();
+
+        // Calculate location distribution data
+        $total_lokasi = \App\Models\Lokasi::count();
+        $lokasi_counts = User::dosen()->select('lokasi_id', \DB::raw('count(*) as total'))
+            ->whereNotNull('lokasi_id')
+            ->groupBy('lokasi_id')
+            ->orderBy('total', 'desc')
+            ->get();
+        
+        $distribusi_lokasi = [];
+        $lokasi_terbesar = 'None';
+        $max_lokasi_count = 0;
+        
+        foreach ($lokasi_counts as $lc) {
+            $lokasi = \App\Models\Lokasi::find($lc->lokasi_id);
+            $nama_lokasi = $lokasi ? $lokasi->nama_lokasi : 'Unknown';
+            $pct = $total_pegawai > 0 ? round(($lc->total / $total_pegawai) * 100, 1) : 0;
+            $distribusi_lokasi[] = [
+                'label' => $nama_lokasi,
+                'count' => $lc->total,
+                'percentage' => $pct
+            ];
+            if ($lc->total > $max_lokasi_count) {
+                $max_lokasi_count = $lc->total;
+                $lokasi_terbesar = $nama_lokasi;
+            }
+        }
+
+        // Calculate domicile (Domisili KTP) distribution data
+        $cities = ['Jakarta', 'Bogor', 'Depok', 'Tangerang', 'Bekasi', 'Bandung', 'Surabaya', 'Tasikmalaya', 'Semarang', 'Yogyakarta', 'Sukabumi', 'Cianjur', 'Garut', 'Cirebon'];
+        $domisili_raw = [];
+        foreach (User::dosen()->get() as $u) {
+            $alamat = $u->alamat;
+            $found_domisili = 'Lainnya';
+            if ($alamat) {
+                if (preg_match('/\b\d{5}\b/', $alamat, $matches)) {
+                    $found_domisili = $matches[0];
+                } else {
+                    foreach ($cities as $city) {
+                        if (stripos($alamat, $city) !== false) {
+                            $found_domisili = $city;
+                            break;
+                        }
+                    }
+                }
+            }
+            $domisili_raw[$found_domisili] = ($domisili_raw[$found_domisili] ?? 0) + 1;
+        }
+        
+        arsort($domisili_raw);
+        $total_provinsi = count(array_keys($domisili_raw));
+        
+        $provinsi_terbesar = 'Lainnya';
+        $max_prov_count = 0;
+        foreach ($domisili_raw as $k => $v) {
+            if ($k !== 'Lainnya' && $v > $max_prov_count) {
+                $max_prov_count = $v;
+                $provinsi_terbesar = $k;
+            }
+        }
+        if ($provinsi_terbesar === 'Lainnya' && !empty($domisili_raw)) {
+            reset($domisili_raw);
+            $provinsi_terbesar = key($domisili_raw);
+        }
+
+        $distribusi_domisili = [];
+        foreach ($domisili_raw as $k => $v) {
+            $pct = $total_pegawai > 0 ? round(($v / $total_pegawai) * 100, 1) : 0;
+            $distribusi_domisili[] = [
+                'label' => $k,
+                'count' => $v,
+                'percentage' => $pct
+            ];
+        }
+
         return view('dosen.index', [
             'title'     => 'Data Dosen',
             'data_user' => $data,
+            'total_pegawai' => $total_pegawai,
+            'aktif_pegawai' => $aktif_pegawai,
+            'cuti_pegawai' => $cuti_pegawai,
+            'baru_bulan_ini' => $baru_bulan_ini,
+            'total_lokasi' => $total_lokasi,
+            'lokasi_terbesar' => $lokasi_terbesar,
+            'distribusi_lokasi' => $distribusi_lokasi,
+            'total_provinsi' => $total_provinsi,
+            'provinsi_terbesar' => $provinsi_terbesar,
+            'distribusi_domisili' => $distribusi_domisili,
         ]);
     }
 
