@@ -269,7 +269,7 @@
 
                         <div class="content">
                             <h4 class="white_color">{{ auth()->user()->name }}</h4>
-                            <p class="white_color fw_4">{{ auth()->user()->Jabatan->nama_jabatan }}</p>
+                            <p class="white_color fw_4">{{ auth()->user()->Jabatan?->nama_jabatan ?? 'Dosen' }}</p>
                         </div>
                     </a>
                     <div class="d-flex align-items-center gap-4">
