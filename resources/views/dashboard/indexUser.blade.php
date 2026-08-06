@@ -8,20 +8,20 @@
                         <div class="col-4 br-right">
                             <div class="inner-left">
                                 <h4>Jam Kerja</h4>
-                                <span>{{ $shift_karyawan->Shift->jam_masuk ?? '' }} - {{ $shift_karyawan->Shift->jam_keluar ?? '' }}</span>
+                                <span>{{ $shift_karyawan?->Shift?->jam_masuk ?? '-' }} - {{ $shift_karyawan?->Shift?->jam_keluar ?? '-' }}</span>
                             </div>
                         </div>
                         <div class="col-4 br-right">
                             <center>
                                 <h4>Lokasi</h4>
-                                <span>{{ auth()->user()->Lokasi->nama_lokasi }}</span>
+                                <span>{{ auth()->user()->Lokasi?->nama_lokasi ?? '-' }}</span>
                             </center>
                         </div>
                         <div class="col-4">
                             <div class="inner-right">
                                 <h4>Istirahat</h4>
                                 <h3>
-                                    <span>{{ $shift_karyawan->Shift->jam_mulai_istirahat ?? '' }} - {{ $shift_karyawan->Shift->jam_selesai_istirahat ?? '' }}</span>
+                                    <span>{{ $shift_karyawan?->Shift?->jam_mulai_istirahat ?? '-' }} - {{ $shift_karyawan?->Shift?->jam_selesai_istirahat ?? '-' }}</span>
                                 </h3>
                             </div>
                         </div>
