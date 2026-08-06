@@ -127,7 +127,7 @@
                     <img class="b-r-50" src="{{ url('assets/img/foto_default.jpg') }}" alt="" style="width: 50px">
                   @endif
                   <div class="flex-grow-1"><span>{{ auth()->user()->name }}</span>
-                    <p class="mb-0 font-roboto">{{ auth()->user()->Jabatan->nama_jabatan }} <i class="middle fa fa-angle-down"></i></p>
+                    <p class="mb-0 font-roboto">{{ auth()->user()->Jabatan?->nama_jabatan ?? 'Dosen' }} <i class="middle fa fa-angle-down"></i></p>
                   </div>
                 </div>
                 <ul class="profile-dropdown onhover-show-div">
@@ -156,7 +156,7 @@
               <a href="{{ url('/dashboard') }}">
                 <img class="img-fluid for-light" src="{{ $logoUrl }}" alt="Logo">
               </a>
-              <div style="font-size: 18px; color:white; font-weight:600">{{ $settings->name }}</div>
+              <div style="font-size: 18px; color:white; font-weight:600">{{ $settings->name ?? 'UNIBA HRIS' }}</div>
               <div class="back-btn ms-auto"><i class="fa fa-angle-left"></i></div>
               <div class="toggle-sidebar ms-2"><i class="fa fa-cog status_toggle middle sidebar-toggle"> </i></div>
             </div>
