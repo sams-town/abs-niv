@@ -139,7 +139,7 @@
                                     <img src="{{ url('/assets/qrcode/'.auth()->user()->username.'.png') }}" alt="{{ auth()->user()->username }}.png" class="mt-3" style="width: 160px">
                                 </div>
                                <h2 class="member-name">{{ auth()->user()->name }}</h2>
-                                <p class="membership-type">{{ auth()->user()->Jabatan->nama_jabatan ?? '-' }}</p>
+                                <p class="membership-type">{{ auth()->user()->Jabatan?->nama_jabatan ?? '-' }}</p>
                            </div>
 
                            <a href="{{ url('/pegawai/print/'.auth()->user()->id) }}" target="_blank" class="btn btn-primary"  style="border-radius: 15px"><i class="fa fa-download me-2"></i>Download</a>

@@ -25,7 +25,7 @@
                                                     @endif
                                                     <p class="fw_7 on_surface_color">{{ auth()->user()->name }}</p>
                                                 </div>
-                                                <p class="fw_7 on_surface_color">{{ auth()->user()->Jabatan->nama_jabatan }}</p>
+                                                <p class="fw_7 on_surface_color">{{ auth()->user()->Jabatan?->nama_jabatan ?? 'Dosen' }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -395,7 +395,7 @@
                                                     @endif
                                                     <p class="fw_7 on_surface_color">{{ auth()->user()->name }}</p>
                                                 </div>
-                                                <p class="fw_7 on_surface_color">{{ auth()->user()->Jabatan->nama_jabatan }}</p>
+                                                <p class="fw_7 on_surface_color">{{ auth()->user()->Jabatan?->nama_jabatan ?? 'Dosen' }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -465,7 +465,7 @@
                                                     @endif
                                                     <p class="fw_7 on_surface_color">{{ auth()->user()->name }}</p>
                                                 </div>
-                                                <p class="fw_7 on_surface_color">{{ auth()->user()->Jabatan->nama_jabatan }}</p>
+                                                <p class="fw_7 on_surface_color">{{ auth()->user()->Jabatan?->nama_jabatan ?? 'Dosen' }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -656,7 +656,7 @@
                                                     @endif
                                                     <p class="fw_7 on_surface_color">{{ auth()->user()->name }}</p>
                                                 </div>
-                                                <p class="fw_7 on_surface_color">{{ auth()->user()->Jabatan->nama_jabatan }}</p>
+                                                <p class="fw_7 on_surface_color">{{ auth()->user()->Jabatan?->nama_jabatan ?? 'Dosen' }}</p>
                                             </div>
                                         </div>
                                     </div>

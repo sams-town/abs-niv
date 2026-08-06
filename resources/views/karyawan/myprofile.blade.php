@@ -26,7 +26,7 @@
 
                     <h3 class="profile-username text-center">{{ $karyawan->name }}</h3>
 
-                    <p class="text-muted text-center">{{ $karyawan->Jabatan->nama_jabatan ?? '-' }}</p>
+                    <p class="text-muted text-center">{{ $karyawan->Jabatan?->nama_jabatan ?? '-' }}</p>
 
                     <ul class="list-group list-group-unbordered mb-3">
                         <li class="list-group-item">
