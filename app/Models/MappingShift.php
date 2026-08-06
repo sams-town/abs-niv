@@ -49,7 +49,7 @@ class MappingShift extends Model
         ->whereDoesntHave('User.roles', function ($q) {
             $q->where('name', 'Super Admin');
         })
-        ->when(auth()->user()->hasRole('kepala_cabang'), function ($query) {
+        ->when(auth()->user()->hasRole('kepala_cabang') && !auth()->user()->isSuperAdmin(), function ($query) {
             return $query->where('users.lokasi_id', auth()->user()->lokasi_id);
         })
         ->when(auth()->user()->is_admin == 'user', function ($query) {

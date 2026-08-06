@@ -249,7 +249,7 @@ class LemburController extends Controller
         $mulai = request()->input('mulai');
         $akhir = request()->input('akhir');
 
-        $data_lembur = Lembur::when(auth()->user()->hasRole('kepala_cabang'), function ($query) {
+        $data_lembur = Lembur::when(auth()->user()->hasRole('kepala_cabang') && !auth()->user()->isSuperAdmin(), function ($query) {
             return $query->where('lokasi_id', auth()->user()->lokasi_id);
         })
         ->when($user_id, function ($query) use ($user_id) {
@@ -280,7 +280,7 @@ class LemburController extends Controller
         $mulai = request()->input('mulai');
         $akhir = request()->input('akhir');
 
-        $data_lembur = Lembur::when(auth()->user()->hasRole('kepala_cabang'), function ($query) {
+        $data_lembur = Lembur::when(auth()->user()->hasRole('kepala_cabang') && !auth()->user()->isSuperAdmin(), function ($query) {
             return $query->where('lokasi_id', auth()->user()->lokasi_id);
         })
         ->when($user_id, function ($query) use ($user_id) {

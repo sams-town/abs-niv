@@ -273,7 +273,7 @@ class CutiController extends Controller
             'is_admin' => 'admin'
         ]);
 
-        $users = User::when(auth()->user()->hasRole('kepala_cabang'), function ($query) {
+        $users = User::when(auth()->user()->hasRole('kepala_cabang') && !auth()->user()->isSuperAdmin(), function ($query) {
             return $query->where('lokasi_id', auth()->user()->lokasi_id);
         })
         ->orderBy('name')
@@ -285,7 +285,7 @@ class CutiController extends Controller
         $status_approval_1 = request()->input('status_approval_1');
         $status_cuti_filter = request()->input('status_cuti_filter');
 
-        $cuti = Cuti::when(auth()->user()->hasRole('kepala_cabang'), function ($query) {
+        $cuti = Cuti::when(auth()->user()->hasRole('kepala_cabang') && !auth()->user()->isSuperAdmin(), function ($query) {
                         return $query->where('lokasi_id', auth()->user()->lokasi_id);
                     })
                     ->when($mulai && $akhir, function ($query) use ($mulai, $akhir) {
@@ -313,7 +313,7 @@ class CutiController extends Controller
 
     public function tambahAdmin()
     {
-        $users = User::when(auth()->user()->hasRole('kepala_cabang'), function ($query) {
+        $users = User::when(auth()->user()->hasRole('kepala_cabang') && !auth()->user()->isSuperAdmin(), function ($query) {
             return $query->where('lokasi_id', auth()->user()->lokasi_id);
         })
         ->orderBy('name')
