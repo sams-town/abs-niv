@@ -44,6 +44,19 @@
                                 </div>
                             @enderror
                         </div>
+                        <div class="form-group">
+                            <label for="anggota" class="float-left">Anggota</label>
+                            <select class="form-control selectpicker @error('anggota') is-invalid @enderror" id="anggota" name="anggota[]" data-live-search="true" multiple>
+                                @foreach ($users as $du)
+                                    <option value="{{ $du->id }}">{{ $du->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('anggota')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>

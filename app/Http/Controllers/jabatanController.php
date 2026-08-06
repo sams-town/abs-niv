@@ -40,7 +40,12 @@ class jabatanController extends Controller
             'manager' => 'nullable',
         ]);
 
-        Jabatan::create($validatedData);
+        $jabatan = Jabatan::create($validatedData);
+
+        if ($request->has('anggota')) {
+            User::whereIn('id', $request->anggota)->update(['jabatan_id' => $jabatan->id]);
+        }
+
         return redirect('/jabatan')->with('success', 'Data Berhasil di Tambahkan');
     }
 
@@ -61,6 +66,17 @@ class jabatanController extends Controller
         ]);
 
         Jabatan::where('id', $id)->update($validatedData);
+
+        if ($request->has('anggota')) {
+            // Remove users that are no longer in this jabatan
+            User::where('jabatan_id', $id)->whereNotIn('id', $request->anggota)->update(['jabatan_id' => null]);
+            // Assign users that are newly added to this jabatan
+            User::whereIn('id', $request->anggota)->update(['jabatan_id' => $id]);
+        } else {
+            // Remove all users if no anggota is selected
+            User::where('jabatan_id', $id)->update(['jabatan_id' => null]);
+        }
+
         return redirect('/jabatan')->with('success', 'Data Berhasil di Update');
     }
 

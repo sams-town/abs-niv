@@ -45,6 +45,22 @@
                                 </div>
                             @enderror
                         </div>
+                        @php
+                            $anggota_ids = \App\Models\User::where('jabatan_id', $data_jabatan->id)->pluck('id')->toArray();
+                        @endphp
+                        <div class="form-group">
+                            <label for="anggota" class="float-left">Anggota</label>
+                            <select class="form-control selectpicker @error('anggota') is-invalid @enderror" id="anggota" name="anggota[]" data-live-search="true" multiple>
+                                @foreach ($users as $du)
+                                    <option value="{{ $du->id }}" {{ in_array($du->id, $anggota_ids) ? 'selected' : '' }}>{{ $du->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('anggota')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>
