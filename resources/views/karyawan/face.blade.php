@@ -49,134 +49,137 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             let video = document.getElementById("video");
-            let width = 320;
-            let height = 240;
+            // Resolusi kecil = deteksi lebih cepat
+            let width = 256;
+            let height = 192;
             let modelsLoaded = false;
 
             const startStream = () => {
                 navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "user", width, height },
+                    video: { facingMode: "user", width: { ideal: width }, height: { ideal: height } },
                     audio: false
                 }).then((stream) => {
                     video.srcObject = stream;
                 }).catch((err) => {
-                    Swal.fire('Kamera Tidak Tersedia', 'Pastikan Anda mengizinkan akses kamera di browser. Error: ' + err.message, 'error');
+                    Swal.fire('Kamera Tidak Tersedia', 'Pastikan Anda mengizinkan akses kamera. Error: ' + err.message, 'error');
                 });
             }
 
-            // Tampilkan progress loading model
+            // Tampilkan loading model
             Swal.fire({
                 title: 'Memuat Model AI...',
-                html: 'Sedang memuat model pengenalan wajah.<br><b id="swal-model-status">Mohon tunggu...</b>',
+                text: 'Mohon tunggu sebentar...',
                 allowOutsideClick: false,
                 showConfirmButton: false,
                 didOpen: () => { Swal.showLoading(); }
             });
 
+            // Pakai tiny landmark model (jauh lebih cepat dari faceLandmark68Net)
             Promise.all([
                 faceapi.nets.tinyFaceDetector.loadFromUri("{{ url('/face/weights') }}"),
-                faceapi.nets.faceLandmark68Net.loadFromUri("{{ url('/face/weights') }}"),
+                faceapi.nets.faceLandmark68TinyNet.loadFromUri("{{ url('/face/weights') }}"),
                 faceapi.nets.faceRecognitionNet.loadFromUri("{{ url('/face/weights') }}")
             ]).then(() => {
                 modelsLoaded = true;
                 startStream();
                 Swal.close();
-                // Aktifkan tombol capture dan sembunyikan info loading
                 document.getElementById('capture').disabled = false;
                 var info = document.getElementById('model-loading-info');
                 if (info) info.style.display = 'none';
             }).catch((err) => {
-                Swal.fire('Gagal Memuat Model', 'Terjadi kesalahan saat memuat model AI: ' + err.message, 'error');
+                Swal.fire('Gagal Memuat Model', 'Error: ' + err.message, 'error');
             });
 
             $(document).ready(function(){
-                const descriptions = [];
 
                 $("#capture").click(async function(){
                     if (!modelsLoaded) {
-                        Swal.fire('Model Belum Siap', 'Model AI masih dimuat. Tunggu hingga kamera aktif, lalu coba lagi.', 'warning');
+                        Swal.fire('Model Belum Siap', 'Tunggu hingga kamera aktif, lalu coba lagi.', 'warning');
                         return;
                     }
 
+                    // Disable tombol agar tidak dobel klik
+                    $("#capture").prop('disabled', true);
+
                     Swal.fire({
-                        title: 'Processing...',
-                        text: 'Detecting face, please wait.',
+                        title: 'Memproses...',
+                        text: 'Mendeteksi wajah, harap tunggu.',
                         allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading()
-                        }
+                        didOpen: () => { Swal.showLoading(); }
                     });
 
-                        var username = $('#username').val();
-                        const label = username;
-                        var isSelfRegister = $('#selfRegister').val() === '1';
+                    var username = $('#username').val();
+                    var isSelfRegister = $('#selfRegister').val() === '1';
 
-                        var canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        var context = canvas.getContext('2d');
-                        context.drawImage(video, 0, 0, width, height);
+                    // Ambil frame dari video
+                    var canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    var context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, width, height);
 
-                        var img = document.createElement('img');
-                        img.src = canvas.toDataURL('image/png');
+                    var img = document.createElement('img');
+                    img.src = canvas.toDataURL('image/png');
 
-                        const detections = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 })).withFaceLandmarks().withFaceDescriptor();
+                    try {
+                        // inputSize 128 = paling cepat, pakai tiny landmark
+                        const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.3 });
+                        const detections = await faceapi.detectSingleFace(canvas, opts)
+                            .withFaceLandmarks(true)   // true = pakai tiny landmark
+                            .withFaceDescriptor();
 
-                        if(detections) {
-                            descriptions.push(detections.descriptor);
-                            var descrip = descriptions;
-
-                            $.ajaxSetup({
-                                headers: {
-                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                                }
-                            });
-
-                            // Gunakan endpoint yang sesuai: self-register untuk dosen, atau admin untuk admin
-                            var photoUrl = isSelfRegister
-                                ? "{{ url('/dosen/registrasi-wajah/simpan') }}"
-                                : "{{ url('/pegawai/face/ajaxPhoto') }}";
-
-                            $.ajax({
-                                type : 'POST',
-                                url : photoUrl,
-                                data :  {image: img.src, path: username},
-                                cache : false,
-                                success: function(msg){
-                                    console.log(msg);
-                                },
-                                error: function(data){
-                                    console.log('error:', data);
-                                }
-                            });
-
-                            var postData = new faceapi.LabeledFaceDescriptors(label, descrip);
-                            $.ajax({
-                                type : 'POST',
-                                url : "{{ url('/pegawai/face/ajaxDescrip') }}",
-                                data :  { myData: JSON.stringify(postData), user_id:{{ $karyawan->id }} },
-                                datatype : 'json',
-                                cache : false,
-                                success: function(msg){
-                                    Swal.fire({
-                                        title: 'Berhasil Daftar Wajah!',
-                                        text: isSelfRegister ? 'Wajah Anda berhasil didaftarkan. Selamat menggunakan sistem!' : 'Wajah berhasil didaftarkan.',
-                                        icon: 'success'
-                                    });
-                                    setTimeout(function() {
-                                        window.location.href = isSelfRegister
-                                            ? "{{ url('/dashboard') }}"
-                                            : "{{ url('/pegawai') }}";
-                                    }, 2000);
-                                },
-                                error: function(data){
-                                    console.log('error:', data);
-                                }
-                            });
-                        } else {
-                            Swal.fire('Gagal Deteksi Wajah!', 'Wajah tidak terdeteksi. Pastikan pencahayaan baik dan wajah terlihat jelas, lalu coba lagi.', 'error');
+                        if (!detections) {
+                            Swal.fire('Wajah Tidak Terdeteksi', 'Pastikan pencahayaan cukup dan wajah terlihat jelas, lalu coba lagi.', 'error');
+                            $("#capture").prop('disabled', false);
+                            return;
                         }
-                    });
+
+                        $.ajaxSetup({
+                            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+                        });
+
+                        // Kirim foto
+                        var photoUrl = isSelfRegister
+                            ? "{{ url('/dosen/registrasi-wajah/simpan') }}"
+                            : "{{ url('/pegawai/face/ajaxPhoto') }}";
+
+                        $.ajax({
+                            type: 'POST', url: photoUrl,
+                            data: { image: img.src, path: username },
+                            cache: false
+                        });
+
+                        // Kirim descriptor wajah
+                        var postData = new faceapi.LabeledFaceDescriptors(username, [detections.descriptor]);
+                        $.ajax({
+                            type: 'POST',
+                            url: "{{ url('/pegawai/face/ajaxDescrip') }}",
+                            data: { myData: JSON.stringify(postData), user_id: {{ $karyawan->id }} },
+                            cache: false,
+                            success: function() {
+                                Swal.fire({
+                                    title: 'Berhasil!',
+                                    text: isSelfRegister ? 'Wajah Anda berhasil didaftarkan.' : 'Wajah berhasil didaftarkan.',
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = isSelfRegister
+                                        ? "{{ url('/dashboard') }}"
+                                        : "{{ url('/pegawai') }}";
+                                });
+                            },
+                            error: function() {
+                                Swal.fire('Gagal Simpan', 'Terjadi kesalahan saat menyimpan data wajah. Coba lagi.', 'error');
+                                $("#capture").prop('disabled', false);
+                            }
+                        });
+
+                    } catch(e) {
+                        Swal.fire('Error', 'Terjadi kesalahan: ' + e.message, 'error');
+                        $("#capture").prop('disabled', false);
+                    }
+                });
             });
         </script>
     @endpush
