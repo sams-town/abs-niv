@@ -122,8 +122,8 @@
                     img.src = canvas.toDataURL('image/png');
 
                     try {
-                        // inputSize 128 = paling cepat, pakai tiny landmark
-                        const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.3 });
+                        // inputSize 224 = balance antara kecepatan dan akurasi deteksi
+                        const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 });
                         const detections = await faceapi.detectSingleFace(canvas, opts)
                             .withFaceLandmarks(true)   // true = pakai tiny landmark
                             .withFaceDescriptor();
@@ -150,13 +150,18 @@
                         });
 
                         // Kirim descriptor wajah
-                        var postData = new faceapi.LabeledFaceDescriptors(username, [detections.descriptor]);
+                        // Konversi Float32Array ke plain array agar bisa di-JSON.stringify dengan benar
+                        var plainDescriptor = Array.from(detections.descriptor);
+                        var postData = {
+                            label: username,
+                            descriptors: [plainDescriptor]
+                        };
                         $.ajax({
                             type: 'POST',
                             url: "{{ url('/pegawai/face/ajaxDescrip') }}",
                             data: { myData: JSON.stringify(postData), user_id: {{ $karyawan->id }} },
                             cache: false,
-                            success: function() {
+                            success: function(resp) {
                                 Swal.fire({
                                     title: 'Berhasil!',
                                     text: isSelfRegister ? 'Wajah Anda berhasil didaftarkan.' : 'Wajah berhasil didaftarkan.',
@@ -169,8 +174,13 @@
                                         : "{{ url('/pegawai') }}";
                                 });
                             },
-                            error: function() {
-                                Swal.fire('Gagal Simpan', 'Terjadi kesalahan saat menyimpan data wajah. Coba lagi.', 'error');
+                            error: function(xhr) {
+                                var msg = 'Terjadi kesalahan saat menyimpan data wajah. Coba lagi.';
+                                try {
+                                    var resp = JSON.parse(xhr.responseText);
+                                    if (resp.error) msg = resp.error;
+                                } catch(e) {}
+                                Swal.fire('Gagal Simpan', msg, 'error');
                                 $("#capture").prop('disabled', false);
                             }
                         });

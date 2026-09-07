@@ -658,7 +658,7 @@ class karyawanController extends Controller
         // Pastikan file neural.json ada; buat jika belum ada
         if (!file_exists($path)) {
             file_put_contents($path, '[]');
-            chmod($path, 0664);
+            @chmod($path, 0664);
         }
 
         // Pastikan file writable
@@ -670,20 +670,47 @@ class karyawanController extends Controller
         $dataface = json_decode($neural, true) ?? [];
         $user = User::find($request->user_id);
 
-        // Hapus entry lama untuk user ini
-        $filterface = array_values(array_filter($dataface, function($item) use ($user) {
-            return $item['label'] !== $user->username;
-        }));
-
-        // Tambahkan data baru
-        $newEntry = json_decode($request["myData"], true);
-        if ($newEntry) {
-            $filterface[] = $newEntry;
+        if (!$user) {
+            return response()->json(['error' => 'User tidak ditemukan.'], 404);
         }
 
-        File::put($path, json_encode($filterface, JSON_PRETTY_PRINT));
+        // Hapus entry lama untuk user ini
+        $filterface = array_values(array_filter($dataface, function($item) use ($user) {
+            return isset($item['label']) && $item['label'] !== $user->username;
+        }));
 
-        return response()->json(['success' => true]);
+        // Parse data dari faceapi.LabeledFaceDescriptors
+        // Format: { label: "username", descriptors: [[0.1, 0.2, ...]] }
+        $myData = $request->input('myData');
+        $newEntry = json_decode($myData, true);
+
+        if (!$newEntry || !isset($newEntry['label'])) {
+            return response()->json(['error' => 'Data wajah tidak valid.'], 422);
+        }
+
+        // Pastikan label sesuai dengan username user
+        $newEntry['label'] = $user->username;
+
+        // Normalisasi descriptors: Float32Array dari JS bisa masuk sebagai object {0: x, 1: y, ...}
+        // Konversi ke array biasa
+        if (isset($newEntry['descriptors'])) {
+            foreach ($newEntry['descriptors'] as &$descriptor) {
+                if (is_array($descriptor)) {
+                    $descriptor = array_values($descriptor);
+                }
+            }
+            unset($descriptor);
+        }
+
+        $filterface[] = $newEntry;
+
+        $result = File::put($path, json_encode($filterface, JSON_PRETTY_PRINT));
+
+        if ($result === false) {
+            return response()->json(['error' => 'Gagal menulis neural.json.'], 500);
+        }
+
+        return response()->json(['success' => true, 'label' => $user->username]);
     }
 
     public function ajaxPhoto(Request $request)
