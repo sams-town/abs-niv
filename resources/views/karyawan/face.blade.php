@@ -49,8 +49,8 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             let video = document.getElementById("video");
-            let width = 640;
-            let height = 480;
+            let width = 320;
+            let height = 240;
             let modelsLoaded = false;
 
             const startStream = () => {
@@ -120,7 +120,7 @@
                         var img = document.createElement('img');
                         img.src = canvas.toDataURL('image/png');
 
-                        const detections = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
+                        const detections = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 })).withFaceLandmarks().withFaceDescriptor();
 
                         if(detections) {
                             descriptions.push(detections.descriptor);
