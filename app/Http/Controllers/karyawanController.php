@@ -671,8 +671,10 @@ class karyawanController extends Controller
         $user = User::find($request->user_id);
 
         if (!$user) {
-            return response()->json(['error' => 'User tidak ditemukan.'], 404);
+            return response()->json(['error' => 'User tidak ditemukan di database.'], 404);
         }
+
+        // Validasi: username harus ada di database sebelum disimpan ke neural.json
 
         // Hapus entry lama untuk user ini
         $filterface = array_values(array_filter($dataface, function($item) use ($user) {

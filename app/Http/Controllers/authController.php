@@ -520,9 +520,15 @@ class authController extends Controller
             return;
         }
         $inp = file_get_contents($path);
-        $tempArray = json_decode($inp);
-        $jsonData = json_encode($tempArray);
-        echo $jsonData;
+        $tempArray = json_decode($inp, true) ?? [];
+
+        // Filter: hanya kembalikan label yang benar-benar ada di tabel users
+        $validUsernames = \App\Models\User::pluck('username')->toArray();
+        $filtered = array_values(array_filter($tempArray, function($item) use ($validUsernames) {
+            return isset($item['label']) && in_array($item['label'], $validUsernames);
+        }));
+
+        echo json_encode($filtered);
     }
 
     public function registerProses(Request $request)
