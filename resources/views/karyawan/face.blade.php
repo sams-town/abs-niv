@@ -74,7 +74,7 @@
             });
 
             Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri("{{ url('/face/weights') }}"),
+                faceapi.nets.tinyFaceDetector.loadFromUri("{{ url('/face/weights') }}"),
                 faceapi.nets.faceLandmark68Net.loadFromUri("{{ url('/face/weights') }}"),
                 faceapi.nets.faceRecognitionNet.loadFromUri("{{ url('/face/weights') }}")
             ]).then(() => {
@@ -120,7 +120,7 @@
                         var img = document.createElement('img');
                         img.src = canvas.toDataURL('image/png');
 
-                        const detections = await faceapi.detectSingleFace(canvas, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
+                        const detections = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceDescriptor();
 
                         if(detections) {
                             descriptions.push(detections.descriptor);
