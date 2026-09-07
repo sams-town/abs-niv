@@ -514,7 +514,7 @@ class authController extends Controller
 
     public function ajaxGetNeural()
     {
-        $path = public_path('neural.json');
+        $path = storage_path('app/neural.json');
         if (!file_exists($path)) {
             echo '[]';
             return;

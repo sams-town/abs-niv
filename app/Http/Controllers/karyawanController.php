@@ -417,7 +417,7 @@ class karyawanController extends Controller
         }
         // Pastikan neural.json ada dan writable untuk face recognition
         try {
-            $neuralPath = public_path('neural.json');
+            $neuralPath = storage_path('app/neural.json');
             if (!file_exists($neuralPath)) {
                 file_put_contents($neuralPath, '[]');
                 @chmod($neuralPath, 0664);
@@ -540,7 +540,7 @@ class karyawanController extends Controller
             $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan', 'public');
         }
 
-        $path = public_path('neural.json');
+        $path = storage_path('app/neural.json');
         $neural = File::get($path);
         $dataface = json_decode($neural, true);
 
@@ -611,7 +611,7 @@ class karyawanController extends Controller
                 } catch (\Throwable $th) {}
             }
 
-            $path = public_path('neural.json');
+            $path = storage_path('app/neural.json');
             if (\Illuminate\Support\Facades\File::exists($path)) {
                 try {
                     $neural = \Illuminate\Support\Facades\File::get($path);
@@ -653,7 +653,7 @@ class karyawanController extends Controller
 
     public function ajaxDescrip(Request $request)
     {
-        $path = public_path('neural.json');
+        $path = storage_path('app/neural.json');
 
         // Pastikan file neural.json ada; buat jika belum ada
         if (!file_exists($path)) {
@@ -1043,7 +1043,7 @@ class karyawanController extends Controller
 
         // Update label di neural.json jika username berubah
         try {
-            $path = public_path('neural.json');
+            $path = storage_path('app/neural.json');
 
             // Buat file jika belum ada
             if (!file_exists($path)) {

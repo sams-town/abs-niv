@@ -427,7 +427,7 @@ class DosenController extends Controller
                 } catch (\Throwable $th) {}
             }
 
-            $path = public_path('neural.json');
+            $path = storage_path('app/neural.json');
             if (\Illuminate\Support\Facades\File::exists($path)) {
                 try {
                     $neural = \Illuminate\Support\Facades\File::get($path);
