@@ -33,7 +33,12 @@
                     <video id="video" autoplay playsinline class="col-lg-12 col-md-12 col-sm-12 mx-auto"></video>
                     <br>
                     <center>
-                        <button id="capture" class="btn btn-primary mt-4"><i class="fas fa-camera me-2"></i>Capture Image</button>
+                        <p id="model-loading-info" class="text-muted mt-2">
+                            <i class="fas fa-spinner fa-spin me-1"></i> Memuat model AI, harap tunggu...
+                        </p>
+                        <button id="capture" class="btn btn-primary mt-4" disabled>
+                            <i class="fas fa-camera me-2"></i>Capture Image
+                        </button>
                     </center>
                 </div>
             </div>
@@ -46,6 +51,7 @@
             let video = document.getElementById("video");
             let width = 640;
             let height = 480;
+            let modelsLoaded = false;
 
             const startStream = () => {
                 navigator.mediaDevices.getUserMedia({
@@ -53,19 +59,45 @@
                     audio: false
                 }).then((stream) => {
                     video.srcObject = stream;
+                }).catch((err) => {
+                    Swal.fire('Kamera Tidak Tersedia', 'Pastikan Anda mengizinkan akses kamera di browser. Error: ' + err.message, 'error');
                 });
             }
+
+            // Tampilkan progress loading model
+            Swal.fire({
+                title: 'Memuat Model AI...',
+                html: 'Sedang memuat model pengenalan wajah.<br><b id="swal-model-status">Mohon tunggu...</b>',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
 
             Promise.all([
                 faceapi.nets.ssdMobilenetv1.loadFromUri("{{ url('/face/weights') }}"),
                 faceapi.nets.faceLandmark68Net.loadFromUri("{{ url('/face/weights') }}"),
                 faceapi.nets.faceRecognitionNet.loadFromUri("{{ url('/face/weights') }}")
-            ]).then(startStream);
+            ]).then(() => {
+                modelsLoaded = true;
+                startStream();
+                Swal.close();
+                // Aktifkan tombol capture dan sembunyikan info loading
+                document.getElementById('capture').disabled = false;
+                var info = document.getElementById('model-loading-info');
+                if (info) info.style.display = 'none';
+            }).catch((err) => {
+                Swal.fire('Gagal Memuat Model', 'Terjadi kesalahan saat memuat model AI: ' + err.message, 'error');
+            });
 
             $(document).ready(function(){
                 const descriptions = [];
 
                 $("#capture").click(async function(){
+                    if (!modelsLoaded) {
+                        Swal.fire('Model Belum Siap', 'Model AI masih dimuat. Tunggu hingga kamera aktif, lalu coba lagi.', 'warning');
+                        return;
+                    }
+
                     Swal.fire({
                         title: 'Processing...',
                         text: 'Detecting face, please wait.',

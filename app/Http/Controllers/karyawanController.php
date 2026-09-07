@@ -415,6 +415,17 @@ class karyawanController extends Controller
                 }
             }
         }
+        // Pastikan neural.json ada dan writable untuk face recognition
+        try {
+            $neuralPath = public_path('neural.json');
+            if (!file_exists($neuralPath)) {
+                file_put_contents($neuralPath, '[]');
+                @chmod($neuralPath, 0664);
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Gagal membuat neural.json: ' . $e->getMessage());
+        }
+
         return redirect('/pegawai')->with('success', 'Data Berhasil di Tambahkan');
     }
 
@@ -643,26 +654,36 @@ class karyawanController extends Controller
     public function ajaxDescrip(Request $request)
     {
         $path = public_path('neural.json');
+
+        // Pastikan file neural.json ada; buat jika belum ada
+        if (!file_exists($path)) {
+            file_put_contents($path, '[]');
+            chmod($path, 0664);
+        }
+
+        // Pastikan file writable
+        if (!is_writable($path)) {
+            return response()->json(['error' => 'neural.json tidak dapat ditulis. Periksa permission file di server.'], 500);
+        }
+
         $neural = File::get($path);
-        $dataface = json_decode($neural, true);
+        $dataface = json_decode($neural, true) ?? [];
         $user = User::find($request->user_id);
 
-        $filterface = array_filter($dataface, function($item) use ($user) {
+        // Hapus entry lama untuk user ini
+        $filterface = array_values(array_filter($dataface, function($item) use ($user) {
             return $item['label'] !== $user->username;
-        });
+        }));
 
-        File::put($path, json_encode(array_values($filterface), JSON_PRETTY_PRINT));
+        // Tambahkan data baru
+        $newEntry = json_decode($request["myData"], true);
+        if ($newEntry) {
+            $filterface[] = $newEntry;
+        }
 
-        $json = file_get_contents('neural.json');
-        if(strlen($json) > 4){
-            $string = ',' . $request["myData"];
-        }
-        else{
-            $string = $request["myData"];
-        }
-        $position = strlen($json) - 1;
-        $out = substr_replace( $json, $string, $position, 0 );
-        file_put_contents('neural.json', $out);
+        File::put($path, json_encode($filterface, JSON_PRETTY_PRINT));
+
+        return response()->json(['success' => true]);
     }
 
     public function ajaxPhoto(Request $request)
@@ -991,17 +1012,33 @@ class karyawanController extends Controller
             $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan', 'public');
         }
 
-        $path = public_path('neural.json');
-        $neural = File::get($path);
-        $dataface = json_decode($neural, true);
+        // Update label di neural.json jika username berubah
+        try {
+            $path = public_path('neural.json');
 
-        foreach ($dataface as &$item) {
-            if ($item['label'] === $user->username) {
-                $item['label'] = $request->username;
+            // Buat file jika belum ada
+            if (!file_exists($path)) {
+                file_put_contents($path, '[]');
+                @chmod($path, 0664);
             }
-        }
 
-        File::put($path, json_encode($dataface, JSON_PRETTY_PRINT));
+            if (is_writable($path)) {
+                $neural = File::get($path);
+                $dataface = json_decode($neural, true) ?? [];
+
+                foreach ($dataface as &$item) {
+                    if (isset($item['label']) && $item['label'] === $user->username) {
+                        $item['label'] = $request->username ?? $user->username;
+                    }
+                }
+                unset($item);
+
+                File::put($path, json_encode($dataface, JSON_PRETTY_PRINT));
+            }
+        } catch (\Exception $e) {
+            // Log error tapi jangan hentikan proses update profil
+            \Log::warning('Gagal update neural.json: ' . $e->getMessage());
+        }
 
         $user->update($validatedData);
 
