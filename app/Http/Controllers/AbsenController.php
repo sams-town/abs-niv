@@ -173,7 +173,7 @@ class AbsenController extends Controller
                     'lat_absen' => 'required',
                     'long_absen' => 'required',
                     'jarak_masuk' => 'required',
-                    'keterangan_masuk' => 'required',
+                    'keterangan_masuk' => 'nullable',
                     'status_absen' => 'required'
                 ]);
             }
@@ -305,7 +305,7 @@ class AbsenController extends Controller
                     'lat_pulang' => 'required',
                     'long_pulang' => 'required',
                     'pulang_cepat' => 'required',
-                    'keterangan_pulang' => 'required',
+                    'keterangan_pulang' => 'nullable',
                     'jarak_pulang' => 'required'
                 ]);
             }
