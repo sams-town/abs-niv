@@ -251,6 +251,10 @@
     let faceMatcher = null;
     let isSubmitting = false;
     let detectionActive = false;
+    let isDetecting = false;
+    let confirmedLabel = null;
+    let confirmCount = 0;
+    const CONFIRM_FRAMES = 2;
 
     function setProgress(p) { progress.style.width = p + '%'; }
     function setLabel(t) { label.textContent = t; }
@@ -333,7 +337,10 @@
 
     async function detectLoop() {
         if (!detectionActive || isSubmitting) { setTimeout(detectLoop, 300); return; }
+        if (isDetecting) { setTimeout(detectLoop, 100); return; }
         if (!video.videoWidth) { setTimeout(detectLoop, 300); return; }
+
+        isDetecting = true;
 
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -348,6 +355,7 @@
                 .withFaceLandmarks(faceapi.nets.faceLandmark68TinyNet.params ? true : false)
                 .withFaceDescriptors();
         } catch(e) {
+            isDetecting = false;
             setTimeout(detectLoop, 500);
             return;
         }
@@ -355,10 +363,15 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (!detections || detections.length === 0) {
+            confirmedLabel = null;
+            confirmCount = 0;
             setLabel('Wajah tidak terdeteksi. Pastikan pencahayaan cukup...');
             dot.className = 'scanning';
         } else {
             const resized = faceapi.resizeResults(detections, { width: canvas.width, height: canvas.height });
+            let bestMatch = null;
+            let bestDistance = 1;
+
             resized.forEach((det) => {
                 if (!faceMatcher) return;
                 const match = faceMatcher.findBestMatch(det.descriptor);
@@ -369,14 +382,37 @@
                 ctx.lineWidth = 2.5;
                 ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-                if (isKnown && !isSubmitting) {
-                    submitAbsen(match.label);
-                } else {
-                    setLabel('Mengenali wajah... ' + (match.label !== 'unknown' ? match.label : ''));
+                if (isKnown && match.distance < bestDistance) {
+                    bestDistance = match.distance;
+                    bestMatch = match.label;
                 }
             });
+
+            if (bestMatch && !isSubmitting) {
+                if (bestMatch === confirmedLabel) {
+                    confirmCount++;
+                } else {
+                    confirmedLabel = bestMatch;
+                    confirmCount = 1;
+                }
+
+                if (confirmCount >= CONFIRM_FRAMES) {
+                    confirmedLabel = null;
+                    confirmCount = 0;
+                    isDetecting = false;
+                    submitAbsen(bestMatch);
+                    return;
+                } else {
+                    setLabel('Mengenali wajah... ' + bestMatch + ' (' + confirmCount + '/' + CONFIRM_FRAMES + ')');
+                }
+            } else {
+                confirmedLabel = null;
+                confirmCount = 0;
+                setLabel('Wajah tidak dikenali. Pastikan wajah terdaftar...');
+            }
         }
 
+        isDetecting = false;
         setTimeout(detectLoop, 400);
     }
 
