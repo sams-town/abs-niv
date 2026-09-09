@@ -305,6 +305,10 @@
                           <li><a href="{{ url('/data-absen') }}">Data Absen</a></li>
                           <li><a href="{{ url('/dinas-luar') }}">Absen Dinas Luar</a></li>
                           <li><a href="{{ url('/data-dinas-luar') }}">Data Dinas Luar</a></li>
+                          @if ($isManager)
+                          <li><a href="{{ url('/rekap-absen/harian') }}" class="{{ Request::is('rekap-absen/harian*') ? 'active' : '' }}">Rekap Harian</a></li>
+                          <li><a href="{{ url('/rekap-absen/bulanan') }}" class="{{ Request::is('rekap-absen/bulanan*') ? 'active' : '' }}">Rekap Bulanan</a></li>
+                          @endif
                           </ul>
                       </li>
 

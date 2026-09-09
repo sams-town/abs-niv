@@ -780,4 +780,160 @@ class AbsenController extends Controller
         return redirect('/pengajuan-absensi')->with('success', 'Pengajuan Berhasil Diupdate');
     }
 
+    // =============================================
+    // REKAP ABSEN HARIAN
+    // =============================================
+    public function rekapHarian(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+
+        $tanggal   = $request->input('tanggal', date('Y-m-d'));
+        $lokasi_id = $request->input('lokasi_id');
+        $search    = $request->input('search');
+
+        $query = User::with(['MappingShift' => function ($q) use ($tanggal) {
+            $q->where('tanggal', $tanggal)->with('Shift');
+        }, 'Jabatan', 'Lokasi'])
+        ->pegawaiDanDosen()
+        ->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
+        ->when($search, fn($q) => $q->where('name', 'like', "%$search%"))
+        ->orderBy('name');
+
+        $users  = $query->get();
+        $lokasi = \App\Models\Lokasi::where('status', 'approved')->orderBy('nama_lokasi')->get();
+
+        // Hitung ringkasan
+        $summary = [
+            'total'   => $users->count(),
+            'hadir'   => 0,
+            'alpha'   => 0,
+            'terlambat' => 0,
+            'cuti'    => 0,
+            'izin'    => 0,
+            'sakit'   => 0,
+            'libur'   => 0,
+        ];
+
+        foreach ($users as $user) {
+            $ms = $user->MappingShift->first();
+            $status = $ms->status_absen ?? null;
+            match ($status) {
+                'Masuk'              => $summary['hadir']++,
+                'Izin Telat',
+                'Izin Pulang Cepat'  => ($summary['hadir']++ && $summary['terlambat']++),
+                'Cuti'               => $summary['cuti']++,
+                'Izin Masuk'         => $summary['izin']++,
+                'Sakit'              => $summary['sakit']++,
+                'Libur'              => $summary['libur']++,
+                default              => $summary['alpha']++,
+            };
+        }
+
+        return view('absen.rekap-harian', [
+            'title'    => 'Rekap Absen Harian',
+            'users'    => $users,
+            'tanggal'  => $tanggal,
+            'lokasi'   => $lokasi,
+            'lokasi_id'=> $lokasi_id,
+            'search'   => $search,
+            'summary'  => $summary,
+        ]);
+    }
+
+    // =============================================
+    // REKAP ABSEN BULANAN
+    // =============================================
+    public function rekapBulanan(Request $request)
+    {
+        date_default_timezone_set('Asia/Jakarta');
+
+        $bulan     = $request->input('bulan', date('m'));
+        $tahun     = $request->input('tahun', date('Y'));
+        $lokasi_id = $request->input('lokasi_id');
+        $search    = $request->input('search');
+
+        $mulai = "$tahun-$bulan-01";
+        $akhir = date('Y-m-t', strtotime($mulai));
+
+        // Buat array tanggal dalam bulan
+        $tanggal_range = [];
+        $current = strtotime($mulai);
+        $end     = strtotime($akhir);
+        while ($current <= $end) {
+            $tanggal_range[] = date('Y-m-d', $current);
+            $current = strtotime('+1 day', $current);
+        }
+
+        $users = User::with(['MappingShift' => function ($q) use ($mulai, $akhir) {
+            $q->whereBetween('tanggal', [$mulai, $akhir])->with('Shift');
+        }, 'Jabatan', 'Lokasi'])
+        ->pegawaiDanDosen()
+        ->when($lokasi_id, fn($q) => $q->where('lokasi_id', $lokasi_id))
+        ->when($search, fn($q) => $q->where('name', 'like', "%$search%"))
+        ->orderBy('name')
+        ->get();
+
+        $lokasi     = \App\Models\Lokasi::where('status', 'approved')->orderBy('nama_lokasi')->get();
+        $bulan_list = ['', 'Januari','Februari','Maret','April','Mei','Juni',
+                           'Juli','Agustus','September','Oktober','November','Desember'];
+
+        // Hitung rekap per user
+        $rows = [];
+        foreach ($users as $user) {
+            $shifts = $user->MappingShift->keyBy('tanggal');
+            $hadir = $terlambat = $cuti = $izin = $sakit = $libur = $alpha = 0;
+            $total_telat_detik = 0;
+
+            foreach ($tanggal_range as $tgl) {
+                $ms = $shifts->get($tgl);
+                $status = $ms->status_absen ?? null;
+                match ($status) {
+                    'Masuk'             => $hadir++,
+                    'Izin Telat'        => ($hadir++ && $terlambat++),
+                    'Izin Pulang Cepat' => ($hadir++ && $terlambat++),
+                    'Cuti'              => $cuti++,
+                    'Izin Masuk'        => $izin++,
+                    'Sakit'             => $sakit++,
+                    'Libur'             => $libur++,
+                    default             => $alpha++,
+                };
+                if ($ms && $ms->telat > 0) {
+                    $total_telat_detik += (int) $ms->telat;
+                }
+            }
+
+            $total_hari   = count($tanggal_range);
+            $persentase   = $total_hari > 0 ? round((($hadir + $libur) / $total_hari) * 100, 1) : 0;
+            $jam_telat    = floor($total_telat_detik / 3600);
+            $menit_telat  = floor(($total_telat_detik % 3600) / 60);
+
+            $rows[] = [
+                'user'        => $user,
+                'hadir'       => $hadir,
+                'terlambat'   => $terlambat,
+                'cuti'        => $cuti,
+                'izin'        => $izin,
+                'sakit'       => $sakit,
+                'libur'       => $libur,
+                'alpha'       => $alpha,
+                'total_telat' => "{$jam_telat}j {$menit_telat}m",
+                'persentase'  => $persentase,
+            ];
+        }
+
+        return view('absen.rekap-bulanan', [
+            'title'          => 'Rekap Absen Bulanan',
+            'rows'           => $rows,
+            'bulan'          => $bulan,
+            'tahun'          => $tahun,
+            'bulan_list'     => $bulan_list,
+            'lokasi'         => $lokasi,
+            'lokasi_id'      => $lokasi_id,
+            'search'         => $search,
+            'tanggal_range'  => $tanggal_range,
+            'mulai'          => $mulai,
+            'akhir'          => $akhir,
+        ]);
+    }
+
 }

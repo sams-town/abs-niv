@@ -216,6 +216,10 @@ Route::get('/rekap-data/rekap-pdf', [RekapDataController::class, 'rekapPdf'])->m
 Route::get('/rekap-data/payroll/{id}', [RekapDataController::class, 'payroll'])->middleware('admin');
 Route::post('/rekap-data/payroll/tambah', [RekapDataController::class, 'tambahPayroll'])->middleware('admin');
 
+// ===== REKAP ABSEN HARIAN & BULANAN =====
+Route::get('/rekap-absen/harian', [AbsenController::class, 'rekapHarian'])->middleware('admin');
+Route::get('/rekap-absen/bulanan', [AbsenController::class, 'rekapBulanan'])->middleware('admin');
+
 Route::get('/cuti', [CutiController::class, 'index'])->middleware('auth');
 Route::post('/cuti/tambah', [CutiController::class, 'tambah'])->middleware('auth');
 Route::delete('/cuti/delete/{id}', [CutiController::class, 'delete'])->middleware('auth');
