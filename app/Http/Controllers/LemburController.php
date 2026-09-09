@@ -18,35 +18,45 @@ class LemburController extends Controller
     {
         date_default_timezone_set('Asia/Jakarta');
         $user_login = auth()->user()->id;
-        $tanggal = "";
         $tglskrg = date("Y-m-d");
         $tglkmrn = date('Y-m-d', strtotime('-1 days'));
-        $lembur = Lembur::where('user_id', $user_login)->where('tanggal', $tglkmrn)->get();
-        if($lembur->count() > 0) {
-            foreach($lembur as $l) {
-                $jam_keluar = $l->jam_keluar;
-            }
-        } else {
-            $jam_keluar = "-";
+
+        // Cek apakah ada lembur kemarin yang masih berjalan (belum pulang)
+        $lembur_berjalan = Lembur::where('user_id', $user_login)
+            ->where('tanggal', $tglkmrn)
+            ->whereNull('jam_keluar')
+            ->first();
+
+        // Jika tidak ada yang berjalan kemarin, cek hari ini
+        if (!$lembur_berjalan) {
+            $lembur_berjalan = Lembur::where('user_id', $user_login)
+                ->where('tanggal', $tglskrg)
+                ->whereNull('jam_keluar')
+                ->first();
         }
-        if($jam_keluar == null){
-            $tanggal = $tglkmrn;
-        } else {
-            $tanggal = $tglskrg;
-        }
+
+        // Semua lembur hari ini yang sudah selesai (untuk ditampilkan di riwayat)
+        $lembur_hari_ini = Lembur::where('user_id', $user_login)
+            ->where('tanggal', $tglskrg)
+            ->whereNotNull('jam_keluar')
+            ->orderBy('jam_masuk')
+            ->get();
 
         if (auth()->user()->is_admin == 'admin') {
             return view('lembur.index', [
-                'title' => 'Absen Lembur',
-                'lembur' => Lembur::where('user_id', $user_login)->where('tanggal', $tanggal)->get()
+                'title'           => 'Absen Lembur',
+                'lembur_berjalan' => $lembur_berjalan,
+                'lembur_hari_ini' => $lembur_hari_ini,
+                'lembur'          => Lembur::where('user_id', $user_login)->where('tanggal', $tglskrg)->get()
             ]);
         } else {
             return view('lembur.indexuser', [
-                'title' => 'Absen Lembur',
-                'lembur' => Lembur::where('user_id', $user_login)->where('tanggal', $tanggal)->first()
+                'title'           => 'Absen Lembur',
+                'lembur_berjalan' => $lembur_berjalan,
+                'lembur_hari_ini' => $lembur_hari_ini,
+                'lembur'          => $lembur_berjalan
             ]);
         }
-
     }
 
     public function distance($lat1, $lon1, $lat2, $lon2, $unit)

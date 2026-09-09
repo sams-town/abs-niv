@@ -2,22 +2,6 @@
 @section('isi')
     <div class="container-fluid">
 
-        <?php
-            $cek_lembur = $lembur->count();
-
-            if($cek_lembur > 0) {
-                foreach($lembur as $l) {
-                    $id = $l->id;
-                    $jam_masuk = $l->jam_masuk;
-                    $jam_keluar = $l->jam_keluar;
-                }
-            } else {
-                    $id = "";
-                    $jam_masuk = "";
-                    $jam_keluar = "";
-            }
-        ?>
-
         <center>
             <p class="p mb-2 text-gray-800">Tanggal : {{ date('Y-m-d') }}</p>
         </center>
@@ -84,7 +68,67 @@
 
         <br>
 
-        @if($cek_lembur == 0)
+        @if(isset($lembur_hari_ini) && $lembur_hari_ini->count() > 0)
+        <div class="col-lg-12 mb-3">
+            <div class="card">
+                <div class="card-header py-2"><strong>Lembur Hari Ini</strong></div>
+                <div class="card-body p-2">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead><tr><th>#</th><th>Jam Masuk</th><th>Jam Keluar</th><th>Durasi</th><th>Status</th></tr></thead>
+                            <tbody>
+                            @foreach($lembur_hari_ini as $i => $done)
+                            @php
+                                $j = floor($done->total_lembur / 3600);
+                                $m = floor(($done->total_lembur % 3600) / 60);
+                            @endphp
+                            <tr>
+                                <td>{{ $i+1 }}</td>
+                                <td>{{ $done->jam_masuk }}</td>
+                                <td>{{ $done->jam_keluar }}</td>
+                                <td><span class="badge badge-success">{{ $j }}j {{ $m }}m</span></td>
+                                <td><span class="badge badge-info">{{ $done->status }}</span></td>
+                            </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(isset($lembur_berjalan) && $lembur_berjalan && $lembur_berjalan->jam_keluar == null)
+            <div class="col-lg-12">
+                <div class="card">
+                    <form method="post" action="{{ url('/lembur/pulang/'.$lembur_berjalan->id) }}" class="p-4">
+                        @method('put')
+                        @csrf
+                        <div class="form-row">
+                            <div class="col"></div>
+                            <div class="col">
+                                <center>
+                                    <h2>Pulang Lembur</h2>
+                                    <small class="text-muted d-block mb-2">Masuk: {{ $lembur_berjalan->jam_masuk }}</small>
+                                    <div class="webcam" id="results"></div>
+                                </center>
+                            </div>
+                            <div class="col">
+                                <input type="hidden" name="jam_keluar" value="{{ date('Y-m-d H:i') }}">
+                                <input type="hidden" name="lat_keluar" id="lat">
+                                <input type="hidden" name="long_keluar" id="long">
+                                <input type="hidden" name="jarak_keluar">
+                                <input type="hidden" name="foto_jam_keluar" class="image-tag">
+                                <input type="hidden" name="total_lembur">
+                            </div>
+                        </div>
+                        <center>
+                            <button type="submit" class="btn btn-primary" value="Ambil Foto" onClick="take_snapshot()">Pulang</button>
+                        </center>
+                    </form>
+                </div>
+            </div>
+        @else
             <div class="col-lg-12">
                 <div class="card">
                     <form method="post" action="{{ url('/lembur/masuk') }}" class="p-4">
@@ -93,7 +137,11 @@
                             <div class="col"></div>
                             <div class="col">
                                 <center>
-                                    <h2>Masuk Lembur: </h2>
+                                    <h2>Masuk Lembur
+                                        @if(isset($lembur_hari_ini) && $lembur_hari_ini->count() > 0)
+                                            <span class="badge badge-primary">Sesi {{ $lembur_hari_ini->count() + 1 }}</span>
+                                        @endif
+                                    </h2>
                                     <div class="webcam" id="results"></div>
                                 </center>
                             </div>
@@ -114,87 +162,18 @@
                     </form>
                 </div>
             </div>
-            <script type="text/javascript" src="{{ url('webcamjs/webcam.min.js') }}"></script>
-            <script language="JavaScript">
-                Webcam.set({
-                    width: 240,
-                    height: 320,
-                    image_format: 'jpeg',
-                    jpeg_quality: 50
-                });
-                Webcam.attach( '.webcam' );
-            </script>
-            <script language="JavaScript">
-                function take_snapshot() {
-                    Webcam.snap( function(data_uri) {
-                        $(".image-tag").val(data_uri);
-                        document.getElementById('results').innerHTML =
-                            '<img src="'+data_uri+'"/>';
-                    } );
-                }
-            </script>
-
-        @elseif($cek_lembur > 0 && $jam_masuk == true && $jam_keluar == null)
-            <div class="col-lg-12">
-                <div class="card">
-                    <form method="post" action="{{ url('/lembur/pulang/'.$id) }}" class="p-4">
-                        @method('put')
-                        @csrf
-                        <div class="form-row">
-                            <div class="col"></div>
-                            <div class="col">
-                                <center>
-                                    <h2>Pulang Lembur: </h2>
-                                    <div class="webcam" id="results"></div>
-                                </center>
-                            </div>
-                            <div class="col">
-                                <input type="hidden" name="jam_keluar" value="{{ date('Y-m-d H:i') }}">
-                                <input type="hidden" name="lat_keluar" id="lat">
-                                <input type="hidden" name="long_keluar" id="long">
-                                <input type="hidden" name="jarak_keluar">
-                                <input type="hidden" name="foto_jam_keluar" class="image-tag">
-                                <input type="hidden" name="total_lembur">
-                            </div>
-                        </div>
-                        <center>
-                            <button type="submit" class="btn btn-primary" value="Ambil Foto" onClick="take_snapshot()">Pulang</button>
-                        </center>
-                        </form>
-                </div>
-            </div>
-            <script type="text/javascript" src="{{ url('webcamjs/webcam.min.js') }}"></script>
-            <script language="JavaScript">
-            Webcam.set({
-            width: 240,
-            height: 320,
-            image_format: 'jpeg',
-            jpeg_quality: 50
-            });
-            Webcam.attach( '.webcam' );
-            </script>
-            <script language="JavaScript">
-            function take_snapshot() {
-            // take snapshot and get image data
-            Webcam.snap( function(data_uri) {
-                        $(".image-tag").val(data_uri);
-                // display results in page
-                document.getElementById('results').innerHTML =
-                '<img src="'+data_uri+'"/>';
-            } );
-            }
-            </script>
-        @else
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="p-4">
-                        <center>
-                            <h2>Anda Sudah Selesai Lembur Hari Ini</h2>
-                        </center>
-                    </div>
-                </div>
-            </div>
         @endif
     </div>
+    <script type="text/javascript" src="{{ url('webcamjs/webcam.min.js') }}"></script>
+    <script language="JavaScript">
+        Webcam.set({ width: 240, height: 320, image_format: 'jpeg', jpeg_quality: 50 });
+        Webcam.attach('.webcam');
+        function take_snapshot() {
+            Webcam.snap(function(data_uri) {
+                $(".image-tag").val(data_uri);
+                document.getElementById('results').innerHTML = '<img src="'+data_uri+'"/>';
+            });
+        }
+    </script>
 @endsection
 

@@ -82,99 +82,86 @@
     @endif
 
     <div class="transfer-content">
-        @if (!$lembur)
-            <form method="post" action="{{ url('/lembur/masuk') }}">
-                @csrf
-                <div class="tf-container">
-                    <center>
-                        <h2>Masuk Lembur: </h2>
-                        <div class="webcam" id="results"></div>
-                    </center>
-                            <input type="hidden" name="user_id" value="{{ auth()->user()->id }}">
-                            <input type="hidden" name="tanggal" value="{{ date('Y-m-d') }}">
-                            <input type="hidden" name="jam_masuk" value="{{ date('Y-m-d H:i') }}">
-                            <input type="hidden" name="lat_masuk" id="lat">
-                            <input type="hidden" name="long_masuk" id="long">
-                            <input type="hidden" name="jarak_masuk">
-                            <input type="hidden" name="status" value="Pending">
-                            <input type="hidden" name="foto_jam_masuk" class="image-tag">
-                    <button type="submit" class="tf-btn accent large" onClick="take_snapshot()">Save</button>
+        {{-- Daftar lembur hari ini yang sudah selesai --}}
+        @if(isset($lembur_hari_ini) && $lembur_hari_ini->count() > 0)
+        <div class="tf-container mb-3">
+            <h6 class="fw-bold mb-2">Lembur Hari Ini</h6>
+            @foreach($lembur_hari_ini as $done)
+            @php
+                $jam = floor($done->total_lembur / 3600);
+                $menit = floor(($done->total_lembur % 3600) / 60);
+            @endphp
+            <div class="d-flex justify-content-between align-items-center p-2 mb-2 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0">
+                <div>
+                    <small class="fw-semibold text-success">✓ Selesai</small><br>
+                    <small>{{ $done->jam_masuk }} – {{ $done->jam_keluar }}</small>
                 </div>
-            </form>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <script type="text/javascript" src="{{ url('webcamjs/webcam.min.js') }}"></script>
-            <script language="JavaScript">
-            Webcam.set({
-                width: 310,
-                height: 420,
-                image_format: 'jpeg',
-                jpeg_quality: 50
-            });
-            Webcam.attach( '.webcam' );
-            </script>
-            <script language="JavaScript">
-            function take_snapshot() {
-                Webcam.snap( function(data_uri) {
-                        $(".image-tag").val(data_uri);
-                document.getElementById('results').innerHTML =
-                    '<img src="'+data_uri+'"/>';
-                } );
-            }
-            </script>
-        @elseif($lembur && $lembur->jam_keluar == null)
-            <form method="post" action="{{ url('/lembur/pulang/'.$lembur->id) }}">
+                <span class="badge bg-success">{{ $jam }}j {{ $menit }}m</span>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        {{-- Form lembur aktif atau form masuk baru --}}
+        @if(isset($lembur_berjalan) && $lembur_berjalan && $lembur_berjalan->jam_keluar == null)
+            {{-- Ada lembur yang sedang berjalan → tampilkan form pulang --}}
+            <form method="post" action="{{ url('/lembur/pulang/'.$lembur_berjalan->id) }}">
                 @method('PUT')
                 @csrf
                 <div class="tf-container">
                     <center>
-                        <h2>Pulang Lembur: </h2>
-                        <div class="webcam" id="results"></div>
+                        <h2>Pulang Lembur</h2>
+                        <small class="text-muted">Masuk: {{ $lembur_berjalan->jam_masuk }}</small>
+                        <div class="webcam mt-2" id="results"></div>
                     </center>
-                            <input type="hidden" name="jam_keluar" value="{{ date('Y-m-d H:i') }}">
-                            <input type="hidden" name="lat_keluar" id="lat">
-                            <input type="hidden" name="long_keluar" id="long">
-                            <input type="hidden" name="jarak_keluar">
-                            <input type="hidden" name="foto_jam_keluar" class="image-tag">
-                            <input type="hidden" name="total_lembur">
-                    <button type="submit" class="tf-btn accent large" onClick="take_snapshot()">Save</button>
+                    <input type="hidden" name="jam_keluar" value="{{ date('Y-m-d H:i') }}">
+                    <input type="hidden" name="lat_keluar" id="lat">
+                    <input type="hidden" name="long_keluar" id="long">
+                    <input type="hidden" name="jarak_keluar">
+                    <input type="hidden" name="foto_jam_keluar" class="image-tag">
+                    <input type="hidden" name="total_lembur">
+                    <button type="submit" class="tf-btn accent large mt-3" onClick="take_snapshot()">Save</button>
                 </div>
             </form>
-            <br>
-            <br>
-            <br>
-            <br>
-            <br>
-            <script type="text/javascript" src="{{ url('webcamjs/webcam.min.js') }}"></script>
-            <script language="JavaScript">
-            Webcam.set({
-                width: 310,
-                height: 420,
-                image_format: 'jpeg',
-                jpeg_quality: 50
-            });
-            Webcam.attach( '.webcam' );
-            </script>
-            <script language="JavaScript">
-            function take_snapshot() {
-                Webcam.snap( function(data_uri) {
-                        $(".image-tag").val(data_uri);
-                document.getElementById('results').innerHTML =
-                    '<img src="'+data_uri+'"/>';
-                } );
-            }
-            </script>
         @else
-            <center>
-                    <h2>Anda Sudah Selesai Lembur Hari Ini</h2>
-            </center>
+            {{-- Tidak ada lembur berjalan → tampilkan form masuk lembur baru --}}
+            <form method="post" action="{{ url('/lembur/masuk') }}">
+                @csrf
+                <div class="tf-container">
+                    <center>
+                        <h2>Masuk Lembur
+                            @if(isset($lembur_hari_ini) && $lembur_hari_ini->count() > 0)
+                                <span class="badge bg-primary" style="font-size:12px">Sesi {{ $lembur_hari_ini->count() + 1 }}</span>
+                            @endif
+                        </h2>
+                        <div class="webcam mt-2" id="results"></div>
+                    </center>
+                    <input type="hidden" name="user_id" value="{{ auth()->user()->id }}">
+                    <input type="hidden" name="tanggal" value="{{ date('Y-m-d') }}">
+                    <input type="hidden" name="jam_masuk" value="{{ date('Y-m-d H:i') }}">
+                    <input type="hidden" name="lat_masuk" id="lat">
+                    <input type="hidden" name="long_masuk" id="long">
+                    <input type="hidden" name="jarak_masuk">
+                    <input type="hidden" name="status" value="Pending">
+                    <input type="hidden" name="foto_jam_masuk" class="image-tag">
+                    <button type="submit" class="tf-btn accent large mt-3" onClick="take_snapshot()">Save</button>
+                </div>
+            </form>
         @endif
     </div>
 
     @push('script')
+        <script type="text/javascript" src="{{ url('webcamjs/webcam.min.js') }}"></script>
+        <script language="JavaScript">
+        Webcam.set({ width: 310, height: 420, image_format: 'jpeg', jpeg_quality: 50 });
+        Webcam.attach('.webcam');
+        function take_snapshot() {
+            Webcam.snap(function(data_uri) {
+                $(".image-tag").val(data_uri);
+                document.getElementById('results').innerHTML = '<img src="'+data_uri+'"/>';
+            });
+        }
+        </script>
         <script>
             function getLocation() {
                 if (navigator.geolocation) {
