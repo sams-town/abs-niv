@@ -86,8 +86,8 @@
                         <div class="shift-name">{{ $shift->nama_shift }}</div>
                         <div class="shift-time">
                             <i data-feather="clock" style="width:12px"></i>
-                            {{ \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i') }} -
-                            {{ \Carbon\Carbon::parse($shift->jam_keluar)->format('H:i') }}
+                            {{ $shift->jam_masuk ? \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i') : '--:--' }} -
+                            {{ $shift->jam_keluar ? \Carbon\Carbon::parse($shift->jam_keluar)->format('H:i') : '--:--' }}
                         </div>
                     </div>
                     <div class="d-flex gap-1">
@@ -125,7 +125,7 @@
                             <div>
                                 <div class="assigned-name">{{ $emp['user']->name }}</div>
                                 <div class="assigned-sub">
-                                    {{ $emp['user']->Jabatan?->nama_jabatan ?? '-' }} &bull; {{ $emp['range'] }}
+                                    {{ optional($emp['user']->Jabatan)->nama_jabatan ?? '-' }} &bull; {{ $emp['range'] }}
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-1">

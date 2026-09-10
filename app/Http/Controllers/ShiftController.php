@@ -17,7 +17,9 @@ class ShiftController extends Controller
     {
         $search = request()->input('search');
 
-        $shifts = Shift::when($search, fn($q) => $q->where('nama_shift', 'LIKE', "%$search%"))
+        $shifts = Shift::when($search, function ($q) use ($search) {
+            return $q->where('nama_shift', 'LIKE', "%$search%");
+        })
             ->orderBy('nama_shift')
             ->get();
 
