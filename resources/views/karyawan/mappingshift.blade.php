@@ -55,7 +55,7 @@
                                 @enderror
                                 <input type="hidden" name="tanggal">
                                 <input type="hidden" name="status_absen">
-                            <input type="hidden" name="user_id" value="{{ $karyawan->id }}">
+                            <input type="hidden" name="user_id" value="{{ $karyawan->id ?? "" }}">
                             </div>
                             <div class="form-check mb-4">
                                 <input name="lock_location" class="form-check-input lock_location" type="checkbox" value="1" id="lock_location" checked>
@@ -116,7 +116,7 @@
                                                     <form action="{{ url('/pegawai/delete-shift/'.$sk->id) }}" method="post" class="d-inline">
                                                         @method('delete')
                                                         @csrf
-                                                        <input type="hidden" name="user_id" value="{{ $karyawan->id }}">
+                                                        <input type="hidden" name="user_id" value="{{ $karyawan->id ?? "" }}">
                                                         <button class="border-0" style="background-color: transparent;"  onClick="return confirm('Are You Sure')"><i class="fa fa-solid fa-trash"></i></button>
                                                     </form>
                                                 </li>

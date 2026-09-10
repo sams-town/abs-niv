@@ -114,6 +114,10 @@ class AbsenController extends Controller
             return redirect('/absen');
         }
         $image_parts = explode(";base64,", $foto_jam_absen);
+        if (count($image_parts) < 2 || empty($image_parts[1])) {
+            Alert::error('Foto Tidak Valid', 'Format foto tidak valid. Pastikan kamera aktif dan coba lagi.');
+            return redirect('/absen');
+        }
         $image_base64 = base64_decode($image_parts[1]);
         if (strlen($image_base64) < 5000) {
             Alert::error('Foto Tidak Valid', 'Foto terlalu kecil atau tidak valid. Pastikan kamera aktif.');
@@ -276,6 +280,10 @@ class AbsenController extends Controller
             return redirect('/absen');
         }
         $image_parts = explode(";base64,", $foto_jam_pulang);
+        if (count($image_parts) < 2 || empty($image_parts[1])) {
+            Alert::error('Foto Tidak Valid', 'Format foto tidak valid. Pastikan kamera aktif dan coba lagi.');
+            return redirect('/absen');
+        }
         $image_base64 = base64_decode($image_parts[1]);
         // Foto minimal 5KB — gambar sangat kecil kemungkinan bukan foto kamera live
         if (strlen($image_base64) < 5000) {
