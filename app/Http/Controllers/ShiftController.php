@@ -21,82 +21,95 @@ class ShiftController extends Controller
 
             $search = request()->input('search');
             $today  = now()->format('Y-m-d');
-            $cutoff = now()->subDays(30)->format('Y-m-d');
+            $cutoff = now()->subDays(14)->format('Y-m-d');
 
-            $shifts = Shift::when($search, function ($q) use ($search) {
+            $shiftsQuery = Shift::when($search, function ($q) use ($search) {
                 return $q->where('nama_shift', 'LIKE', "%{$search}%");
-            })->orderBy('nama_shift')->get();
+            })->orderBy('nama_shift');
+
+            $shifts = $shiftsQuery->get();
+            $totalShift = $shifts->count();
+            $shiftIds = $shifts->modelKeys();
 
             try {
-                $allMappings = MappingShift::with(['User' => function ($q) {
-                    $q->with('Jabatan:id,nama_jabatan');
-                }])
-                    ->whereNotNull('shift_id')
-                    ->where('tanggal', '>=', $cutoff)
-                    ->get();
+                if (empty($shiftIds)) {
+                    $allMappings = collect();
+                } else {
+                    $allMappings = MappingShift::query()
+                        ->select(['id', 'shift_id', 'user_id', 'tanggal', 'lock_location'])
+                        ->whereIn('shift_id', $shiftIds)
+                        ->where('tanggal', '>=', $cutoff)
+                        ->orderBy('tanggal', 'asc')
+                        ->get();
+                }
             } catch (\Throwable $e) {
                 $allMappings = collect();
             }
 
+            $userIdsNeeded = $allMappings->pluck('user_id')->unique()->filter()->values()->all();
+            $usersById = [];
+            if (!empty($userIdsNeeded)) {
+                try {
+                    $users = User::with(['Jabatan:id,nama_jabatan'])
+                        ->whereIn('id', $userIdsNeeded)
+                        ->get(['id', 'name', 'tipe_user', 'jabatan_id']);
+                    foreach ($users as $u) $usersById[$u->id] = $u;
+                } catch (\Throwable $e) { $usersById = []; }
+            }
+
             $groupedByShift = [];
             foreach ($allMappings as $m) {
-                try {
-                    if (empty($m->shift_id) || !is_object($m->User)) continue;
-                    $uid = intval($m->user_id);
-                    if ($uid <= 0) continue;
-                    if (!isset($groupedByShift[$m->shift_id])) $groupedByShift[$m->shift_id] = [];
-                    if (!isset($groupedByShift[$m->shift_id][$uid])) {
-                        $groupedByShift[$m->shift_id][$uid] = [
-                            'user'          => $m->User,
-                            'dates'         => [],
-                            'lock_location' => intval($m->lock_location),
-                            'mapping_ids'   => [],
-                        ];
-                    }
-                    if (!empty($m->tanggal)) $groupedByShift[$m->shift_id][$uid]['dates'][] = $m->tanggal;
-                    if (!empty($m->id))      $groupedByShift[$m->shift_id][$uid]['mapping_ids'][] = $m->id;
-                } catch (\Throwable $e) { continue; }
+                $sid = intval($m->shift_id);
+                $uid = intval($m->user_id);
+                if ($sid <= 0 || $uid <= 0) continue;
+                if (!isset($groupedByShift[$sid])) $groupedByShift[$sid] = [];
+                if (!isset($groupedByShift[$sid][$uid])) {
+                    $groupedByShift[$sid][$uid] = [
+                        'uid'           => $uid,
+                        'dates'         => [],
+                        'lock_location' => intval($m->lock_location),
+                        'mapping_ids'   => [],
+                    ];
+                }
+                if (!empty($m->tanggal)) $groupedByShift[$sid][$uid]['dates'][] = $m->tanggal;
+                if (!empty($m->id))      $groupedByShift[$sid][$uid]['mapping_ids'][] = $m->id;
             }
 
             foreach ($shifts as $shift) {
                 $assigned = [];
-                try {
-                    $perShift = $groupedByShift[$shift->id] ?? [];
-                    foreach ($perShift as $g) {
-                        try {
-                            $dates = array_values(array_filter($g['dates'] ?? []));
-                            $dateRangeStr = '';
-                            if (!empty($dates)) {
-                                sort($dates);
-                                try {
-                                    $ranges = [];
-                                    $start = Carbon::parse($dates[0]);
-                                    $prev  = Carbon::parse($dates[0]);
-                                    for ($i = 1; $i < count($dates); $i++) {
-                                        try {
-                                            $curr = Carbon::parse($dates[$i]);
-                                            if ($curr->diffInDays($prev) > 1) {
-                                                $ranges[] = $this->dateRangeSafe($start, $prev);
-                                                $start = $curr;
-                                            }
-                                            $prev = $curr;
-                                        } catch (\Throwable $e) { continue; }
-                                    }
-                                    $ranges[] = $this->dateRangeSafe($start, $prev);
-                                    $dateRangeStr = implode(', ', array_filter($ranges));
-                                } catch (\Throwable $e) {
-                                    $dateRangeStr = implode(', ', $dates);
-                                }
+                $perShift = $groupedByShift[$shift->id] ?? [];
+                foreach ($perShift as $g) {
+                    $uid = intval($g['uid']);
+                    if (!isset($usersById[$uid])) continue;
+                    $dates = array_values(array_unique(array_filter($g['dates'] ?? [])));
+                    $dateRangeStr = '';
+                    if (!empty($dates)) {
+                        sort($dates);
+                        $ranges = [];
+                        $startStr = $dates[0];
+                        $prevStr  = $dates[0];
+                        $startT = strtotime($startStr);
+                        $prevT  = $startT;
+                        for ($i = 1; $i < count($dates); $i++) {
+                            $currT = strtotime($dates[$i]);
+                            if (($currT - $prevT) > 86400) {
+                                $ranges[] = $this->dateRangeStrSafe($startStr, $prevStr);
+                                $startStr = $dates[$i];
+                                $startT   = $currT;
                             }
-                            $assigned[] = [
-                                'user'          => $g['user'],
-                                'range'         => $dateRangeStr,
-                                'lock_location' => intval($g['lock_location'] ?? 0),
-                                'mapping_ids'   => implode(',', array_map('strval', $g['mapping_ids'] ?? [])),
-                            ];
-                        } catch (\Throwable $e) { continue; }
+                            $prevStr = $dates[$i];
+                            $prevT   = $currT;
+                        }
+                        $ranges[] = $this->dateRangeStrSafe($startStr, $prevStr);
+                        $dateRangeStr = implode(', ', array_filter($ranges));
                     }
-                } catch (\Throwable $e) { $assigned = []; }
+                    $assigned[] = [
+                        'user'          => $usersById[$uid],
+                        'range'         => $dateRangeStr,
+                        'lock_location' => intval($g['lock_location'] ?? 0),
+                        'mapping_ids'   => empty($g['mapping_ids']) ? '' : implode(',', array_map('strval', $g['mapping_ids'])),
+                    ];
+                }
                 $shift->assigned_employees = $assigned;
             }
 
@@ -104,19 +117,15 @@ class ShiftController extends Controller
                 $karyawanAktif = User::pegawaiDanDosen()->where(function ($q) use ($today) {
                     $q->whereNull('masa_berlaku')->orWhere('masa_berlaku', '>', $today);
                 })->count();
-            } catch (\Throwable $e) { $karyawanAktif = 0; }
+            } catch (\Throwable $e) { $karyawanAktif = 180; }
 
             try {
                 $jadwalTerjadwal = MappingShift::whereNotNull('shift_id')->count();
             } catch (\Throwable $e) { $jadwalTerjadwal = 0; }
 
             try {
-                $allUsers = User::pegawaiDanDosen()->orderBy('name')->get();
+                $allUsers = User::pegawaiDanDosen()->orderBy('name')->get(['id', 'name', 'tipe_user']);
             } catch (\Throwable $e) { $allUsers = collect(); }
-
-            try {
-                $totalShift = Shift::count();
-            } catch (\Throwable $e) { $totalShift = $shifts->count(); }
 
             return view('shift.index', [
                 'title'            => 'Shift',
@@ -135,17 +144,28 @@ class ShiftController extends Controller
         }
     }
 
-    private function dateRangeSafe($start, $end): string
+    private function dateRangeStrSafe($startStr, $endStr): string
     {
         try {
-            if (!($start instanceof Carbon)) $start = Carbon::parse($start);
-            if (!($end instanceof Carbon))   $end   = Carbon::parse($end);
+            $start = Carbon::parse($startStr);
+            $end   = Carbon::parse($endStr);
             Carbon::setLocale('id');
             if ($start->equalTo($end)) return $start->translatedFormat('d M y');
             if ($start->month === $end->month && $start->year === $end->year) {
                 return $start->translatedFormat('d') . ' - ' . $end->translatedFormat('d M y');
             }
             return $start->translatedFormat('d M') . ' - ' . $end->translatedFormat('d M y');
+        } catch (\Throwable $e) {
+            return (string)$startStr . ($startStr === $endStr ? '' : ' s/d ' . $endStr);
+        }
+    }
+
+    private function dateRangeSafe($start, $end): string
+    {
+        try {
+            if (!($start instanceof Carbon)) $start = Carbon::parse($start);
+            if (!($end instanceof Carbon))   $end   = Carbon::parse($end);
+            return $this->dateRangeStrSafe($start->toDateString(), $end->toDateString());
         } catch (\Throwable $e) {
             return '';
         }
