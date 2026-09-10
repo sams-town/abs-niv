@@ -505,6 +505,26 @@
                         </select>
                     </div>
                 </div>
+
+                {{-- Lokasi Alternatif --}}
+                <div class="row g-3 mt-1">
+                    <div class="col-md-12">
+                        <label for="lokasi_alternatif_id" class="form-label fw-semibold">
+                            <i class="fa fa-map-marker-alt me-1 text-warning"></i>
+                            Lokasi Alternatif
+                            <small class="text-muted fw-normal">(opsional — untuk dosen yang mengajar di 2 gedung)</small>
+                        </label>
+                        <select name="lokasi_alternatif_id" id="lokasi_alternatif_id" class="form-select">
+                            <option value="">-- Tidak Ada / Hapus Lokasi Alternatif --</option>
+                            @foreach($lokasi as $l)
+                                <option value="{{ $l->id }}" {{ old('lokasi_alternatif_id', $dosen->lokasi_alternatif_id)==$l->id?'selected':'' }}>
+                                    {{ $l->nama_lokasi }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Jika diisi, dosen bisa absen dari lokasi ini <strong>atau</strong> lokasi utama di atas. Kedua lokasi tetap terkunci (lock).</small>
+                    </div>
+                </div>
             </div>
 
             <!-- Tab 3: KONTAK & AKUN -->
@@ -799,6 +819,7 @@
             makeSelectSearchable(document.getElementById('status_kepegawaian'), 'PILIH STATUS KEPEGAWAIAN', 'fa fa-id-card');
             makeSelectSearchable(document.getElementById('mata_kuliah'), 'PILIH MATA KULIAH', 'fa fa-book');
             makeSelectSearchable(document.getElementById('lokasi_id'), 'PILIH LOKASI', 'fa fa-map-marker-alt');
+            makeSelectSearchable(document.getElementById('lokasi_alternatif_id'), 'PILIH LOKASI ALTERNATIF', 'fa fa-map-pin');
             makeSelectSearchable(document.getElementById('tipe_honorarium'), 'PILIH SKEMA HONORARIUM', 'fa fa-file-invoice-dollar');
             makeSelectSearchable(document.getElementById('master_skema_honorarium_id'), 'PILIH MASTER SKEMA', 'fa fa-credit-card');
 

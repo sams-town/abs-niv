@@ -117,6 +117,11 @@ class User extends Authenticatable
         return $this->belongsTo(Lokasi::class);
     }
 
+    public function LokasiAlternatif()
+    {
+        return $this->belongsTo(Lokasi::class, 'lokasi_alternatif_id');
+    }
+
     public function sp()
     {
         return $this->belongsTo(StatusPajak::class, 'status_pajak_id');

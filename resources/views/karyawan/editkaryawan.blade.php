@@ -124,6 +124,20 @@
 
                                 <div class="row">
                                     <div class="col mb-4">
+                                        <label for="lokasi_alternatif_id">Lokasi Alternatif <small class="text-muted">(opsional — untuk dosen yang mengajar di 2 gedung)</small></label>
+                                        <select name="lokasi_alternatif_id" id="lokasi_alternatif_id" class="form-control selectpicker" data-live-search="true">
+                                            <option value="">-- Tidak Ada --</option>
+                                            @foreach ($data_lokasi as $dl)
+                                                <option value="{{ $dl->id }}" {{ old('lokasi_alternatif_id', $karyawan->lokasi_alternatif_id) == $dl->id ? 'selected' : '' }}>
+                                                    {{ $dl->nama_lokasi }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col mb-4">
                                         <label for="tgl_lahir">Tanggal Lahir</label>
                                         <input type="datetime" class="form-control @error('tgl_lahir') is-invalid @enderror" id="tgl_lahir" name="tgl_lahir" value="{{ old('tgl_lahir', $karyawan->tgl_lahir) }}">
                                         @error('tgl_lahir')

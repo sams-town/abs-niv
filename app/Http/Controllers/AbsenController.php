@@ -65,19 +65,39 @@ class AbsenController extends Controller
     {
         date_default_timezone_set('Asia/Jakarta');
 
-        $lat_kantor = auth()->user()->Lokasi->lat_kantor;
-        $long_kantor = auth()->user()->Lokasi->long_kantor;
-        $radius = auth()->user()->Lokasi->radius;
-        $nama_lokasi = auth()->user()->Lokasi->nama_lokasi;
+        $user        = auth()->user();
+        $lat_kantor  = $user->Lokasi->lat_kantor;
+        $long_kantor = $user->Lokasi->long_kantor;
+        $radius      = $user->Lokasi->radius;
+        $nama_lokasi = $user->Lokasi->nama_lokasi;
 
-        $request["jarak_masuk"] = $this->distance($request["lat_absen"], $request["long_absen"], $lat_kantor, $long_kantor, "K") * 1000;
+        // Hitung jarak ke lokasi utama
+        $jarak_utama = $this->distance($request["lat_absen"], $request["long_absen"], $lat_kantor, $long_kantor, "K") * 1000;
 
-        $request["jam_absen"] = date('H:i');
+        // Cek lokasi alternatif jika ada
+        $jarak_terpilih  = $jarak_utama;
+        $lokasi_terpilih = $nama_lokasi;
+        if ($user->LokasiAlternatif) {
+            $jarak_alt = $this->distance(
+                $request["lat_absen"], $request["long_absen"],
+                $user->LokasiAlternatif->lat_kantor,
+                $user->LokasiAlternatif->long_kantor, "K"
+            ) * 1000;
+            // Gunakan lokasi yang paling dekat
+            if ($jarak_alt < $jarak_utama) {
+                $jarak_terpilih  = $jarak_alt;
+                $lokasi_terpilih = $user->LokasiAlternatif->nama_lokasi;
+                $radius          = $user->LokasiAlternatif->radius;
+            }
+        }
+
+        $request["jarak_masuk"] = $jarak_terpilih;
+        $request["jam_absen"]   = date('H:i');
 
         $mapping_shift = MappingShift::find($id);
 
         if($request["jarak_masuk"] > $radius && $mapping_shift->lock_location == 1) {
-            Alert::error('Diluar Jangkauan', 'Lokasi Anda Diluar Radius ' . $nama_lokasi);
+            Alert::error('Diluar Jangkauan', 'Lokasi Anda Diluar Radius ' . $lokasi_terpilih);
             return redirect('/absen');
         }
 
@@ -208,24 +228,44 @@ class AbsenController extends Controller
         date_default_timezone_set('Asia/Jakarta');
         $request["jam_pulang"] = date('H:i');
 
-        $lat_kantor = auth()->user()->Lokasi->lat_kantor ?? null;
-        $long_kantor = auth()->user()->Lokasi->long_kantor ?? null;
-        $radius = auth()->user()->Lokasi->radius ?? null;
-        $nama_lokasi = auth()->user()->Lokasi->nama_lokasi ?? null;
+        $user        = auth()->user();
+        $lat_kantor  = $user->Lokasi->lat_kantor ?? null;
+        $long_kantor = $user->Lokasi->long_kantor ?? null;
+        $radius      = $user->Lokasi->radius ?? null;
+        $nama_lokasi = $user->Lokasi->nama_lokasi ?? null;
 
-        $request["jarak_pulang"] = $this->distance($request["lat_pulang"], $request["long_pulang"], $lat_kantor, $long_kantor, "K") * 1000;
+        // Hitung jarak ke lokasi utama
+        $jarak_utama = $this->distance($request["lat_pulang"], $request["long_pulang"], $lat_kantor, $long_kantor, "K") * 1000;
+
+        // Cek lokasi alternatif jika ada
+        $jarak_terpilih  = $jarak_utama;
+        $lokasi_terpilih = $nama_lokasi;
+        if ($user->LokasiAlternatif) {
+            $jarak_alt = $this->distance(
+                $request["lat_pulang"], $request["long_pulang"],
+                $user->LokasiAlternatif->lat_kantor,
+                $user->LokasiAlternatif->long_kantor, "K"
+            ) * 1000;
+            if ($jarak_alt < $jarak_utama) {
+                $jarak_terpilih  = $jarak_alt;
+                $lokasi_terpilih = $user->LokasiAlternatif->nama_lokasi;
+                $radius          = $user->LokasiAlternatif->radius;
+            }
+        }
+
+        $request["jarak_pulang"] = $jarak_terpilih;
 
         $mapping_shift = MappingShift::find($id);
 
-        // Blokir jika lock_location aktif dan di luar radius
-        if($request["jarak_pulang"] > $radius && $mapping_shift->lock_location == 1) {
-            Alert::error('Diluar Jangkauan', 'Lokasi Anda Diluar Radius ' . $nama_lokasi);
+        // Blokir jika lock_location aktif dan di luar radius kedua lokasi
+        if($jarak_terpilih > $radius && $mapping_shift->lock_location == 1) {
+            Alert::error('Diluar Jangkauan', 'Lokasi Anda Diluar Radius ' . $lokasi_terpilih);
             return redirect('/absen');
         }
 
         // Hard limit: tolak jika jarak > 5km meskipun lock_location tidak aktif (anti-fraud)
-        if ($request["jarak_pulang"] > 5000) {
-            Alert::error('Lokasi Tidak Valid', 'Lokasi Anda terlalu jauh dari kantor (' . round($request["jarak_pulang"]/1000, 1) . ' km). Absen tidak dapat dilakukan.');
+        if ($jarak_terpilih > 5000) {
+            Alert::error('Lokasi Tidak Valid', 'Lokasi Anda terlalu jauh dari kantor (' . round($jarak_terpilih/1000, 1) . ' km). Absen tidak dapat dilakukan.');
             return redirect('/absen');
         }
 

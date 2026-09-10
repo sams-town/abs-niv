@@ -1001,6 +1001,7 @@ class karyawanController extends Controller
             'telepon' => 'required',
             'foto_karyawan' => 'image|file|max:10240',
             'lokasi_id' => 'nullable',
+            'lokasi_alternatif_id' => 'nullable|exists:lokasis,id',
             'tgl_lahir' => 'nullable',
             'tgl_join' => 'nullable',
             'gender' => 'nullable',

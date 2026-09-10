@@ -289,6 +289,7 @@ class DosenController extends Controller
             'mata_kuliah'     => 'required|array',
             'telepon'         => 'required|string|max:20',
             'lokasi_id'       => 'required',
+            'lokasi_alternatif_id' => 'nullable|exists:lokasis,id',
             'username'        => ['required', 'max:255', Rule::unique('users', 'username')->ignore($id)],
             'tgl_lahir'       => 'required|date',
             'tgl_join'        => 'required|date',
