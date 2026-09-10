@@ -79,12 +79,28 @@ class AbsenController extends Controller
         if($request["jarak_masuk"] > $radius && $mapping_shift->lock_location == 1) {
             Alert::error('Diluar Jangkauan', 'Lokasi Anda Diluar Radius ' . $nama_lokasi);
             return redirect('/absen');
-        } else {
-            $foto_jam_absen = $request["foto_jam_absen"];
+        }
 
-            $image_parts = explode(";base64,", $foto_jam_absen);
+        // Hard limit anti-fraud: tolak jika > 5km meski lock_location tidak aktif
+        if ($request["jarak_masuk"] > 5000) {
+            Alert::error('Lokasi Tidak Valid', 'Lokasi Anda terlalu jauh dari kantor (' . round($request["jarak_masuk"]/1000, 1) . ' km). Absen tidak dapat dilakukan.');
+            return redirect('/absen');
+        }
 
-            $image_base64 = base64_decode($image_parts[1]);
+        // Validasi foto
+        $foto_jam_absen = $request["foto_jam_absen"];
+        if (empty($foto_jam_absen) || !str_contains($foto_jam_absen, 'base64,')) {
+            Alert::error('Foto Tidak Valid', 'Foto tidak terdeteksi. Pastikan kamera aktif dan coba lagi.');
+            return redirect('/absen');
+        }
+        $image_parts = explode(";base64,", $foto_jam_absen);
+        $image_base64 = base64_decode($image_parts[1]);
+        if (strlen($image_base64) < 5000) {
+            Alert::error('Foto Tidak Valid', 'Foto terlalu kecil atau tidak valid. Pastikan kamera aktif.');
+            return redirect('/absen');
+        }
+
+        if (true) { // mulai blok proses
             $fileName = 'foto_jam_absen/' . uniqid() . '.png';
 
             Storage::disk('public')->put($fileName, $image_base64);
@@ -201,15 +217,33 @@ class AbsenController extends Controller
 
         $mapping_shift = MappingShift::find($id);
 
+        // Blokir jika lock_location aktif dan di luar radius
         if($request["jarak_pulang"] > $radius && $mapping_shift->lock_location == 1) {
             Alert::error('Diluar Jangkauan', 'Lokasi Anda Diluar Radius ' . $nama_lokasi);
             return redirect('/absen');
-        } else {
-            $foto_jam_pulang = $request["foto_jam_pulang"];
+        }
 
-            $image_parts = explode(";base64,", $foto_jam_pulang);
+        // Hard limit: tolak jika jarak > 5km meskipun lock_location tidak aktif (anti-fraud)
+        if ($request["jarak_pulang"] > 5000) {
+            Alert::error('Lokasi Tidak Valid', 'Lokasi Anda terlalu jauh dari kantor (' . round($request["jarak_pulang"]/1000, 1) . ' km). Absen tidak dapat dilakukan.');
+            return redirect('/absen');
+        }
 
-            $image_base64 = base64_decode($image_parts[1]);
+        // Validasi ukuran foto — cegah upload foto non-kamera
+        $foto_jam_pulang = $request["foto_jam_pulang"];
+        if (empty($foto_jam_pulang) || !str_contains($foto_jam_pulang, 'base64,')) {
+            Alert::error('Foto Tidak Valid', 'Foto tidak terdeteksi. Pastikan kamera aktif dan coba lagi.');
+            return redirect('/absen');
+        }
+        $image_parts = explode(";base64,", $foto_jam_pulang);
+        $image_base64 = base64_decode($image_parts[1]);
+        // Foto minimal 5KB — gambar sangat kecil kemungkinan bukan foto kamera live
+        if (strlen($image_base64) < 5000) {
+            Alert::error('Foto Tidak Valid', 'Foto terlalu kecil atau tidak valid. Pastikan kamera aktif.');
+            return redirect('/absen');
+        }
+
+        if (true) { // mulai blok proses
             $fileName = 'foto_jam_pulang/' . uniqid() . '.png';
 
             Storage::disk('public')->put($fileName, $image_base64);

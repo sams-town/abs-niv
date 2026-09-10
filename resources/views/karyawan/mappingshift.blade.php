@@ -58,9 +58,9 @@
                             <input type="hidden" name="user_id" value="{{ $karyawan->id }}">
                             </div>
                             <div class="form-check mb-4">
-                                <input name="lock_location" class="form-check-input lock_location" type="checkbox" value="{{ old('lock_location') }}" id="lock_location">
+                                <input name="lock_location" class="form-check-input lock_location" type="checkbox" value="1" id="lock_location" checked>
                                 <label class="form-check-label" for="lock_location">
-                                    Lock Location
+                                    Lock Location (Wajib Absen di Lokasi Kantor)
                                 </label>
                             </div>
                         <button type="submit" class="btn btn-primary float-right">Submit</button>
