@@ -75,7 +75,9 @@ class ShiftController extends Controller
             'title'           => 'Shift',
             'shifts'          => $shifts,
             'total_shift'     => Shift::count(),
-            'karyawan_aktif'  => User::pegawaiDanDosen()->whereNull('masa_berlaku')->orWhere('masa_berlaku', '>', now()->format('Y-m-d'))->count(),
+            'karyawan_aktif'  => User::pegawaiDanDosen()->where(function($q) {
+                $q->whereNull('masa_berlaku')->orWhere('masa_berlaku', '>', now()->format('Y-m-d'));
+            })->count(),
             'jadwal_terjadwal'=> MappingShift::whereNotNull('shift_id')->count(),
             'all_users'       => User::pegawaiDanDosen()->orderBy('name')->get(),
         ]);

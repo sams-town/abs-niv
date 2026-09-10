@@ -125,7 +125,7 @@
                             <div>
                                 <div class="assigned-name">{{ $emp['user']->name }}</div>
                                 <div class="assigned-sub">
-                                    {{ $emp['user']->Jabatan->nama_jabatan ?? '-' }} &bull; {{ $emp['range'] }}
+                                    {{ $emp['user']->Jabatan?->nama_jabatan ?? '-' }} &bull; {{ $emp['range'] }}
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-1">
