@@ -179,38 +179,97 @@ class ShiftController extends Controller
     public function assign(Request $request)
     {
         $request->validate([
-            'shift_id'      => 'required',
+            'shift_id'      => 'required|integer',
             'tanggal_mulai' => 'required|date',
             'tanggal_akhir' => 'required|date',
         ]);
 
         $userIds = $request->user_ids ?? ($request->user_id ? [$request->user_id] : []);
+        $userIds = array_values(array_unique(array_filter(array_map('intval', (array)$userIds), function ($v) { return $v > 0; })));
 
         if (empty($userIds)) {
             return redirect('/shift')->with('error', 'Pilih minimal satu pegawai.');
         }
 
-        $dates = new \DatePeriod(
-            new \DateTime($request->tanggal_mulai),
-            new \DateInterval('P1D'),
-            (new \DateTime($request->tanggal_akhir))->modify('+1 day')
-        );
-
-        foreach ($userIds as $userId) {
-            foreach ($dates as $date) {
-                MappingShift::updateOrCreate(
-                    ['user_id' => $userId, 'tanggal' => $date->format('Y-m-d')],
-                    ['shift_id' => $request->shift_id, 'lock_location' => $request->lock_location ?? 0]
-                );
-            }
+        try {
+            $start = Carbon::parse($request->tanggal_mulai)->startOfDay();
+            $end   = Carbon::parse($request->tanggal_akhir)->startOfDay();
+        } catch (\Throwable $e) {
+            return redirect('/shift')->with('error', 'Format tanggal tidak valid.');
+        }
+        if ($end->lt($start)) {
+            return redirect('/shift')->with('error', 'Tanggal akhir tidak boleh kurang dari tanggal mulai.');
         }
 
-        return redirect('/shift')->with('success', 'Penugasan Shift Berhasil Dibuat');
+        $maxDays = 92;
+        if ($start->diffInDays($end) + 1 > $maxDays) {
+            return redirect('/shift')->with('error', "Maksimal {$maxDays} hari sekaligus (kurangi rentang tanggal).");
+        }
+
+        $shiftId       = intval($request->shift_id);
+        $lockLocation  = intval($request->lock_location ?? 0);
+        $now           = now()->toDateTimeString();
+
+        $datesArr = [];
+        $cursor = $start->copy();
+        while ($cursor->lte($end)) {
+            $datesArr[] = $cursor->toDateString();
+            $cursor->addDay();
+        }
+        unset($cursor);
+
+        if (empty($datesArr)) {
+            return redirect('/shift')->with('error', 'Tidak ada tanggal di rentang yang dipilih.');
+        }
+
+        try {
+            \DB::beginTransaction();
+            $totalUsers = count($userIds);
+            $totalDates = count($datesArr);
+            $batchSize  = 500;
+            $allRows    = [];
+            foreach ($userIds as $uid) {
+                foreach ($datesArr as $d) {
+                    $allRows[] = [
+                        'user_id'       => $uid,
+                        'shift_id'      => $shiftId,
+                        'tanggal'       => $d,
+                        'lock_location' => $lockLocation,
+                        'created_at'    => $now,
+                        'updated_at'    => $now,
+                    ];
+                }
+            }
+            unset($userIds, $datesArr);
+
+            foreach (array_chunk($allRows, $batchSize) as $chunk) {
+                \DB::table('mapping_shifts')->upsert(
+                    $chunk,
+                    ['user_id', 'tanggal'],
+                    ['shift_id', 'lock_location', 'updated_at']
+                );
+            }
+            \DB::commit();
+        } catch (\Throwable $e) {
+            \DB::rollBack();
+            logger()->error('Shift assign bulk error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect('/shift')->with('error', 'Gagal menyimpan penugasan: ' . $e->getMessage());
+        }
+
+        return redirect('/shift')->with('success', "Penugasan Shift Berhasil ({$totalUsers} pegawai × {$totalDates} hari).");
     }
 
     public function deleteAssignment($id)
     {
-        MappingShift::whereIn('id', explode(',', $id))->delete();
+        $ids = array_values(array_unique(array_filter(array_map('intval', explode(',', $id ?? '')), function ($v) { return $v > 0; })));
+        if (empty($ids)) {
+            return redirect('/shift')->with('error', 'ID penugasan tidak valid.');
+        }
+        try {
+            MappingShift::whereIn('id', $ids)->delete();
+        } catch (\Throwable $e) {
+            return redirect('/shift')->with('error', 'Gagal menghapus: ' . $e->getMessage());
+        }
         return redirect('/shift')->with('success', 'Penugasan Shift Berhasil Dihapus');
     }
 
@@ -238,32 +297,74 @@ class ShiftController extends Controller
 
     public function import(Request $request)
     {
+        @ini_set('memory_limit', '1024M');
         $request->validate(['file_excel' => 'required']);
-        $rows = Excel::toArray([], $request->file('file_excel'))[0];
-
-        for ($i = 1; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            if (empty($row[0])) continue;
-            try {
-                $start = $this->parseDate($row[4]);
-                $end   = $this->parseDate($row[5]);
-            } catch (\Exception $e) { continue; }
-
-            if ($start && $end) {
-                $dates = new \DatePeriod(
-                    new \DateTime($start),
-                    new \DateInterval('P1D'),
-                    (new \DateTime($end))->modify('+1 day')
-                );
-                foreach ($dates as $date) {
-                    MappingShift::updateOrCreate(
-                        ['user_id' => $row[0], 'tanggal' => $date->format('Y-m-d')],
-                        ['shift_id' => $row[2], 'lock_location' => $row[6] ?? 0]
-                    );
-                }
-            }
+        try {
+            $rows = Excel::toArray([], $request->file('file_excel'))[0] ?? [];
+        } catch (\Throwable $e) {
+            return redirect('/shift')->with('error', 'Gagal baca file Excel: '.$e->getMessage());
         }
-        return redirect('/shift')->with('success', 'Import Berhasil');
+
+        $now = now()->toDateTimeString();
+        $batchSize = 500;
+        $buffer = [];
+        $totalInsert = 0;
+        $errors = [];
+
+        $flush = function () use (&$buffer, &$totalInsert, $now) {
+            if (empty($buffer)) return;
+            try {
+                \DB::table('mapping_shifts')->upsert(
+                    $buffer,
+                    ['user_id', 'tanggal'],
+                    ['shift_id', 'lock_location', 'updated_at']
+                );
+                $totalInsert += count($buffer);
+            } catch (\Throwable $e) {
+                throw $e;
+            }
+            $buffer = [];
+        };
+
+        try {
+            \DB::beginTransaction();
+            for ($i = 1; $i < count($rows); $i++) {
+                $row = $rows[$i];
+                $uid = intval($row[0] ?? 0);
+                $sid = intval($row[2] ?? 0);
+                if ($uid <= 0 || $sid <= 0) continue;
+                try {
+                    $start = $this->parseDate($row[4] ?? null);
+                    $end   = $this->parseDate($row[5] ?? null);
+                    if (!$start || !$end) continue;
+                    $s = Carbon::parse($start)->startOfDay();
+                    $e = Carbon::parse($end)->startOfDay();
+                    if ($e->lt($s)) continue;
+                    if ($s->diffInDays($e) + 1 > 185) { $errors[] = "Row $i: rentang >185 hari skip"; continue; }
+                    $lock = intval($row[6] ?? 0);
+                    for ($d = $s->copy(); $d->lte($e); $d->addDay()) {
+                        $buffer[] = [
+                            'user_id'       => $uid,
+                            'shift_id'      => $sid,
+                            'tanggal'       => $d->toDateString(),
+                            'lock_location' => $lock,
+                            'created_at'    => $now,
+                            'updated_at'    => $now,
+                        ];
+                        if (count($buffer) >= $batchSize) $flush();
+                    }
+                } catch (\Throwable $e) { $errors[] = "Row $i: " . $e->getMessage(); continue; }
+            }
+            $flush();
+            \DB::commit();
+        } catch (\Throwable $e) {
+            \DB::rollBack();
+            return redirect('/shift')->with('error', 'Import gagal: ' . $e->getMessage());
+        }
+
+        $msg = "Import Berhasil ({$totalInsert} baris diproses).";
+        if (!empty($errors)) $msg .= ' Lewati '.count($errors).' baris bermasalah.';
+        return redirect('/shift')->with('success', $msg);
     }
 
     private function parseDate($val): string
@@ -298,7 +399,7 @@ class ShiftController extends Controller
 
     public function edit($id)
     {
-        return view('shift.edit', ['title' => 'Edit Shift', 'shift' => Shift::findOrFail($id)]);
+        return view('shift.edit', ['title' => 'Edit Shift', 'shift' => Shift::findOrFail(intval($id))]);
     }
 
     public function update(Request $request, $id)
@@ -310,17 +411,28 @@ class ShiftController extends Controller
             'jam_mulai_istirahat'   => 'nullable',
             'jam_selesai_istirahat' => 'nullable',
         ]);
-        Shift::where('id', $id)->update($request->validated());
+        try {
+            Shift::findOrFail(intval($id))->update($request->validated());
+        } catch (\Throwable $e) {
+            return redirect('/shift')->with('error', 'Gagal update Shift: '.$e->getMessage());
+        }
         return redirect('/shift')->with('success', 'Shift Berhasil Diupdate');
     }
 
     public function destroy($id)
     {
-        if (MappingShift::where('shift_id', $id)->exists() || dinasLuar::where('shift_id', $id)->exists()) {
-            Alert::error('Gagal', 'Shift masih digunakan oleh pegawai!');
-            return back();
+        $id = intval($id);
+        try {
+            $exists = \DB::table('mapping_shifts')->where('shift_id', $id)->exists()
+                   || \DB::table('dinas_luars')->where('shift_id', $id)->exists();
+            if ($exists) {
+                Alert::error('Gagal', 'Shift masih digunakan oleh pegawai!');
+                return back();
+            }
+            Shift::where('id', $id)->delete();
+        } catch (\Throwable $e) {
+            return redirect('/shift')->with('error', 'Gagal hapus Shift: '.$e->getMessage());
         }
-        Shift::findOrFail($id)->delete();
         return redirect('/shift')->with('success', 'Shift Berhasil Dihapus');
     }
 
