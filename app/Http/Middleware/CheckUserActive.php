@@ -16,15 +16,17 @@ class CheckUserActive
     public function handle(Request $request, Closure $next)
     {
         if (Auth::check()) {
-            $user = User::find(Auth::id());
-
-            if (!$user) {
-                // User sudah dihapus dari database — paksa logout
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return redirect('/')->with('error', 'Akun Anda telah dihapus oleh administrator. Silakan hubungi admin.');
+            try {
+                $user = User::find(Auth::id());
+                if (!$user) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return redirect('/')->with('error', 'Akun Anda telah dihapus oleh administrator. Silakan hubungi admin.');
+                }
+            } catch (\Exception $e) {
+                // Jika database tidak bisa diakses, lanjutkan saja
+                \Log::warning('CheckUserActive error: ' . $e->getMessage());
             }
         }
 

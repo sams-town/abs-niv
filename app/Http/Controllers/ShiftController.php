@@ -20,7 +20,6 @@ class ShiftController extends Controller
      */
     public function index()
     {
-        try {
         $search = request()->input('search');
         $shifts = Shift::when($search, function ($query) use ($search) {
                     $query->where('nama_shift', 'LIKE', '%' . $search . '%');
@@ -99,10 +98,6 @@ class ShiftController extends Controller
             'jadwal_terjadwal' => $jadwal_terjadwal,
             'all_users' => $all_users
         ]);
-        } catch (\Throwable $e) {
-            \Log::error('SHIFT ERROR: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            return response('SHIFT ERROR: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 500);
-        }
     }
 
     private function formatDateRange($start, $end)
