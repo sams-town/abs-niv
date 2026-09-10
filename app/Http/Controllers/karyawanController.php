@@ -745,8 +745,9 @@ class karyawanController extends Controller
 
     public function shift($id)
     {
+        $karyawan = User::findOrFail($id);
         $tanggal = request()->input('tanggal');
-        $mapping_shift = MappingShift::where('user_id', $id)
+        $mapping_shift = MappingShift::with('Shift')->where('user_id', $id)
                                     ->when($tanggal, function ($query) use ($tanggal) {
                                         return $query->where('tanggal', $tanggal);
                                     })
@@ -755,7 +756,7 @@ class karyawanController extends Controller
                                     ->withQueryString();
         return view('karyawan.mappingshift', [
             'title' => 'Mapping Shift',
-            'karyawan' => User::find($id),
+            'karyawan' => $karyawan,
             'shift_karyawan' => $mapping_shift,
             'shift' => Shift::all()
         ]);
@@ -763,6 +764,7 @@ class karyawanController extends Controller
 
     public function dinasLuar($id)
     {
+        $karyawan = User::findOrFail($id);
         $tanggal = request()->input('tanggal');
         $dinas_luar = dinasLuar::where('user_id', $id)
                         ->when($tanggal, function ($query) use ($tanggal) {
@@ -773,7 +775,7 @@ class karyawanController extends Controller
                         ->withQueryString();
         return view('karyawan.dinasluar', [
             'title' => 'Mapping Dinas Luar',
-            'karyawan' => User::find($id),
+            'karyawan' => $karyawan,
             'dinas_luar' => $dinas_luar,
             'shift' => Shift::all()
         ]);
