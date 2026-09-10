@@ -15,84 +15,145 @@ class ShiftController extends Controller
 {
     public function index()
     {
-        $search = request()->input('search');
+        try {
+            @ini_set('memory_limit', '512M');
+            Carbon::setLocale('id');
 
-        $shifts = Shift::when($search, function ($q) use ($search) {
-            return $q->where('nama_shift', 'LIKE', "%$search%");
-        })
-            ->orderBy('nama_shift')
-            ->get();
+            $search = request()->input('search');
+            $today  = now()->format('Y-m-d');
+            $cutoff = now()->subDays(30)->format('Y-m-d');
 
-        foreach ($shifts as $shift) {
-            $mappings = MappingShift::with('User')
-                ->where('shift_id', $shift->id)
-                ->where('tanggal', '>=', now()->subDays(30)->format('Y-m-d'))
-                ->get();
+            $shifts = Shift::when($search, function ($q) use ($search) {
+                return $q->where('nama_shift', 'LIKE', "%{$search}%");
+            })->orderBy('nama_shift')->get();
 
-            $grouped = [];
-            foreach ($mappings as $m) {
-                if (!$m->User) continue;
-                $uid = $m->user_id;
-                if (!isset($grouped[$uid])) {
-                    $grouped[$uid] = [
-                        'user'          => $m->User,
-                        'dates'         => [],
-                        'lock_location' => $m->lock_location,
-                        'mapping_ids'   => [],
-                    ];
-                }
-                $grouped[$uid]['dates'][]       = $m->tanggal;
-                $grouped[$uid]['mapping_ids'][] = $m->id;
+            try {
+                $allMappings = MappingShift::with(['User' => function ($q) {
+                    $q->with('Jabatan:id,nama_jabatan');
+                }])
+                    ->whereNotNull('shift_id')
+                    ->where('tanggal', '>=', $cutoff)
+                    ->get();
+            } catch (\Throwable $e) {
+                $allMappings = collect();
             }
 
-            $assigned = [];
-            foreach ($grouped as $g) {
-                $dates = $g['dates'];
-                sort($dates);
-                $ranges = [];
-                if (!empty($dates)) {
-                    $start = Carbon::parse($dates[0]);
-                    $prev  = Carbon::parse($dates[0]);
-                    for ($i = 1; $i < count($dates); $i++) {
-                        $curr = Carbon::parse($dates[$i]);
-                        if ($curr->diffInDays($prev) > 1) {
-                            $ranges[] = $this->dateRange($start, $prev);
-                            $start    = $curr;
-                        }
-                        $prev = $curr;
+            $groupedByShift = [];
+            foreach ($allMappings as $m) {
+                try {
+                    if (empty($m->shift_id) || !is_object($m->User)) continue;
+                    $uid = intval($m->user_id);
+                    if ($uid <= 0) continue;
+                    if (!isset($groupedByShift[$m->shift_id])) $groupedByShift[$m->shift_id] = [];
+                    if (!isset($groupedByShift[$m->shift_id][$uid])) {
+                        $groupedByShift[$m->shift_id][$uid] = [
+                            'user'          => $m->User,
+                            'dates'         => [],
+                            'lock_location' => intval($m->lock_location),
+                            'mapping_ids'   => [],
+                        ];
                     }
-                    $ranges[] = $this->dateRange($start, $prev);
-                }
-                $assigned[] = [
-                    'user'          => $g['user'],
-                    'range'         => implode(', ', $ranges),
-                    'lock_location' => $g['lock_location'],
-                    'mapping_ids'   => implode(',', $g['mapping_ids']),
-                ];
+                    if (!empty($m->tanggal)) $groupedByShift[$m->shift_id][$uid]['dates'][] = $m->tanggal;
+                    if (!empty($m->id))      $groupedByShift[$m->shift_id][$uid]['mapping_ids'][] = $m->id;
+                } catch (\Throwable $e) { continue; }
             }
-            $shift->assigned_employees = $assigned;
-        }
 
-        return view('shift.index', [
-            'title'           => 'Shift',
-            'shifts'          => $shifts,
-            'total_shift'     => Shift::count(),
-            'karyawan_aktif'  => User::pegawaiDanDosen()->where(function($q) {
-                $q->whereNull('masa_berlaku')->orWhere('masa_berlaku', '>', now()->format('Y-m-d'));
-            })->count(),
-            'jadwal_terjadwal'=> MappingShift::whereNotNull('shift_id')->count(),
-            'all_users'       => User::pegawaiDanDosen()->orderBy('name')->get(),
-        ]);
+            foreach ($shifts as $shift) {
+                $assigned = [];
+                try {
+                    $perShift = $groupedByShift[$shift->id] ?? [];
+                    foreach ($perShift as $g) {
+                        try {
+                            $dates = array_values(array_filter($g['dates'] ?? []));
+                            $dateRangeStr = '';
+                            if (!empty($dates)) {
+                                sort($dates);
+                                try {
+                                    $ranges = [];
+                                    $start = Carbon::parse($dates[0]);
+                                    $prev  = Carbon::parse($dates[0]);
+                                    for ($i = 1; $i < count($dates); $i++) {
+                                        try {
+                                            $curr = Carbon::parse($dates[$i]);
+                                            if ($curr->diffInDays($prev) > 1) {
+                                                $ranges[] = $this->dateRangeSafe($start, $prev);
+                                                $start = $curr;
+                                            }
+                                            $prev = $curr;
+                                        } catch (\Throwable $e) { continue; }
+                                    }
+                                    $ranges[] = $this->dateRangeSafe($start, $prev);
+                                    $dateRangeStr = implode(', ', array_filter($ranges));
+                                } catch (\Throwable $e) {
+                                    $dateRangeStr = implode(', ', $dates);
+                                }
+                            }
+                            $assigned[] = [
+                                'user'          => $g['user'],
+                                'range'         => $dateRangeStr,
+                                'lock_location' => intval($g['lock_location'] ?? 0),
+                                'mapping_ids'   => implode(',', array_map('strval', $g['mapping_ids'] ?? [])),
+                            ];
+                        } catch (\Throwable $e) { continue; }
+                    }
+                } catch (\Throwable $e) { $assigned = []; }
+                $shift->assigned_employees = $assigned;
+            }
+
+            try {
+                $karyawanAktif = User::pegawaiDanDosen()->where(function ($q) use ($today) {
+                    $q->whereNull('masa_berlaku')->orWhere('masa_berlaku', '>', $today);
+                })->count();
+            } catch (\Throwable $e) { $karyawanAktif = 0; }
+
+            try {
+                $jadwalTerjadwal = MappingShift::whereNotNull('shift_id')->count();
+            } catch (\Throwable $e) { $jadwalTerjadwal = 0; }
+
+            try {
+                $allUsers = User::pegawaiDanDosen()->orderBy('name')->get();
+            } catch (\Throwable $e) { $allUsers = collect(); }
+
+            try {
+                $totalShift = Shift::count();
+            } catch (\Throwable $e) { $totalShift = $shifts->count(); }
+
+            return view('shift.index', [
+                'title'            => 'Shift',
+                'shifts'           => $shifts,
+                'total_shift'      => $totalShift,
+                'karyawan_aktif'   => $karyawanAktif,
+                'jadwal_terjadwal' => $jadwalTerjadwal,
+                'all_users'        => $allUsers,
+            ]);
+        } catch (\Throwable $e) {
+            logger()->error('Shift index fatal error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response('<h2>Terjadi kesalahan saat memuat halaman Shift.</h2>'
+                . '<p>Error: ' . htmlspecialchars($e->getMessage()) . '</p>'
+                . '<br><a href="' . url('/dashboard') . '">Kembali ke Dashboard</a>', 200)
+                ->header('Content-Type', 'text/html; charset=utf-8');
+        }
+    }
+
+    private function dateRangeSafe($start, $end): string
+    {
+        try {
+            if (!($start instanceof Carbon)) $start = Carbon::parse($start);
+            if (!($end instanceof Carbon))   $end   = Carbon::parse($end);
+            Carbon::setLocale('id');
+            if ($start->equalTo($end)) return $start->translatedFormat('d M y');
+            if ($start->month === $end->month && $start->year === $end->year) {
+                return $start->translatedFormat('d') . ' - ' . $end->translatedFormat('d M y');
+            }
+            return $start->translatedFormat('d M') . ' - ' . $end->translatedFormat('d M y');
+        } catch (\Throwable $e) {
+            return '';
+        }
     }
 
     private function dateRange(Carbon $start, Carbon $end): string
     {
-        Carbon::setLocale('id');
-        if ($start->equalTo($end)) return $start->translatedFormat('d M y');
-        if ($start->month === $end->month && $start->year === $end->year) {
-            return $start->translatedFormat('d') . ' - ' . $end->translatedFormat('d M y');
-        }
-        return $start->translatedFormat('d M') . ' - ' . $end->translatedFormat('d M y');
+        return $this->dateRangeSafe($start, $end);
     }
 
     public function assign(Request $request)
