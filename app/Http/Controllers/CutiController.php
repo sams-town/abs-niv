@@ -76,7 +76,7 @@ class CutiController extends Controller
             $validatedData['lokasi_id'] = auth()->user()->lokasi_id;
 
             if ($request->file('foto_cuti')) {
-                $validatedData['foto_cuti'] = $request->file('foto_cuti')->store('foto_cuti');
+                $validatedData['foto_cuti'] = $request->file('foto_cuti')->store('foto_cuti', 'public');
             }
 
             $validatedData['status_approval_1'] = 'Pending';
@@ -218,7 +218,7 @@ class CutiController extends Controller
         $validatedData['lokasi_id'] = auth()->user()->lokasi_id;
 
         if ($request->file('foto_cuti')) {
-            $validatedData['foto_cuti'] = $request->file('foto_cuti')->store('foto_cuti');
+            $validatedData['foto_cuti'] = $request->file('foto_cuti')->store('foto_cuti', 'public');
         }
 
         $cuti->update($validatedData);
@@ -411,7 +411,7 @@ class CutiController extends Controller
             ]);
 
             if ($request->file('foto_cuti')) {
-                $validatedData['foto_cuti'] = $request->file('foto_cuti')->store('foto_cuti');
+                $validatedData['foto_cuti'] = $request->file('foto_cuti')->store('foto_cuti', 'public');
             }
 
             $validatedData['lokasi_id'] = $user_cuti->lokasi_id;
