@@ -119,9 +119,38 @@
                                                 </div>
                                                 @enderror
                                             </div>
+                                            @php
+                                                $tglJoinSudahDiedit = !empty($karyawan->tgl_join_edited_by_user_at);
+                                            @endphp
                                             <div class="group-input">
-                                                <label for="tgl_join">Tanggal Masuk Perusahaan</label>
-                                                <input type="datetime" class="@error('tgl_join') is-invalid @enderror" id="tgl_join" name="tgl_join" value="{{ old('tgl_join', $karyawan->tgl_join) }}" disabled>
+                                                <label for="tgl_join">
+                                                    Tanggal Masuk Perusahaan
+                                                    @if($tglJoinSudahDiedit)
+                                                        <span class="badge badge-danger ml-2" style="background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px;" title="Anda sudah pernah mengedit tanggal ini, tidak bisa diubah lagi">
+                                                            <i class="fas fa-lock"></i> Terkunci
+                                                        </span>
+                                                    @else
+                                                        <span class="badge badge-warning ml-2" style="background: #ffc107; color: #212529; padding: 3px 8px; border-radius: 12px; font-size: 11px;" title="Anda hanya bisa mengisi/mengedit tanggal ini MAKSIMAL 1 KALI, setelah di Save tidak bisa diubah lagi">
+                                                            <i class="fas fa-exclamation-triangle"></i> Edit 1x Saja
+                                                        </span>
+                                                    @endif
+                                                </label>
+                                                <input type="datetime"
+                                                       class="@error('tgl_join') is-invalid @enderror"
+                                                       id="tgl_join"
+                                                       name="tgl_join"
+                                                       value="{{ old('tgl_join', $karyawan->tgl_join) }}"
+                                                       @if($tglJoinSudahDiedit) disabled @endif>
+                                                @if(!$tglJoinSudahDiedit)
+                                                    <small class="text-danger mt-1 d-block">
+                                                        <i class="fas fa-info-circle"></i> Perhatian: Isilah dengan benar! Setelah klik Save, tanggal ini <strong>TIDAK BISA DIUBAH LAGI</strong>.
+                                                    </small>
+                                                @else
+                                                    <small class="text-muted mt-1 d-block">
+                                                        <i class="fas fa-lock"></i> Tanggal ini sudah dikunci sejak:
+                                                        <strong>{{ \Carbon\Carbon::parse($karyawan->tgl_join_edited_by_user_at)->setTimezone('Asia/Jakarta')->format('d M Y H:i:s') }} WIB</strong>
+                                                    </small>
+                                                @endif
                                                 @error('tgl_join')
                                                 <div class="invalid-feedback">
                                                     {{ $message }}

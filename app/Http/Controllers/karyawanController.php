@@ -1044,6 +1044,29 @@ class karyawanController extends Controller
             $validatedData['foto_karyawan'] = $request->file('foto_karyawan')->store('foto_karyawan', 'public');
         }
 
+        // === LOGIC LOCK TGL_JOIN UNTUK USER BIASA (1x edit maksimal) ===
+        $isUserBiasa = auth()->user()->is_admin !== 'admin' && !auth()->user()->isSuperAdmin();
+        if ($isUserBiasa) {
+            // Jika user sudah pernah edit tgl_join (flag sudah terisi), TOLAK perubahan tgl_join
+            if (!empty($user->tgl_join_edited_by_user_at)) {
+                // Hapus tgl_join dari validatedData agar tidak ikut terupdate
+                if (isset($validatedData['tgl_join'])) {
+                    unset($validatedData['tgl_join']);
+                }
+            } else {
+                // BELUM PERNAH EDIT: jika user submit perubahan tgl_join, set flag lock
+                $tglJoinBaru = $validatedData['tgl_join'] ?? null;
+                $tglJoinLama = $user->tgl_join;
+                $userSubmitTglJoin = $request->has('tgl_join');
+
+                if ($userSubmitTglJoin && (string)$tglJoinBaru !== (string)$tglJoinLama) {
+                    // Kunci untuk selamanya: set timestamp flag
+                    $validatedData['tgl_join_edited_by_user_at'] = now();
+                }
+            }
+        }
+        // Admin / Super Admin: BISA EDIT BERAPAKALI (tidak ada lock)
+
         // Update label di neural.json jika username berubah
         try {
             $path = storage_path('app/neural.json');
