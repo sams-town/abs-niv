@@ -88,7 +88,16 @@
                                 <td class="border-0 align-middle text-muted">{{ $dc->alasan_cuti ?? '-' }}</td>
                                 <td class="border-0 align-middle">
                                     @if ($dc->foto_cuti)
-                                        <img src="{{ url('storage/'.$dc->foto_cuti) }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 10px; border: 2px solid #e2e8f0;" alt="">
+                                        <a href="javascript:void(0)" class="d-inline-block photo-preview-trigger"
+                                           data-img-src="{{ url('storage/'.$dc->foto_cuti) }}"
+                                           data-img-name="{{ $dc->User->name ?? 'Foto Cuti' }} - {{ $dc->tanggal ?? '' }}"
+                                           style="cursor: zoom-in;"
+                                           title="Klik untuk lihat jelas">
+                                            <img src="{{ url('storage/'.$dc->foto_cuti) }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 10px; border: 2px solid #e2e8f0; transition: transform 0.2s;"
+                                                 onmouseover="this.style.transform='scale(1.1)'"
+                                                 onmouseout="this.style.transform='scale(1)'"
+                                                 alt="Foto Cuti">
+                                        </a>
                                     @else
                                         <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 60px; height:60px; border-radius:10px;">
                                             <i class="fas fa-image text-muted"></i>
@@ -166,12 +175,57 @@
             </div>
         </div>
     </div>
+    <!-- Modal Preview Foto -->
+    <div class="modal fade" id="photoPreviewModal" tabindex="-1" aria-labelledby="photoPreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border-radius: 20px; overflow: hidden; border: none;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;">
+                    <h5 class="modal-title fw-bold" id="photoPreviewModalLabel">
+                        <i class="fas fa-image me-2"></i><span id="previewPhotoTitle">Preview Foto</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center" style="background: #f8fafc;">
+                    <div class="bg-white rounded shadow-sm p-3 d-inline-block mx-auto" style="max-width: 100%;">
+                        <img id="previewPhotoImage" src="" class="img-fluid rounded" style="max-height: 70vh; max-width: 100%; display: block; margin: 0 auto;" alt="Preview">
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center" style="border-top: 1px solid #e2e8f0; background: #fff;">
+                    <a id="previewPhotoDownload" href="#" download class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-download me-2"></i>Download
+                    </a>
+                    <a id="previewPhotoNewTab" href="#" target="_blank" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-external-link-alt me-2"></i>Buka Tab Baru
+                    </a>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('script')
         <script>
             $(document).ready(function() {
                 $('#mulai').change(function(){
                     var mulai = $(this).val();
                     $('#akhir').val(mulai);
+                });
+
+                // === Preview Foto Modal ===
+                var photoModal = new bootstrap.Modal(document.getElementById('photoPreviewModal'));
+
+                $('.photo-preview-trigger').on('click', function() {
+                    var src  = $(this).data('img-src');
+                    var name = $(this).data('img-name') || 'Foto Cuti';
+
+                    $('#previewPhotoImage').attr('src', src);
+                    $('#previewPhotoTitle').text(name);
+                    $('#previewPhotoDownload').attr('href', src);
+                    $('#previewPhotoNewTab').attr('href', src);
+
+                    photoModal.show();
                 });
             });
         </script>

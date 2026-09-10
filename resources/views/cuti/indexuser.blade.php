@@ -176,7 +176,19 @@
                        <td>{{ $dcu->tanggal ?? '-' }}</td>
                        <td>{{ $dcu->alasan_cuti ?? '-' }}</td>
                        <td>
-                            <img src="{{ url('storage/'.$dcu->foto_cuti) }}" style="width:150px" alt="">
+                            @if($dcu->foto_cuti)
+                                <a href="{{ url('storage/'.$dcu->foto_cuti) }}" target="_blank" title="Klik untuk lihat jelas" style="display: inline-block; cursor: zoom-in;">
+                                    <img src="{{ url('storage/'.$dcu->foto_cuti) }}" style="width:150px; border-radius: 8px; border: 2px solid #dee2e6; transition: transform 0.2s;"
+                                         onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'"
+                                         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'"
+                                         alt="Foto Cuti">
+                                </a>
+                            @else
+                                <span class="text-muted text-center" style="display:inline-block; width:150px; padding:10px; background:#f8f9fa; border-radius:8px;">
+                                    <i class="fas fa-image text-muted mb-1"></i><br>
+                                    <small>Tidak ada foto</small>
+                                </span>
+                            @endif
                        </td>
                        <td>
                             @if($dcu->status_cuti == "Diterima")
