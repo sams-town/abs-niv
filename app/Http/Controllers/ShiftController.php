@@ -394,10 +394,32 @@ class ShiftController extends Controller
             'jam_selesai_istirahat' => 'nullable',
             'toleransi' => 'nullable|integer|min:0|max:480',
         ]);
-        $validated = $request->validated();
-        $validated['toleransi'] = intval($validated['toleransi'] ?? 0);
-        Shift::create($validated);
-        return redirect('/shift')->with('success', 'Shift Berhasil Ditambahkan');
+
+        $toleransiVal = $request->has('toleransi') && $request->toleransi !== ''
+            ? intval($request->toleransi)
+            : 0;
+
+        logger()->info('SHIFT STORE REQUEST', [
+            'nama_shift'           => $request->nama_shift,
+            'toleransi_raw'        => $request->toleransi,
+            'toleransi_parsed_int' => $toleransiVal,
+        ]);
+
+        $shift = new Shift;
+        $shift->nama_shift           = $request->nama_shift;
+        $shift->jam_masuk            = $request->jam_masuk;
+        $shift->jam_keluar           = $request->jam_keluar;
+        $shift->jam_mulai_istirahat  = $request->jam_mulai_istirahat;
+        $shift->jam_selesai_istirahat = $request->jam_selesai_istirahat;
+        $shift->toleransi            = $toleransiVal;
+        $shift->save();
+
+        logger()->info('SHIFT STORE SAVED', [
+            'shift_id'    => $shift->id,
+            'toleransi_db' => $shift->toleransi,
+        ]);
+
+        return redirect('/shift')->with('success', 'Shift Berhasil Ditambahkan (Toleransi: ' . $shift->toleransi . ' menit)');
     }
 
     public function edit($id)
@@ -415,14 +437,44 @@ class ShiftController extends Controller
             'jam_selesai_istirahat' => 'nullable',
             'toleransi' => 'nullable|integer|min:0|max:480',
         ]);
+
+        $toleransiVal = $request->has('toleransi') && $request->toleransi !== ''
+            ? intval($request->toleransi)
+            : 0;
+
+        logger()->info('SHIFT UPDATE REQUEST', [
+            'shift_id'             => $id,
+            'nama_shift'           => $request->nama_shift,
+            'toleransi_raw'        => $request->toleransi,
+            'toleransi_parsed_int' => $toleransiVal,
+        ]);
+
         try {
-            $validated = $request->validated();
-            $validated['toleransi'] = intval($validated['toleransi'] ?? 0);
-            Shift::findOrFail(intval($id))->update($validated);
+            $shift = Shift::findOrFail(intval($id));
+            $toleransiSebelum = $shift->toleransi;
+
+            $shift->nama_shift            = $request->nama_shift;
+            $shift->jam_masuk             = $request->jam_masuk;
+            $shift->jam_keluar            = $request->jam_keluar;
+            $shift->jam_mulai_istirahat   = $request->jam_mulai_istirahat;
+            $shift->jam_selesai_istirahat = $request->jam_selesai_istirahat;
+            $shift->toleransi             = $toleransiVal;
+            $shift->save();
+
+            logger()->info('SHIFT UPDATE SAVED', [
+                'shift_id'            => $shift->id,
+                'toleransi_sebelum'   => $toleransiSebelum,
+                'toleransi_setelah_db'=> $shift->toleransi,
+            ]);
         } catch (\Throwable $e) {
+            logger()->error('SHIFT UPDATE ERROR', [
+                'shift_id' => $id,
+                'msg'      => $e->getMessage(),
+                'trace'    => $e->getTraceAsString(),
+            ]);
             return redirect('/shift')->with('error', 'Gagal update Shift: '.$e->getMessage());
         }
-        return redirect('/shift')->with('success', 'Shift Berhasil Diupdate');
+        return redirect('/shift')->with('success', 'Shift Berhasil Diupdate (Toleransi: ' . $shift->toleransi . ' menit)');
     }
 
     public function destroy($id)
