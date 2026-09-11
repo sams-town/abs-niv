@@ -89,6 +89,22 @@
                             {{ $shift->jam_masuk ? \Carbon\Carbon::parse($shift->jam_masuk)->format('H:i') : '--:--' }} -
                             {{ $shift->jam_keluar ? \Carbon\Carbon::parse($shift->jam_keluar)->format('H:i') : '--:--' }}
                         </div>
+                        <div class="mt-1">
+                            @php
+                                $tol = (int) ($shift->toleransi ?? 0);
+                            @endphp
+                            @if ($tol > 0)
+                                <span class="badge" style="background:#198754;color:#fff;font-size:11px;padding:3px 8px;border-radius:10px;"
+                                      title="Karyawan dapat terlambat maksimal {{ $tol }} menit tanpa dianggap telat">
+                                    <i class="fas fa-clock"></i> Toleransi {{ $tol }} menit
+                                </span>
+                            @else
+                                <span class="badge" style="background:#6c757d;color:#fff;font-size:11px;padding:3px 8px;border-radius:10px;"
+                                      title="Tidak ada toleransi - lewat sedikit saja langsung terhitung telat">
+                                    <i class="fas fa-ban"></i> Tanpa Toleransi
+                                </span>
+                            @endif
+                        </div>
                     </div>
                     <div class="d-flex gap-1">
                         <button class="btn btn-sm btn-outline-primary py-1 px-2 btn-assign"

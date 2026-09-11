@@ -100,11 +100,15 @@ class authController extends Controller
                     $jam_absen = date('H:i');
                     $tgl_skrg = date("Y-m-d");
 
-                    $awal  = strtotime($ms->tanggal . $ms->Shift->jam_masuk);
+                    $shiftObj = $ms->Shift;
+                    $toleransi_menit = (int) ($shiftObj->toleransi ?? 0);
+                    $toleransi_detik = $toleransi_menit * 60;
+
+                    $awal  = strtotime($ms->tanggal . $shiftObj->jam_masuk);
                     $akhir = strtotime($tgl_skrg . $jam_absen);
                     $diff  = $akhir - $awal;
 
-                    if ($diff <= 0) {
+                    if ($diff <= $toleransi_detik) {
                         $telat= 0;
                         $jenis_kinerja = JenisKinerja::where('nama', 'Presensi Kehadiran Ontime')->first();
                         $laporan_kinerja_before = LaporanKinerja::where('user_id', $user->id)->latest()->first();
@@ -130,7 +134,7 @@ class authController extends Controller
                             ]);
                         }
                     } else {
-                        $telat= $diff;
+                        $telat= $diff - $toleransi_detik;
                         $jenis_kinerja = JenisKinerja::where('nama', 'Telat Presensi Masuk')->first();
                         $laporan_kinerja_before = LaporanKinerja::where('user_id', $user->id)->latest()->first();
                         if ($laporan_kinerja_before) {
@@ -200,11 +204,15 @@ class authController extends Controller
                         $jam_absen = date('H:i');
                         $tgl_skrg = date("Y-m-d");
 
-                        $awal  = strtotime($ms->tanggal . $ms->Shift->jam_masuk);
+                        $shiftObj = $ms->Shift;
+                        $toleransi_menit = (int) ($shiftObj->toleransi ?? 0);
+                        $toleransi_detik = $toleransi_menit * 60;
+
+                        $awal  = strtotime($ms->tanggal . $shiftObj->jam_masuk);
                         $akhir = strtotime($tgl_skrg . $jam_absen);
                         $diff  = $akhir - $awal;
 
-                        if ($diff <= 0) {
+                        if ($diff <= $toleransi_detik) {
                             $telat= 0;
                             $jenis_kinerja = JenisKinerja::where('nama', 'Presensi Kehadiran Ontime')->first();
                             $laporan_kinerja_before = LaporanKinerja::where('user_id', $user->id)->latest()->first();
@@ -230,7 +238,7 @@ class authController extends Controller
                                 ]);
                             }
                         } else {
-                            $telat= $diff;
+                            $telat= $diff - $toleransi_detik;
                             $jenis_kinerja = JenisKinerja::where('nama', 'Telat Presensi Masuk')->first();
                             $laporan_kinerja_before = LaporanKinerja::where('user_id', $user->id)->latest()->first();
                             if ($laporan_kinerja_before) {

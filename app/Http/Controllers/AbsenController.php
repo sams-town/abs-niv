@@ -134,16 +134,19 @@ class AbsenController extends Controller
 
             $request["status_absen"] = "Masuk";
 
-            $shift = $mapping_shift->Shift->jam_masuk;
+            $shift = $mapping_shift->Shift;
+            $jam_masuk_shift = $shift->jam_masuk;
+            $toleransi_menit = (int) ($shift->toleransi ?? 0);
+            $toleransi_detik = $toleransi_menit * 60;
             $tanggal = $mapping_shift->tanggal;
 
             $tgl_skrg = date("Y-m-d");
 
-            $awal  = strtotime($tanggal . $shift);
+            $awal  = strtotime($tanggal . $jam_masuk_shift);
             $akhir = strtotime($tgl_skrg . $request["jam_absen"]);
             $diff  = $akhir - $awal;
 
-            if ($diff <= 0) {
+            if ($diff <= $toleransi_detik) {
                 $request["telat"] = 0;
                 $jenis_kinerja = JenisKinerja::where('nama', 'Presensi Kehadiran Ontime')->first();
                 $laporan_kinerja_before = LaporanKinerja::where('user_id', auth()->user()->id)->latest()->first();
@@ -169,7 +172,7 @@ class AbsenController extends Controller
                     ]);
                 }
             } else {
-                $request["telat"] = $diff;
+                $request["telat"] = $diff - $toleransi_detik;
                 $jenis_kinerja = JenisKinerja::where('nama', 'Telat Presensi Masuk')->first();
                 $laporan_kinerja_before = LaporanKinerja::where('user_id', auth()->user()->id)->latest()->first();
                 if ($laporan_kinerja_before) {
@@ -472,20 +475,23 @@ class AbsenController extends Controller
         $mapping_shift = MappingShift::where('id', $id)->get();
 
         foreach ($mapping_shift as $mp) {
-            $shift = $mp->Shift->jam_masuk;
-            $tanggal = $mp->tanggal;
-            $user_id = $mp->user_id;
-        }
+            $shiftObj = $mp->Shift;
+        $shift = $shiftObj->jam_masuk;
+        $toleransi_menit = (int) ($shiftObj->toleransi ?? 0);
+        $toleransi_detik = $toleransi_menit * 60;
+        $tanggal = $mp->tanggal;
+        $user_id = $mp->user_id;
+    }
 
-        $awal  = strtotime($tanggal . $shift);
-        $akhir = strtotime($tanggal . $request["jam_absen"]);
-        $diff  = $akhir - $awal;
+    $awal  = strtotime($tanggal . $shift);
+    $akhir = strtotime($tanggal . $request["jam_absen"]);
+    $diff  = $akhir - $awal;
 
-        if ($diff <= 0) {
-            $request["telat"] = 0;
-        } else {
-            $request["telat"] = $diff;
-        }
+    if ($diff <= $toleransi_detik) {
+        $request["telat"] = 0;
+    } else {
+        $request["telat"] = $diff - $toleransi_detik;
+    }
 
         $user = User::findOrFail($user_id);
         $lat_kantor = $user->Lokasi->lat_kantor;
@@ -739,17 +745,20 @@ class AbsenController extends Controller
         $ms->update($validated);
 
         if ($request['status_pengajuan'] == 'Disetujui') {
-            $shiftmasuk = $ms->Shift->jam_masuk;
+            $shiftObjMasuk = $ms->Shift;
+            $shiftmasuk = $shiftObjMasuk->jam_masuk;
+            $toleransi_menit = (int) ($shiftObjMasuk->toleransi ?? 0);
+            $toleransi_detik = $toleransi_menit * 60;
             $tanggal = $ms->tanggal;
 
             $awal_masuk  = strtotime($tanggal . $shiftmasuk);
             $akhir_masuk = strtotime($tanggal . $ms->jam_masuk_pengajuan);
             $diff_masuk  = $akhir_masuk - $awal_masuk;
 
-            if ($diff_masuk <= 0) {
+            if ($diff_masuk <= $toleransi_detik) {
                 $telat = 0;
             } else {
-                $telat = $diff_masuk;
+                $telat = $diff_masuk - $toleransi_detik;
             }
 
             $shiftpulang = $ms->Shift->jam_keluar;

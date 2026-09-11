@@ -69,6 +69,32 @@
                             </div>
                         </div>
 
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="toleransi" class="float-left">
+                                    Toleransi Keterlambatan
+                                    <small class="text-muted">(menit)</small>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" min="0" max="480" step="1"
+                                           class="form-control @error('toleransi') is-invalid @enderror"
+                                           id="toleransi" name="toleransi"
+                                           value="{{ old('toleransi', 0) }}"
+                                           placeholder="Contoh: 20">
+                                    <span class="input-group-text bg-light">menit</span>
+                                </div>
+                                <small class="form-text text-muted mt-1">
+                                    <i class="fas fa-info-circle"></i>
+                                    Jika diisi <strong>20</strong> → Karyawan masuk s/d jam <strong>08:20</strong> (untuk shift 08.00) <strong>TIDAK TERHITUNG TELAT</strong>.
+                                </small>
+                                @error('toleransi')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                                @enderror
+                            </div>
+                        </div>
+
                     <button type="submit" class="btn btn-primary float-right">Submit</button>
                 </form>
             </div>

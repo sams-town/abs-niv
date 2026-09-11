@@ -392,8 +392,11 @@ class ShiftController extends Controller
             'jam_keluar' => 'required',
             'jam_mulai_istirahat'   => 'nullable',
             'jam_selesai_istirahat' => 'nullable',
+            'toleransi' => 'nullable|integer|min:0|max:480',
         ]);
-        Shift::create($request->validated());
+        $validated = $request->validated();
+        $validated['toleransi'] = intval($validated['toleransi'] ?? 0);
+        Shift::create($validated);
         return redirect('/shift')->with('success', 'Shift Berhasil Ditambahkan');
     }
 
@@ -410,9 +413,12 @@ class ShiftController extends Controller
             'jam_keluar' => 'required',
             'jam_mulai_istirahat'   => 'nullable',
             'jam_selesai_istirahat' => 'nullable',
+            'toleransi' => 'nullable|integer|min:0|max:480',
         ]);
         try {
-            Shift::findOrFail(intval($id))->update($request->validated());
+            $validated = $request->validated();
+            $validated['toleransi'] = intval($validated['toleransi'] ?? 0);
+            Shift::findOrFail(intval($id))->update($validated);
         } catch (\Throwable $e) {
             return redirect('/shift')->with('error', 'Gagal update Shift: '.$e->getMessage());
         }
