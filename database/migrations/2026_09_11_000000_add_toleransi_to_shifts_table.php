@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('shifts', function (Blueprint $table) {
-            $table->unsignedInteger('toleransi')->default(0)->after('jam_selesai_istirahat')->comment('Toleransi keterlambatan dalam MENIT (default 0 = tanpa toleransi)');
+            $table->unsignedInteger('toleransi')->default(20)->after('jam_selesai_istirahat')->comment('Toleransi keterlambatan dalam MENIT (default 20 menit)');
         });
     }
 

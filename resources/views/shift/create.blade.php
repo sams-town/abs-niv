@@ -79,7 +79,7 @@
                                     <input type="number" min="0" max="480" step="1"
                                            class="form-control @error('toleransi') is-invalid @enderror"
                                            id="toleransi" name="toleransi"
-                                           value="{{ old('toleransi', 0) }}"
+                                           value="{{ old('toleransi', 20) }}"
                                            placeholder="Contoh: 20">
                                     <span class="input-group-text bg-light">menit</span>
                                 </div>
