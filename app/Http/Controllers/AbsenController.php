@@ -872,6 +872,38 @@ class AbsenController extends Controller
     }
 
     // =============================================
+    // EXPORT REKAP HARIAN
+    // =============================================
+    public function exportRekapHarian(Request $request)
+    {
+        $tanggal   = $request->input('tanggal', date('Y-m-d'));
+        $lokasi_id = $request->input('lokasi_id');
+        $search    = $request->input('search');
+        $filename  = 'Rekap_Harian_' . str_replace('-', '', $tanggal) . '.xlsx';
+
+        return (new \App\Exports\RekapHarianExport($tanggal, $lokasi_id, $search))
+            ->download($filename, \Maatwebsite\Excel\Excel::XLSX);
+    }
+
+    // =============================================
+    // EXPORT REKAP BULANAN
+    // =============================================
+    public function exportRekapBulanan(Request $request)
+    {
+        $bulan     = $request->input('bulan', date('m'));
+        $tahun     = $request->input('tahun', date('Y'));
+        $lokasi_id = $request->input('lokasi_id');
+        $search    = $request->input('search');
+
+        $bulan_list = ['', 'Januari','Februari','Maret','April','Mei','Juni',
+                           'Juli','Agustus','September','Oktober','November','Desember'];
+        $filename = 'Rekap_Bulanan_' . ($bulan_list[(int)$bulan] ?? $bulan) . '_' . $tahun . '.xlsx';
+
+        return (new \App\Exports\RekapBulananExport($bulan, $tahun, $lokasi_id, $search))
+            ->download($filename, \Maatwebsite\Excel\Excel::XLSX);
+    }
+
+    // =============================================
     // REKAP ABSEN HARIAN
     // =============================================
     public function rekapHarian(Request $request)

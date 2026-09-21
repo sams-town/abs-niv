@@ -218,7 +218,9 @@ Route::post('/rekap-data/payroll/tambah', [RekapDataController::class, 'tambahPa
 
 // ===== REKAP ABSEN HARIAN & BULANAN =====
 Route::get('/rekap-absen/harian', [AbsenController::class, 'rekapHarian'])->middleware('admin');
+Route::get('/rekap-absen/harian/export', [AbsenController::class, 'exportRekapHarian'])->middleware('admin');
 Route::get('/rekap-absen/bulanan', [AbsenController::class, 'rekapBulanan'])->middleware('admin');
+Route::get('/rekap-absen/bulanan/export', [AbsenController::class, 'exportRekapBulanan'])->middleware('admin');
 
 Route::get('/cuti', [CutiController::class, 'index'])->middleware('auth');
 Route::post('/cuti/tambah', [CutiController::class, 'tambah'])->middleware('auth');
