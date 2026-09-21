@@ -598,6 +598,10 @@
             <button type="button" class="nav-arrow-btn" id="next-tab-btn" onclick="navigateTab(1)">
                 <i class="fa fa-chevron-right"></i>
             </button>
+            {{-- Tombol simpan muncul di tab terakhir --}}
+            <button type="submit" class="btn btn-primary ms-2" id="save-btn" style="display:none; border-radius:10px; font-weight:600;">
+                <i class="fa fa-save me-1"></i> Simpan
+            </button>
         </div>
     </form>
 
@@ -647,6 +651,12 @@
             // Disable/Enable Nav buttons at bounds
             document.getElementById('prev-tab-btn').style.opacity = currentTabIndex === 0 ? '0.3' : '1';
             document.getElementById('next-tab-btn').style.opacity = currentTabIndex === tabSections.length - 1 ? '0.3' : '1';
+
+            // Tampilkan tombol Simpan hanya di tab terakhir
+            var saveBtn = document.getElementById('save-btn');
+            if (saveBtn) {
+                saveBtn.style.display = currentTabIndex === tabSections.length - 1 ? 'inline-block' : 'none';
+            }
         }
 
         function navigateTab(direction) {
