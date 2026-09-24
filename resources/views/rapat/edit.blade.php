@@ -100,16 +100,20 @@
                         </div>
                         <div class="form-group">
                             <label for="user_id" class="float-left">Peserta</label>
-                            <select class="form-control selectpicker @error('user_id') is-invalid @enderror" id="user_id" name="user_id[]" multiple>
-                                <option value="">-- Pilih --</option>
+                            <div class="mb-2 mt-1">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-seluruh-karyawan"><i class="fa fa-users"></i> Pilih Semua Karyawan</button>
+                                <button type="button" class="btn btn-sm btn-outline-success" id="btn-seluruh-dosen"><i class="fa fa-user-graduate"></i> Pilih Semua Dosen</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-kosongkan"><i class="fa fa-times"></i> Kosongkan</button>
+                            </div>
+                            <select class="form-control selectpicker @error('user_id') is-invalid @enderror" id="user_id" name="user_id[]" multiple data-actions-box="true" data-live-search="true" data-selected-text-format="count > 3" title="Pilih Peserta...">
                                 @foreach ($users as $user)
-                                    <option value="{{ $user->id }}" {{ (is_array(old('user_id', $user_id)) && in_array($user->id, old('user_id', $user_id))) ? 'selected' : '' }}>
-                                        {{ $user->name }}
+                                    <option value="{{ $user->id }}" data-tipe="{{ $user->tipe_user == 'dosen' ? 'dosen' : 'karyawan' }}" {{ (is_array(old('user_id', $user_id)) && in_array($user->id, old('user_id', $user_id))) ? 'selected' : '' }}>
+                                        {{ $user->name }} {{ $user->tipe_user == 'dosen' ? '(Dosen)' : '' }}
                                     </option>
                                 @endforeach
                             </select>
                             @error('user_id')
-                                <div class="invalid-feedback">
+                                <div class="invalid-feedback" style="display:block">
                                     {{ $message }}
                                 </div>
                             @enderror
@@ -121,7 +125,6 @@
     </div>
 
     @push('script')
-        <script>
             $(document).ready(function(){
                 $('.clockpicker').clockpicker({
                     donetext: 'Done'
@@ -132,6 +135,20 @@
                     val = val.replace(/[^0-9:]/g, '');
                     val = val.replace(/:+/g, ':');
                     $(this).val(val);
+                });
+
+                $('#btn-seluruh-karyawan').click(function() {
+                    $('#user_id option[data-tipe="karyawan"]').prop('selected', true);
+                    $('#user_id').selectpicker('refresh');
+                });
+
+                $('#btn-seluruh-dosen').click(function() {
+                    $('#user_id option[data-tipe="dosen"]').prop('selected', true);
+                    $('#user_id').selectpicker('refresh');
+                });
+
+                $('#btn-kosongkan').click(function() {
+                    $('#user_id').selectpicker('deselectAll');
                 });
             });
         </script>
