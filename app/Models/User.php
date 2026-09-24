@@ -182,7 +182,7 @@ class User extends Authenticatable
 
     public function scopePegawai($query)
     {
-        return $query->where('tipe_user', 'pegawai')
+        return $query->whereIn('tipe_user', ['pegawai', 'karyawan'])
                      ->where(function($q) {
                          $q->whereNull('is_admin')
                            ->orWhereNotIn('is_admin', ['superadmin', 'admin', 'Super Admin']);
@@ -199,7 +199,7 @@ class User extends Authenticatable
 
     public function scopePegawaiDanDosen($query)
     {
-        return $query->whereIn('tipe_user', ['pegawai', 'dosen'])
+        return $query->whereIn('tipe_user', ['pegawai', 'karyawan', 'dosen'])
                      ->where(function($q) {
                          $q->whereNull('is_admin')
                            ->orWhereNotIn('is_admin', ['superadmin', 'admin', 'Super Admin']);
