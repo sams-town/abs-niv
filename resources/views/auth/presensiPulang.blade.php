@@ -367,16 +367,29 @@
             confirmCount = 0;
             setLabel('Wajah tidak terdeteksi. Pastikan pencahayaan cukup...');
             dot.className = 'scanning';
+        } else if (detections.length > 1) {
+            confirmedLabel = null;
+            confirmCount = 0;
+            setLabel('⚠️ Terdeteksi lebih dari satu wajah! Harap scan sendiri.');
+            dot.className = 'scanning';
         } else {
             const resized = faceapi.resizeResults(detections, { width: canvas.width, height: canvas.height });
             let bestMatch = null;
             let bestDistance = 1;
+            const expectedUsername = "{{ Auth::check() ? Auth::user()->username : '' }}";
 
             resized.forEach((det) => {
                 if (!faceMatcher) return;
                 const match = faceMatcher.findBestMatch(det.descriptor);
                 const box = det.detection.box;
-                const isKnown = match.label !== 'unknown' && match.distance < 0.5;
+                const isKnown = match.label !== 'unknown' && match.distance < 0.4;
+
+                if (isKnown && expectedUsername && match.label !== expectedUsername) {
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeRect(box.x, box.y, box.width, box.height);
+                    return;
+                }
 
                 ctx.strokeStyle = isKnown ? '#f97316' : '#f59e0b';
                 ctx.lineWidth = 2.5;
