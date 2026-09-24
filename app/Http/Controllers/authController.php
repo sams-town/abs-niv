@@ -190,7 +190,7 @@ class authController extends Controller
                     $long_kantor = $user->Lokasi->long_kantor ?? null;
                     $radius = $user->Lokasi->radius ?? null;
                     $jarak_masuk = $this->distance($request["lat"], $request["long"], $lat_kantor, $long_kantor, "K") * 1000;
-                    if($jarak_masuk > $radius && $ms->lock_location == 1) {
+                    if($jarak_masuk > $radius) {
                         return response()->json('outlocation');
                     } else {
                         $image = $request["image"];
@@ -300,7 +300,7 @@ class authController extends Controller
                     $long_kantor = $user->Lokasi->long_kantor ?? null;
                     $radius = $user->Lokasi->radius ?? null;
                     $jarak_pulang = $this->distance($request["lat"], $request["long"], $lat_kantor, $long_kantor, "K") * 1000;
-                    if($jarak_pulang > $radius && $ms->lock_location == 1) {
+                    if($jarak_pulang > $radius) {
                         return response()->json('outlocation');
                     } else {
                         $image = $request["image"];

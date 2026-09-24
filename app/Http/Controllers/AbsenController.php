@@ -96,7 +96,7 @@ class AbsenController extends Controller
 
         $mapping_shift = MappingShift::find($id);
 
-        if($request["jarak_masuk"] > $radius && $mapping_shift->lock_location == 1) {
+        if($request["jarak_masuk"] > $radius) {
             Alert::error('Diluar Jangkauan', 'Lokasi Anda Diluar Radius ' . $lokasi_terpilih);
             return redirect('/absen');
         }
@@ -264,8 +264,8 @@ class AbsenController extends Controller
 
         $mapping_shift = MappingShift::find($id);
 
-        // Blokir jika lock_location aktif dan di luar radius kedua lokasi
-        if($jarak_terpilih > $radius && $mapping_shift->lock_location == 1) {
+        // Blokir jika di luar radius kedua lokasi
+        if($jarak_terpilih > $radius) {
             Alert::error('Diluar Jangkauan', 'Lokasi Anda Diluar Radius ' . $lokasi_terpilih);
             return redirect('/absen');
         }
