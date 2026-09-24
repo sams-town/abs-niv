@@ -133,4 +133,22 @@ class dashboardController extends Controller
             'title' => 'All Menu',
         ]);
     }
+    public function cariPegawai(Request $request)
+    {
+        $q = $request->q;
+        if (!$q) {
+            return redirect()->back()->with('error', 'Masukkan kata kunci pencarian');
+        }
+
+        $users = User::whereIn('tipe_user', ['pegawai', 'dosen'])
+            ->where('name', 'like', "%{$q}%")
+            ->with(['Jabatan', 'Divisi', 'Lokasi', 'files'])
+            ->get();
+
+        return view('pegawai.profile_search', [
+            'title' => 'Hasil Pencarian',
+            'users' => $users,
+            'q' => $q
+        ]);
+    }
 }

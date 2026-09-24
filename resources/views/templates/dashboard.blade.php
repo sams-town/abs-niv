@@ -106,8 +106,12 @@
             <div class="toggle-sidebar"><i class="status_toggle middle sidebar-toggle" data-feather="align-center"></i></div>
           </div>
 
-          <div class="left-header col horizontal-wrapper ps-0" style="display: flex; gap: 5px;">
+          <div class="left-header col horizontal-wrapper ps-0" style="display: flex; gap: 10px; align-items: center;">
             <a href="{{ url('/switch/user') }}" class="btn btn-sm btn-warning" onclick="return confirm('Are You Sure ?')">Dashboard User</a>
+            <form action="{{ url('/cari-pegawai') }}" method="GET" class="d-flex align-items-center mb-0" style="margin-left: 10px;">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari Karyawan / Dosen..." value="{{ request('q') }}" style="border-radius: 20px 0 0 20px; width: 220px;" required>
+                <button type="submit" class="btn btn-sm btn-primary" style="border-radius: 0 20px 20px 0; height: 31px; display: flex; align-items: center;"><i class="fa fa-search"></i></button>
+            </form>
           </div>
 
           <div class="nav-right col-8 pull-right right-header p-0">

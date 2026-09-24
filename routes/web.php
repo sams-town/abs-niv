@@ -100,6 +100,7 @@ Route::post('/register-proses', [authController::class, 'registerProses'])->midd
 Route::post('/login-proses', [authController::class, 'loginProses'])->middleware('guest');
 Route::post('/login-proses-user', [authController::class, 'loginProsesUser'])->middleware('guest');
 Route::get('/dashboard', [dashboardController::class, 'index'])->middleware('auth');
+Route::get('/cari-pegawai', [dashboardController::class, 'cariPegawai'])->middleware('auth');
 Route::get('/logout', [authController::class, 'logout'])->middleware('auth');
 Route::get('/pegawai/import-massal', [karyawanController::class, 'importMassal'])->middleware('admin');
 Route::get('/pegawai', [karyawanController::class, 'index'])->middleware('auth');
