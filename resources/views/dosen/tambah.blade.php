@@ -413,7 +413,7 @@
         }
     </style>
 
-    <form id="tambahDosenForm" method="POST" action="{{ url('/dosen/store') }}" enctype="multipart/form-data">
+    <form id="tambahDosenForm" method="POST" action="{{ url('/dosen/store') }}" enctype="multipart/form-data" novalidate>
         @csrf
 
         <!-- Top Header Card -->

@@ -384,7 +384,7 @@
         }
     </style>
 
-    <form id="editDosenForm" method="POST" action="{{ url('/dosen/update/'.$dosen->id) }}">
+    <form id="editDosenForm" method="POST" action="{{ url('/dosen/update/'.$dosen->id) }}" novalidate>
         @csrf
         @method('PUT')
 
