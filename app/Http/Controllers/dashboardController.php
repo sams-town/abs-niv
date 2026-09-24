@@ -142,7 +142,7 @@ class dashboardController extends Controller
 
         $users = User::whereIn('tipe_user', ['pegawai', 'dosen'])
             ->where('name', 'like', "%{$q}%")
-            ->with(['Jabatan', 'Divisi', 'Lokasi', 'files'])
+            ->with(['Jabatan', 'Lokasi', 'files'])
             ->get();
 
         return view('pegawai.profile_search', [

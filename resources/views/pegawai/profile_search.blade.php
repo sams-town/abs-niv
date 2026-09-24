@@ -40,8 +40,8 @@
                                                 <strong>{{ $user->email ?? '-' }} | {{ $user->telepon ?? '-' }}</strong>
                                             </div>
                                             <div class="col-md-6 mb-2">
-                                                <small class="text-muted d-block">Jabatan / Divisi</small>
-                                                <strong>{{ $user->Jabatan?->nama_jabatan ?? '-' }} / {{ $user->Divisi?->nama_divisi ?? '-' }}</strong>
+                                                <small class="text-muted d-block">Jabatan</small>
+                                                <strong>{{ $user->Jabatan?->nama_jabatan ?? '-' }}</strong>
                                             </div>
                                             <div class="col-md-6 mb-2">
                                                 <small class="text-muted d-block">Lokasi Penempatan</small>
