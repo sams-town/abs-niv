@@ -145,11 +145,7 @@
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-1">
-                                @if($emp['lock_location'])
-                                    <span class="badge-lock">Lock</span>
-                                @else
-                                    <span class="badge-unlock">Unlock</span>
-                                @endif
+                                <span class="badge-lock">Lock</span>
                                 <form action="{{ url('/shift-management/delete-assignment/'.$emp['mapping_ids']) }}"
                                       method="POST" class="d-inline"
                                       onsubmit="return confirm('Hapus penugasan ini?')">
@@ -211,12 +207,7 @@
                             <input type="date" name="tanggal_akhir" class="form-control form-control-sm" required>
                         </div>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="lock_location" value="1" id="lockCheck">
-                        <label class="form-check-label fw-semibold small" for="lockCheck">
-                            Kunci Lokasi Absensi (Lock Location)
-                        </label>
-                    </div>
+                    <input type="hidden" name="lock_location" value="1">
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
