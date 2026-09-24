@@ -704,5 +704,116 @@
             setTimeout(() => { if (currentUnreadCount > 0 && userInteracted) playAlarmSound(); }, 1000);
         })();
     </script>
+
+    {{-- SESSION AUTO-LOGOUT: 15 min inactivity + 1 min warning --}}
+    <style>
+        #inactivity-overlay {
+            display: none; position: fixed; inset: 0; z-index: 99999;
+            background: rgba(10,15,35,0.82); backdrop-filter: blur(6px);
+            align-items: center; justify-content: center;
+        }
+        #inactivity-overlay.show { display: flex; }
+        #inactivity-box {
+            background: #ffffff; border-radius: 20px; padding: 36px 32px;
+            max-width: 380px; width: 90%; text-align: center;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+            animation: popInSession 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @keyframes popInSession {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        #inactivity-box .warn-icon {
+            width: 64px; height: 64px; background: #fef3c7; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px; font-size: 30px;
+        }
+        #inactivity-box h3 { font-size: 18px; font-weight: 800; color: #1e293b; margin: 0 0 8px; }
+        #inactivity-box p  { font-size: 14px; color: #64748b; margin: 0 0 20px; }
+        #inactivity-countdown { font-size: 38px; font-weight: 800; color: #ef4444; margin: 0 0 20px; }
+        #inactivity-progress-wrap {
+            background: #f1f5f9; border-radius: 100px;
+            height: 6px; overflow: hidden; margin-bottom: 24px;
+        }
+        #inactivity-progress-bar {
+            height: 100%; width: 100%;
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+            border-radius: 100px; transition: width 1s linear;
+        }
+        #btn-stay-active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff; border: none; border-radius: 12px;
+            padding: 12px 28px; font-size: 14px; font-weight: 700;
+            cursor: pointer; width: 100%; transition: opacity 0.2s;
+        }
+        #btn-stay-active:hover { opacity: 0.88; }
+    </style>
+
+    <div id="inactivity-overlay" role="dialog" aria-modal="true">
+        <div id="inactivity-box">
+            <div class="warn-icon">⚠️</div>
+            <h3>Sesi Akan Berakhir</h3>
+            <p>Anda tidak aktif selama beberapa waktu.<br>Sistem akan keluar otomatis dalam:</p>
+            <div id="inactivity-countdown">60</div>
+            <div id="inactivity-progress-wrap">
+                <div id="inactivity-progress-bar"></div>
+            </div>
+            <button id="btn-stay-active">✅ Saya Masih Aktif</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const TIMEOUT_MS = 15 * 60 * 1000;
+            const WARNING_MS = 60 * 1000;
+            const LOGOUT_URL = "{{ url('/logout') }}";
+
+            let warningTimer = null;
+            let logoutTimer  = null;
+            let countdownInt = null;
+            let sLeft        = 60;
+
+            const overlay     = document.getElementById('inactivity-overlay');
+            const countdownEl = document.getElementById('inactivity-countdown');
+            const progressBar = document.getElementById('inactivity-progress-bar');
+            const btnStay     = document.getElementById('btn-stay-active');
+
+            function resetTimers() {
+                clearTimeout(warningTimer);
+                clearTimeout(logoutTimer);
+                clearInterval(countdownInt);
+                overlay.classList.remove('show');
+                warningTimer = setTimeout(showWarning, TIMEOUT_MS - WARNING_MS);
+                logoutTimer  = setTimeout(doLogout,    TIMEOUT_MS);
+            }
+
+            function showWarning() {
+                overlay.classList.add('show');
+                sLeft = 60;
+                countdownEl.textContent    = sLeft;
+                progressBar.style.width    = '100%';
+                clearInterval(countdownInt);
+                countdownInt = setInterval(() => {
+                    sLeft--;
+                    countdownEl.textContent = sLeft;
+                    progressBar.style.width = (sLeft / 60 * 100) + '%';
+                    if (sLeft <= 0) { clearInterval(countdownInt); doLogout(); }
+                }, 1000);
+            }
+
+            function doLogout() {
+                clearInterval(countdownInt);
+                window.location.href = LOGOUT_URL;
+            }
+
+            btnStay.addEventListener('click', resetTimers);
+
+            ['mousemove','keydown','touchstart','scroll','click'].forEach(evt => {
+                document.addEventListener(evt, resetTimers, { passive: true });
+            });
+
+            resetTimers();
+        })();
+    </script>
   </body>
 </html>

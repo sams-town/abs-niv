@@ -246,40 +246,112 @@
 <script src="{{ url('/face/dist/face-api.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Geolocation
-    function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(p => {
-                document.getElementById('lat').value = p.coords.latitude;
-                document.getElementById('long').value = p.coords.longitude;
-            });
-        }
-    }
-    getLocation();
-    setInterval(getLocation, 5000);
+    // ─────────────────────────────────────────────────────────
+    // SECURITY CONSTANTS
+    // ─────────────────────────────────────────────────────────
+    const MATCH_THRESHOLD   = 0.40;   // max euclidean distance (0.40 ≈ 85% confidence)
+    const CONFIRM_FRAMES    = 3;      // consecutive matching frames before submitting
+    const EXPECTED_USERNAME = "{{ Auth::check() ? Auth::user()->username : '' }}";
+    const CSRF_TOKEN        = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
-    // DOM refs
-    const video   = document.getElementById('video');
-    const canvas  = document.getElementById('overlay-canvas');
-    const ctx     = canvas.getContext('2d');
-    const dot     = document.getElementById('status-dot');
-    const label   = document.getElementById('status-label');
-    const progress = document.getElementById('progress-bar');
-    const frame   = document.getElementById('scan-frame');
+    // ─────────────────────────────────────────────────────────
+    // DOM REFS
+    // ─────────────────────────────────────────────────────────
+    const video          = document.getElementById('video');
+    const canvas         = document.getElementById('overlay-canvas');
+    const ctx            = canvas.getContext('2d');
+    const dot            = document.getElementById('status-dot');
+    const label          = document.getElementById('status-label');
+    const progress       = document.getElementById('progress-bar');
+    const frame          = document.getElementById('scan-frame');
     const matchedOverlay = document.getElementById('matched-overlay');
 
-    let faceMatcher = null;
-    let isSubmitting = false;
-    let detectionActive = false;
-    let isDetecting = false;        // lock agar loop tidak overlap
-    let confirmedLabel = null;      // label yang sedang dikonfirmasi
-    let confirmCount = 0;           // jumlah frame berurutan dengan label sama
-    const CONFIRM_FRAMES = 2;       // minimal 2 frame konsisten sebelum submit
+    // ─────────────────────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────────────────────
+    let userDescriptors  = null;    // Float32Array[] – ONLY logged-in user's vectors
+    let isSubmitting     = false;
+    let detectionActive  = false;
+    let isDetecting      = false;
+    let confirmedCount   = 0;
+    let retryTimer       = null;
 
+    // ─────────────────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────────────────
     function setProgress(p) { progress.style.width = p + '%'; }
-    function setLabel(t) { label.textContent = t; }
+    function setLabel(t, color) {
+        label.textContent = t;
+        label.style.color = color || 'rgba(255,255,255,0.7)';
+    }
 
-    // Start camera
+    // ─────────────────────────────────────────────────────────
+    // NETWORK MONITOR
+    // ─────────────────────────────────────────────────────────
+    window.addEventListener('offline', () => {
+        setLabel('⚠️ Koneksi terputus. Menunggu jaringan...', '#fbbf24');
+        dot.className   = 'loading';
+        detectionActive = false;
+    });
+    window.addEventListener('online', () => {
+        if (userDescriptors) {
+            detectionActive = true;
+            confirmedCount  = 0;
+            dot.className   = 'scanning';
+            setLabel('✅ Koneksi kembali. Siap scan...');
+            detectLoop();
+        } else {
+            init();
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────
+    // GEOLOCATION – non-blocking, refreshed every 8 s
+    // ─────────────────────────────────────────────────────────
+    function getLocation() {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(p => {
+            document.getElementById('lat').value  = p.coords.latitude;
+            document.getElementById('long').value = p.coords.longitude;
+        }, () => {}, { enableHighAccuracy: false, timeout: 8000 });
+    }
+    getLocation();
+    setInterval(getLocation, 8000);
+
+    // ─────────────────────────────────────────────────────────
+    // OCCLUSION GUARD – landmark-based mask/helmet detection
+    // ─────────────────────────────────────────────────────────
+    function isFaceOccluded(landmarks) {
+        try {
+            const leftEye  = landmarks.getLeftEye();
+            const rightEye = landmarks.getRightEye();
+            const nose     = landmarks.getNose();
+            const mouth    = landmarks.getMouth();
+            const pts      = landmarks.positions;
+
+            if (!leftEye?.length || !rightEye?.length || !nose?.length || !mouth?.length) return true;
+
+            const avgY = arr => arr.reduce((s, p) => s + p.y, 0) / arr.length;
+            const eyeY   = (avgY(leftEye) + avgY(rightEye)) / 2;
+            const noseY  = avgY(nose);
+            const mouthY = avgY(mouth);
+            const faceH  = pts[8].y - pts[19].y; // chin to brow
+
+            if (faceH <= 0) return true;
+
+            const eyeToNose   = (noseY  - eyeY)  / faceH;
+            const noseToMouth = (mouthY - noseY)  / faceH;
+
+            // If gaps are too small → face regions collapsed (mask/helmet)
+            return (eyeToNose < 0.05 || noseToMouth < 0.05);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // CAMERA
+    // ─────────────────────────────────────────────────────────
     async function startCamera() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -287,17 +359,17 @@
                 audio: false
             });
             video.srcObject = stream;
+            return true;
         } catch (e) {
-            setLabel('❌ Tidak bisa mengakses kamera. Izinkan akses kamera.');
-            dot.className = 'status-dot';
+            setLabel('❌ Tidak bisa akses kamera. Izinkan akses kamera di browser.', '#f87171');
+            return false;
         }
     }
 
-    // Load models + face data
-    async function init() {
-        setLabel('Memuat model AI...');
-        setProgress(10);
-
+    // ─────────────────────────────────────────────────────────
+    // LOAD MODELS (async, parallel with camera start)
+    // ─────────────────────────────────────────────────────────
+    async function loadModels() {
         try {
             await Promise.all([
                 faceapi.nets.tinyFaceDetector.loadFromUri("{{ url('/face/weights') }}"),
@@ -305,46 +377,61 @@
                 faceapi.nets.faceRecognitionNet.loadFromUri("{{ url('/face/weights') }}")
             ]);
         } catch(e) {
-            // Fallback ke model SSD jika tiny tidak ada
             await Promise.all([
                 faceapi.nets.ssdMobilenetv1.loadFromUri("{{ url('/face/weights') }}"),
                 faceapi.nets.faceLandmark68Net.loadFromUri("{{ url('/face/weights') }}"),
                 faceapi.nets.faceRecognitionNet.loadFromUri("{{ url('/face/weights') }}")
             ]);
         }
+    }
 
-        setProgress(50);
-        setLabel('Memuat data wajah pegawai...');
+    // ─────────────────────────────────────────────────────────
+    // INIT – parallel camera + model load, then fetch only
+    //        the current user's descriptor (1-to-1 mode)
+    // ─────────────────────────────────────────────────────────
+    async function init() {
+        if (!navigator.onLine) {
+            setLabel('⚠️ Tidak ada koneksi internet. Hubungkan jaringan.', '#fbbf24');
+            return;
+        }
 
-        await startCamera();
+        setLabel('Memuat model AI...'); setProgress(10); dot.className = 'loading';
 
-        // Fetch neural data
-        const resp = await fetch("{{ url('/ajaxGetNeural') }}", {
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-        });
-        const data = await resp.text();
+        // Start camera and load models in parallel
+        const [camOk] = await Promise.all([startCamera(), loadModels()]);
+        if (!camOk) return;
 
-        setProgress(80);
+        setProgress(55);
+        setLabel('Mengambil data wajah Anda...');
 
-        if (data && data.length > 2) {
-            try {
-                const content = JSON.parse('{"parent":' + data + '}');
-                for (let x = 0; x < content.parent.length; x++) {
-                    for (let y = 0; y < content.parent[x].descriptors.length; y++) {
-                        content.parent[x].descriptors[y] = new Float32Array(Object.values(content.parent[x].descriptors[y]));
-                    }
-                }
-                const labeled = content.parent.map(c => new faceapi.LabeledFaceDescriptors(
-                    c.label,
-                    c.descriptors.map(d => new Float32Array(d))
-                ));
-                faceMatcher = new faceapi.FaceMatcher(labeled, 0.5);
-            } catch(e) {
-                setLabel('⚠️ Gagal memuat data wajah. Coba refresh halaman.');
-                return;
+        // ── CRITICAL: Fetch only the logged-in user's neural data ──
+        try {
+            const resp = await fetch("{{ url('/ajaxGetNeural') }}", {
+                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const raw = await resp.text();
+
+            if (!raw || raw.length < 3) {
+                setLabel('❌ Wajah Anda belum terdaftar. Hubungi admin.', '#f87171'); return;
             }
-        } else {
-            setLabel('⚠️ Belum ada data wajah terdaftar. Hubungi admin.');
+
+            const content = JSON.parse('{"parent":' + raw + '}');
+            // Find ONLY this user's record — strict 1-to-1 identity lock
+            const myEntry = content.parent.find(c => c.label === EXPECTED_USERNAME);
+
+            if (!myEntry || !myEntry.descriptors?.length) {
+                setLabel('❌ Data wajah akun ini tidak ditemukan. Hubungi admin.', '#f87171'); return;
+            }
+
+            // Store ONLY this user's descriptors
+            userDescriptors = myEntry.descriptors.map(d => new Float32Array(Object.values(d)));
+
+        } catch (e) {
+            setLabel('❌ Gagal memuat data wajah: ' + (e.message || 'timeout'), '#f87171');
+            // Auto-retry in 5 s
+            clearTimeout(retryTimer);
+            retryTimer = setTimeout(init, 5000);
             return;
         }
 
@@ -362,32 +449,27 @@
         detectLoop();
     }
 
-    // Detection loop - dengan loop lock dan konfirmasi multi-frame
+    // ─────────────────────────────────────────────────────────
+    // DETECTION LOOP
+    // ─────────────────────────────────────────────────────────
     async function detectLoop() {
-        if (!detectionActive || isSubmitting) {
-            setTimeout(detectLoop, 300);
-            return;
-        }
-        // Lock: jangan mulai iterasi baru jika iterasi sebelumnya belum selesai
-        if (isDetecting) {
-            setTimeout(detectLoop, 100);
-            return;
-        }
+        if (!detectionActive || isSubmitting) { setTimeout(detectLoop, 300); return; }
+        if (isDetecting) { setTimeout(detectLoop, 100); return; }
         if (!video.videoWidth) { setTimeout(detectLoop, 300); return; }
 
-        isDetecting = true;  // kunci loop
-
+        isDetecting   = true;
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
 
         let detections;
         try {
-            const opts = faceapi.nets.tinyFaceDetector.params
+            const useTiny = !!faceapi.nets.tinyFaceDetector.params;
+            const opts    = useTiny
                 ? new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
                 : new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
 
             detections = await faceapi.detectAllFaces(video, opts)
-                .withFaceLandmarks(faceapi.nets.faceLandmark68TinyNet.params ? true : false)
+                .withFaceLandmarks(useTiny)
                 .withFaceDescriptors();
         } catch(e) {
             isDetecting = false;
@@ -397,120 +479,141 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // ── Guard 1: No face ──
         if (!detections || detections.length === 0) {
-            confirmedLabel = null;
-            confirmCount = 0;
+            confirmedCount = 0;
             setLabel('Wajah tidak terdeteksi. Pastikan pencahayaan cukup...');
-            dot.className = 'scanning';
+            dot.className  = 'scanning';
+
+        // ── Guard 2: Multiple faces – STRICT REJECT ──
         } else if (detections.length > 1) {
-            confirmedLabel = null;
-            confirmCount = 0;
-            setLabel('⚠️ Terdeteksi lebih dari satu wajah! Harap scan sendiri.');
-            dot.className = 'scanning';
-        } else {
-            const resized = faceapi.resizeResults(detections, { width: canvas.width, height: canvas.height });
-            let bestMatch = null;
-            let bestDistance = 1;
-            const expectedUsername = "{{ Auth::check() ? Auth::user()->username : '' }}";
-
-            // Ambil match terbaik dari semua wajah yang terdeteksi
-            resized.forEach((det) => {
-                if (!faceMatcher) return;
-                const match = faceMatcher.findBestMatch(det.descriptor);
-                const box = det.detection.box;
-                const isKnown = match.label !== 'unknown' && match.distance < 0.4;
-
-                if (isKnown && expectedUsername && match.label !== expectedUsername) {
-                    ctx.strokeStyle = '#ef4444';
-                    ctx.lineWidth = 2.5;
-                    ctx.strokeRect(box.x, box.y, box.width, box.height);
-                    return;
-                }
-
-                ctx.strokeStyle = isKnown ? '#10b981' : '#f59e0b';
-                ctx.lineWidth = 2.5;
-                ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-                // Pilih match dengan distance terkecil (paling yakin)
-                if (isKnown && match.distance < bestDistance) {
-                    bestDistance = match.distance;
-                    bestMatch = match.label;
-                }
+            confirmedCount = 0;
+            setLabel('⚠️ Pastikan hanya ada 1 wajah dalam frame kamera.', '#fbbf24');
+            dot.className  = 'scanning';
+            const resAll = faceapi.resizeResults(detections, { width: canvas.width, height: canvas.height });
+            resAll.forEach(d => {
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5;
+                ctx.strokeRect(d.detection.box.x, d.detection.box.y, d.detection.box.width, d.detection.box.height);
             });
 
-            if (bestMatch && !isSubmitting) {
-                // Konfirmasi: label harus konsisten CONFIRM_FRAMES kali berturut-turut
-                if (bestMatch === confirmedLabel) {
-                    confirmCount++;
-                } else {
-                    confirmedLabel = bestMatch;
-                    confirmCount = 1;
-                }
+        } else {
+            const det       = detections[0];
+            const resized   = faceapi.resizeResults([det], { width: canvas.width, height: canvas.height })[0];
+            const box       = resized.detection.box;
+            const landmarks = resized.landmarks;
 
-                if (confirmCount >= CONFIRM_FRAMES) {
-                    // Reset sebelum submit
-                    confirmedLabel = null;
-                    confirmCount = 0;
-                    isDetecting = false;
-                    submitAbsen(bestMatch);
+            // ── Guard 3: Occlusion (mask/helmet/sunglasses) ──
+            if (isFaceOccluded(landmarks)) {
+                confirmedCount = 0;
+                setLabel('⚠️ Wajah terhalang (masker/helm/kacamata). Lepaskan penutup wajah.', '#fbbf24');
+                dot.className = 'scanning';
+                ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5;
+                ctx.strokeRect(box.x, box.y, box.width, box.height);
+                isDetecting = false;
+                setTimeout(detectLoop, 400);
+                return;
+            }
+
+            // ── Guard 4: 1-to-1 strict identity verification ──
+            if (!userDescriptors || !EXPECTED_USERNAME) {
+                setLabel('❌ Sesi tidak valid. Silakan login ulang.', '#f87171');
+                isDetecting = false; return;
+            }
+
+            // Compute minimum euclidean distance across all stored samples
+            let minDistance = Infinity;
+            for (const stored of userDescriptors) {
+                const dist = faceapi.euclideanDistance(det.descriptor, stored);
+                if (dist < minDistance) minDistance = dist;
+            }
+
+            const isMatch = minDistance <= MATCH_THRESHOLD;
+            const confPct = Math.round((1 - minDistance) * 100);
+
+            // Draw bounding box
+            ctx.strokeStyle = isMatch ? '#10b981' : '#ef4444';
+            ctx.lineWidth   = 2.5;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+            // Confidence label
+            ctx.fillStyle = isMatch ? '#10b981' : '#ef4444';
+            ctx.font      = 'bold 12px sans-serif';
+            const labelText = isMatch ? `✓ ${confPct}%` : `✗ Tidak cocok`;
+            ctx.fillText(labelText, box.x + 4, box.y > 18 ? box.y - 5 : box.y + box.height + 14);
+
+            if (isMatch && !isSubmitting) {
+                confirmedCount++;
+                setLabel(`Mengenali wajah... (${confirmedCount}/${CONFIRM_FRAMES})`);
+
+                if (confirmedCount >= CONFIRM_FRAMES) {
+                    confirmedCount = 0;
+                    isDetecting    = false;
+                    submitAbsen(EXPECTED_USERNAME);
                     return;
-                } else {
-                    setLabel('Mengenali wajah... ' + bestMatch + ' (' + confirmCount + '/' + CONFIRM_FRAMES + ')');
                 }
-            } else {
-                confirmedLabel = null;
-                confirmCount = 0;
-                setLabel('Wajah tidak dikenali. Pastikan wajah terdaftar...');
+            } else if (!isMatch) {
+                confirmedCount = 0;
+                setLabel('⚠️ Wajah tidak cocok dengan akun yang sedang login.', '#fbbf24');
             }
         }
 
-        isDetecting = false;  // lepas lock
+        isDetecting = false;
         setTimeout(detectLoop, 400);
     }
 
+    // ─────────────────────────────────────────────────────────
+    // SUBMIT with network guard + timeout retry
+    // ─────────────────────────────────────────────────────────
     function submitAbsen(username) {
         if (isSubmitting) return;
-        isSubmitting = true;
-        detectionActive = false;
 
-        dot.className = 'success';
+        // Final offline guard
+        if (!navigator.onLine) {
+            setLabel('⚠️ Tidak ada koneksi. Absensi ditunda...', '#fbbf24');
+            const retry = () => { window.removeEventListener('online', retry); submitAbsen(username); };
+            window.addEventListener('online', retry);
+            return;
+        }
+
+        isSubmitting    = true;
+        detectionActive = false;
+        dot.className   = 'success';
         matchedOverlay.classList.add('show');
         setLabel('✅ Wajah dikenali! Menyimpan absensi...');
         setProgress(80);
 
-        // Capture frame
         const cap = document.createElement('canvas');
-        cap.width = 480; cap.height = 480;
+        cap.width  = 480; cap.height = 480;
         cap.getContext('2d').drawImage(video, 0, 0, 480, 480);
         const imgData = cap.toDataURL('image/jpeg', 0.75);
 
         const lat  = document.getElementById('lat').value;
         const long = document.getElementById('long').value;
 
-        $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+        $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': CSRF_TOKEN } });
         $.ajax({
-            type: 'POST',
-            url: "{{ url('/presensi/store') }}",
+            type: 'POST', url: "{{ url('/presensi/store') }}",
             data: { username, image: imgData, lat, long },
+            timeout: 20000,
             success: function(msg) {
                 setProgress(100);
                 matchedOverlay.classList.remove('show');
                 let text, icon;
                 switch (msg) {
-                    case 'masuk':    text = '✅ Absen Masuk Berhasil!'; icon = 'success'; break;
-                    case 'outlocation': text = '⚠️ Anda di luar radius kantor'; icon = 'warning'; break;
-                    case 'selesai': text = 'ℹ️ Sudah absen masuk hari ini'; icon = 'info'; break;
-                    case 'noMs':    text = '⚠️ Shift belum diatur. Hubungi admin'; icon = 'warning'; break;
-                    default:        text = '❌ Data pengguna tidak ditemukan'; icon = 'error';
+                    case 'masuk':       text = '✅ Absen Masuk Berhasil!';              icon = 'success'; break;
+                    case 'outlocation': text = '⚠️ Anda di luar radius kantor';          icon = 'warning'; break;
+                    case 'selesai':     text = 'ℹ️ Sudah absen masuk hari ini';          icon = 'info';    break;
+                    case 'noMs':        text = '⚠️ Shift belum diatur. Hubungi admin';   icon = 'warning'; break;
+                    default:            text = '❌ Data pengguna tidak ditemukan';       icon = 'error';
                 }
                 Swal.fire({ title: text, icon, confirmButtonColor: '#6366f1', timer: 3000, timerProgressBar: true })
                     .then(() => { window.location.href = "{{ url('/') }}"; });
             },
-            error: function() {
-                isSubmitting = false;
+            error: function(xhr, status) {
+                isSubmitting    = false;
                 detectionActive = true;
                 matchedOverlay.classList.remove('show');
-                setLabel('❌ Gagal menyimpan. Coba lagi...');
+                setLabel(status === 'timeout' ? '⚠️ Koneksi lambat. Coba lagi...' : '❌ Gagal menyimpan. Coba lagi...', '#f87171');
                 setProgress(0);
                 dot.className = 'scanning';
                 setTimeout(detectLoop, 500);
@@ -518,10 +621,8 @@
         });
     }
 
-    // Start
-    init().catch(e => {
-        setLabel('❌ Error: ' + e.message);
-    });
+    // Boot
+    init().catch(e => { setLabel('❌ Error: ' + e.message, '#f87171'); });
 </script>
 @endpush
 @endsection
