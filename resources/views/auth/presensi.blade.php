@@ -246,17 +246,16 @@
 <script src="{{ url('/face/dist/face-api.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // ─────────────────────────────────────────────────────────
-    // SECURITY CONSTANTS
-    // ─────────────────────────────────────────────────────────
-    const MATCH_THRESHOLD   = 0.40;   // max euclidean distance (0.40 ≈ 85% confidence)
-    const CONFIRM_FRAMES    = 3;      // consecutive matching frames before submitting
-    const EXPECTED_USERNAME = "{{ Auth::check() ? Auth::user()->username : '' }}";
+    // ═══════════════════════════════════════════════════════════
+    // SECURITY CONSTANTS – KETAT MODE
+    // ═══════════════════════════════════════════════════════════
+    const MATCH_THRESHOLD   = 0.35;   // LEBIH KETAT: 0.35 ≈ 90%+ confidence
+    const CONFIRM_FRAMES    = 5;      // LEBIH KETAT: 5 frame berturut-turut cocok
     const CSRF_TOKEN        = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
     // DOM REFS
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
     const video          = document.getElementById('video');
     const canvas         = document.getElementById('overlay-canvas');
     const ctx            = canvas.getContext('2d');
@@ -266,37 +265,40 @@
     const frame          = document.getElementById('scan-frame');
     const matchedOverlay = document.getElementById('matched-overlay');
 
-    // ─────────────────────────────────────────────────────────
-    // STATE
-    // ─────────────────────────────────────────────────────────
-    let userDescriptors  = null;    // Float32Array[] – ONLY logged-in user's vectors
-    let isSubmitting     = false;
-    let detectionActive  = false;
-    let isDetecting      = false;
-    let confirmedCount   = 0;
-    let retryTimer       = null;
+    // ═══════════════════════════════════════════════════════════
+    // STATE – 1-to-MANY Identification Mode
+    // ═══════════════════════════════════════════════════════════
+    let allDescriptors    = [];       // Array of { label, descriptors: Float32Array[] }
+    let faceMatcher       = null;     // faceapi FaceMatcher instance
+    let isSubmitting      = false;
+    let detectionActive   = false;
+    let isDetecting       = false;
+    let confirmedCount    = 0;
+    let lastMatchedLabel  = null;     // konsistensi label selama CONFIRM_FRAMES
+    let retryTimer        = null;
 
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
     // HELPERS
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
     function setProgress(p) { progress.style.width = p + '%'; }
     function setLabel(t, color) {
         label.textContent = t;
         label.style.color = color || 'rgba(255,255,255,0.7)';
     }
 
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
     // NETWORK MONITOR
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
     window.addEventListener('offline', () => {
         setLabel('⚠️ Koneksi terputus. Menunggu jaringan...', '#fbbf24');
         dot.className   = 'loading';
         detectionActive = false;
     });
     window.addEventListener('online', () => {
-        if (userDescriptors) {
+        if (faceMatcher) {
             detectionActive = true;
             confirmedCount  = 0;
+            lastMatchedLabel = null;
             dot.className   = 'scanning';
             setLabel('✅ Koneksi kembali. Siap scan...');
             detectLoop();
@@ -305,57 +307,75 @@
         }
     });
 
-    // ─────────────────────────────────────────────────────────
-    // GEOLOCATION – non-blocking, refreshed every 8 s
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    // GEOLOCATION
+    // ═══════════════════════════════════════════════════════════
     function getLocation() {
         if (!navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition(p => {
             document.getElementById('lat').value  = p.coords.latitude;
             document.getElementById('long').value = p.coords.longitude;
-        }, () => {}, { enableHighAccuracy: false, timeout: 8000 });
+        }, () => {}, { enableHighAccuracy: true, timeout: 10000 });
     }
     getLocation();
-    setInterval(getLocation, 8000);
+    setInterval(getLocation, 6000);
 
-    // ─────────────────────────────────────────────────────────
-    // OCCLUSION GUARD – landmark-based mask/helmet detection
-    // ─────────────────────────────────────────────────────────
-    function isFaceOccluded(landmarks) {
+    // ═══════════════════════════════════════════════════════════
+    // OCCLUSION GUARD v2 – LEBIH KETAT
+    // ═══════════════════════════════════════════════════════════
+    function isFaceOccluded(landmarks, detectionScore) {
         try {
+            if (detectionScore < 0.7) return true;
+
             const leftEye  = landmarks.getLeftEye();
             const rightEye = landmarks.getRightEye();
             const nose     = landmarks.getNose();
             const mouth    = landmarks.getMouth();
+            const jaw      = landmarks.getJawOutline();
             const pts      = landmarks.positions;
 
-            if (!leftEye?.length || !rightEye?.length || !nose?.length || !mouth?.length) return true;
+            if (!leftEye?.length || !rightEye?.length || !nose?.length || !mouth?.length || !jaw?.length) return true;
 
             const avgY = arr => arr.reduce((s, p) => s + p.y, 0) / arr.length;
-            const eyeY   = (avgY(leftEye) + avgY(rightEye)) / 2;
-            const noseY  = avgY(nose);
-            const mouthY = avgY(mouth);
-            const faceH  = pts[8].y - pts[19].y; // chin to brow
+            const avgX = arr => arr.reduce((s, p) => s + p.x, 0) / arr.length;
 
-            if (faceH <= 0) return true;
+            const eyeY   = (avgY(leftEye) + avgY(rightEye)) / 2;
+            const eyeX   = (avgX(leftEye) + avgX(rightEye)) / 2;
+            const noseY  = avgY(nose);
+            const noseX  = avgX(nose);
+            const mouthY = avgY(mouth);
+            const mouthX = avgX(mouth);
+            const faceH  = pts[8].y - pts[19].y;
+            const faceW  = pts[16].x - pts[0].x;
+
+            if (faceH <= 20 || faceW <= 20) return true;
 
             const eyeToNose   = (noseY  - eyeY)  / faceH;
             const noseToMouth = (mouthY - noseY)  / faceH;
+            const faceAspect  = faceW / faceH;
 
-            // If gaps are too small → face regions collapsed (mask/helmet)
-            return (eyeToNose < 0.05 || noseToMouth < 0.05);
-        } catch (e) {
+            if (eyeToNose < 0.08 || noseToMouth < 0.08) return true;
+            if (eyeToNose > 0.35 || noseToMouth > 0.35) return true;
+
+            if (faceAspect < 0.55 || faceAspect > 1.25) return true;
+
+            const eyeNoseAlign = Math.abs(eyeX - noseX) / faceW;
+            const noseMouthAlign = Math.abs(noseX - mouthX) / faceW;
+            if (eyeNoseAlign > 0.12 || noseMouthAlign > 0.12) return true;
+
             return false;
+        } catch (e) {
+            return true;
         }
     }
 
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
     // CAMERA
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
     async function startCamera() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                video: { facingMode: 'user', width: { ideal: 640, min: 480 }, height: { ideal: 480, min: 360 } },
                 audio: false
             });
             video.srcObject = stream;
@@ -366,9 +386,9 @@
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // LOAD MODELS (async, parallel with camera start)
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    // LOAD MODELS
+    // ═══════════════════════════════════════════════════════════
     async function loadModels() {
         try {
             await Promise.all([
@@ -385,26 +405,23 @@
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // INIT – parallel camera + model load, then fetch only
-    //        the current user's descriptor (1-to-1 mode)
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    // INIT – 1-to-MANY: load SEMUA data wajah karyawan & dosen
+    // ═══════════════════════════════════════════════════════════
     async function init() {
         if (!navigator.onLine) {
             setLabel('⚠️ Tidak ada koneksi internet. Hubungkan jaringan.', '#fbbf24');
             return;
         }
 
-        setLabel('Memuat model AI...'); setProgress(10); dot.className = 'loading';
+        setLabel('Memuat model AI pengenalan wajah...'); setProgress(8); dot.className = 'loading';
 
-        // Start camera and load models in parallel
         const [camOk] = await Promise.all([startCamera(), loadModels()]);
         if (!camOk) return;
 
-        setProgress(55);
-        setLabel('Mengambil data wajah Anda...');
+        setProgress(45);
+        setLabel('Memuat database wajah karyawan & dosen...');
 
-        // ── CRITICAL: Fetch only the logged-in user's neural data ──
         try {
             const resp = await fetch("{{ url('/ajaxGetNeural') }}", {
                 headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' }
@@ -413,30 +430,56 @@
             const raw = await resp.text();
 
             if (!raw || raw.length < 3) {
-                setLabel('❌ Wajah Anda belum terdaftar. Hubungi admin.', '#f87171'); return;
+                setLabel('❌ Database wajah kosong. Hubungi admin untuk registrasi wajah.', '#f87171'); return;
             }
 
-            const content = JSON.parse('{"parent":' + raw + '}');
-            // Find ONLY this user's record — strict 1-to-1 identity lock
-            const myEntry = content.parent.find(c => c.label === EXPECTED_USERNAME);
-
-            if (!myEntry || !myEntry.descriptors?.length) {
-                setLabel('❌ Data wajah akun ini tidak ditemukan. Hubungi admin.', '#f87171'); return;
+            let content;
+            try {
+                content = JSON.parse(raw);
+            } catch(e) {
+                try {
+                    content = JSON.parse('{"parent":' + raw + '}').parent;
+                } catch(e2) {
+                    throw new Error('Format data wajah tidak valid');
+                }
             }
 
-            // Store ONLY this user's descriptors
-            userDescriptors = myEntry.descriptors.map(d => new Float32Array(Object.values(d)));
+            if (!Array.isArray(content) || content.length === 0) {
+                setLabel('❌ Tidak ada data wajah terdaftar. Hubungi admin.', '#f87171'); return;
+            }
+
+            setProgress(75);
+            setLabel(`Memproses ${content.length} data wajah...`);
+
+            const labeledDescriptors = [];
+            for (const entry of content) {
+                if (!entry.label || !Array.isArray(entry.descriptors) || entry.descriptors.length === 0) continue;
+                try {
+                    const descs = entry.descriptors.map(d => {
+                        const vals = Object.values(d);
+                        if (vals.length !== 128) throw new Error('invalid vector');
+                        return new Float32Array(vals);
+                    });
+                    labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(entry.label, descs));
+                } catch(e) { /* skip invalid entries */ }
+            }
+
+            if (labeledDescriptors.length === 0) {
+                setLabel('❌ Data wajah tidak valid. Hubungi admin.', '#f87171'); return;
+            }
+
+            allDescriptors = labeledDescriptors;
+            faceMatcher    = new faceapi.FaceMatcher(labeledDescriptors, MATCH_THRESHOLD);
 
         } catch (e) {
-            setLabel('❌ Gagal memuat data wajah: ' + (e.message || 'timeout'), '#f87171');
-            // Auto-retry in 5 s
+            setLabel('❌ Gagal memuat database wajah: ' + (e.message || 'timeout'), '#f87171');
             clearTimeout(retryTimer);
             retryTimer = setTimeout(init, 5000);
             return;
         }
 
         setProgress(100);
-        setLabel('✅ Siap! Arahkan wajah Anda ke kamera...');
+        setLabel(`✅ Siap! ${allDescriptors.length} pegawai terdaftar. Arahkan wajah ke kamera...`);
         dot.className = 'scanning';
         frame.classList.add('show');
         setTimeout(() => setProgress(0), 800);
@@ -449,9 +492,9 @@
         detectLoop();
     }
 
-    // ─────────────────────────────────────────────────────────
-    // DETECTION LOOP
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    // DETECTION LOOP – KETAT MODE (1-to-Many)
+    // ═══════════════════════════════════════════════════════════
     async function detectLoop() {
         if (!detectionActive || isSubmitting) { setTimeout(detectLoop, 300); return; }
         if (isDetecting) { setTimeout(detectLoop, 100); return; }
@@ -465,8 +508,8 @@
         try {
             const useTiny = !!faceapi.nets.tinyFaceDetector.params;
             const opts    = useTiny
-                ? new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
-                : new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+                ? new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.6 })
+                : new faceapi.SsdMobilenetv1Options({ minConfidence: 0.6 });
 
             detections = await faceapi.detectAllFaces(video, opts)
                 .withFaceLandmarks(useTiny)
@@ -481,93 +524,109 @@
 
         // ── Guard 1: No face ──
         if (!detections || detections.length === 0) {
-            confirmedCount = 0;
-            setLabel('Wajah tidak terdeteksi. Pastikan pencahayaan cukup...');
-            dot.className  = 'scanning';
+            confirmedCount   = 0;
+            lastMatchedLabel = null;
+            setLabel('Wajah tidak terdeteksi. Pastikan pencahayaan cukup dan wajah jelas...');
+            dot.className    = 'scanning';
 
-        // ── Guard 2: Multiple faces – STRICT REJECT ──
+        // ── Guard 2: Multiple faces – DITOLAK KETAT ──
         } else if (detections.length > 1) {
-            confirmedCount = 0;
-            setLabel('⚠️ Pastikan hanya ada 1 wajah dalam frame kamera.', '#fbbf24');
-            dot.className  = 'scanning';
+            confirmedCount   = 0;
+            lastMatchedLabel = null;
+            setLabel('❌ DITOLAK: Terdeteksi ' + detections.length + ' wajah! Hanya 1 wajah diperbolehkan.', '#ef4444');
+            dot.className    = 'scanning';
             const resAll = faceapi.resizeResults(detections, { width: canvas.width, height: canvas.height });
             resAll.forEach(d => {
-                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
                 ctx.strokeRect(d.detection.box.x, d.detection.box.y, d.detection.box.width, d.detection.box.height);
             });
 
         } else {
-            const det       = detections[0];
-            const resized   = faceapi.resizeResults([det], { width: canvas.width, height: canvas.height })[0];
-            const box       = resized.detection.box;
-            const landmarks = resized.landmarks;
+            const det            = detections[0];
+            const resized        = faceapi.resizeResults([det], { width: canvas.width, height: canvas.height })[0];
+            const box            = resized.detection.box;
+            const landmarks      = resized.landmarks;
+            const detectionScore = resized.detection.score;
 
-            // ── Guard 3: Occlusion (mask/helmet/sunglasses) ──
-            if (isFaceOccluded(landmarks)) {
-                confirmedCount = 0;
-                setLabel('⚠️ Wajah terhalang (masker/helm/kacamata). Lepaskan penutup wajah.', '#fbbf24');
+            if (box.width < 100 || box.height < 120) {
+                confirmedCount   = 0;
+                lastMatchedLabel = null;
+                setLabel('⚠️ Dekatkan wajah Anda ke kamera.', '#fbbf24');
+                dot.className    = 'scanning';
+                isDetecting = false;
+                setTimeout(detectLoop, 300);
+                return;
+            }
+
+            // ── Guard 3: Occlusion (masker/helm/kacamata hitam) ──
+            if (isFaceOccluded(landmarks, detectionScore)) {
+                confirmedCount   = 0;
+                lastMatchedLabel = null;
+                setLabel('❌ DITOLAK: Wajah terhalang! Lepaskan masker, helm, kacamata hitam.', '#ef4444');
                 dot.className = 'scanning';
-                ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
                 ctx.strokeRect(box.x, box.y, box.width, box.height);
                 isDetecting = false;
                 setTimeout(detectLoop, 400);
                 return;
             }
 
-            // ── Guard 4: 1-to-1 strict identity verification ──
-            if (!userDescriptors || !EXPECTED_USERNAME) {
-                setLabel('❌ Sesi tidak valid. Silakan login ulang.', '#f87171');
-                isDetecting = false; return;
+            // ── Guard 4: FaceMatcher – 1-to-Many identification ──
+            if (!faceMatcher) {
+                setLabel('❌ Sistem belum siap. Memuat ulang...', '#f87171');
+                isDetecting = false; setTimeout(init, 1000); return;
             }
 
-            // Compute minimum euclidean distance across all stored samples
-            let minDistance = Infinity;
-            for (const stored of userDescriptors) {
-                const dist = faceapi.euclideanDistance(det.descriptor, stored);
-                if (dist < minDistance) minDistance = dist;
-            }
+            const bestMatch = faceMatcher.findBestMatch(det.descriptor);
+            const isMatch   = bestMatch.label !== 'unknown';
+            const dist      = bestMatch.distance;
+            const confPct   = Math.round((1 - dist) * 100);
 
-            const isMatch = minDistance <= MATCH_THRESHOLD;
-            const confPct = Math.round((1 - minDistance) * 100);
-
-            // Draw bounding box
             ctx.strokeStyle = isMatch ? '#10b981' : '#ef4444';
-            ctx.lineWidth   = 2.5;
+            ctx.lineWidth   = 3;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-            // Confidence label
             ctx.fillStyle = isMatch ? '#10b981' : '#ef4444';
-            ctx.font      = 'bold 12px sans-serif';
-            const labelText = isMatch ? `✓ ${confPct}%` : `✗ Tidak cocok`;
-            ctx.fillText(labelText, box.x + 4, box.y > 18 ? box.y - 5 : box.y + box.height + 14);
+            ctx.font      = 'bold 13px sans-serif';
+            const displayLabel = isMatch ? bestMatch.label : 'Tidak Dikenal';
+            const labelText    = isMatch
+                ? `✓ ${displayLabel}  ${confPct}%`
+                : `✗ Tidak Dikenal  ${confPct}%`;
+            ctx.fillText(labelText, box.x + 4, box.y > 22 ? box.y - 7 : box.y + box.height + 16);
 
             if (isMatch && !isSubmitting) {
-                confirmedCount++;
-                setLabel(`Mengenali wajah... (${confirmedCount}/${CONFIRM_FRAMES})`);
+                if (lastMatchedLabel !== bestMatch.label) {
+                    confirmedCount    = 1;
+                    lastMatchedLabel  = bestMatch.label;
+                } else {
+                    confirmedCount++;
+                }
+                setLabel(`Verifikasi: ${bestMatch.label} (${confirmedCount}/${CONFIRM_FRAMES}) – ${confPct}%`);
 
                 if (confirmedCount >= CONFIRM_FRAMES) {
-                    confirmedCount = 0;
-                    isDetecting    = false;
-                    submitAbsen(EXPECTED_USERNAME);
+                    confirmedCount   = 0;
+                    lastMatchedLabel = null;
+                    isDetecting      = false;
+                    submitAbsen(bestMatch.label);
                     return;
                 }
             } else if (!isMatch) {
-                confirmedCount = 0;
-                setLabel('⚠️ Wajah tidak cocok dengan akun yang sedang login.', '#fbbf24');
+                confirmedCount   = 0;
+                lastMatchedLabel = null;
+                setLabel('❌ WAJAH TIDAK DAPAT DIBACA: Tidak terdaftar di database. Hubungi admin.', '#ef4444');
             }
         }
 
         isDetecting = false;
-        setTimeout(detectLoop, 400);
+        setTimeout(detectLoop, 350);
     }
 
-    // ─────────────────────────────────────────────────────────
-    // SUBMIT with network guard + timeout retry
-    // ─────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    // SUBMIT
+    // ═══════════════════════════════════════════════════════════
     function submitAbsen(username) {
         if (isSubmitting) return;
 
-        // Final offline guard
         if (!navigator.onLine) {
             setLabel('⚠️ Tidak ada koneksi. Absensi ditunda...', '#fbbf24');
             const retry = () => { window.removeEventListener('online', retry); submitAbsen(username); };
@@ -579,13 +638,13 @@
         detectionActive = false;
         dot.className   = 'success';
         matchedOverlay.classList.add('show');
-        setLabel('✅ Wajah dikenali! Menyimpan absensi...');
+        setLabel(`✅ Wajah dikenali: ${username}! Menyimpan absensi...`);
         setProgress(80);
 
         const cap = document.createElement('canvas');
-        cap.width  = 480; cap.height = 480;
-        cap.getContext('2d').drawImage(video, 0, 0, 480, 480);
-        const imgData = cap.toDataURL('image/jpeg', 0.75);
+        cap.width  = 640; cap.height = 640;
+        cap.getContext('2d').drawImage(video, 0, 0, 640, 640);
+        const imgData = cap.toDataURL('image/jpeg', 0.85);
 
         const lat  = document.getElementById('lat').value;
         const long = document.getElementById('long').value;
@@ -594,20 +653,25 @@
         $.ajax({
             type: 'POST', url: "{{ url('/presensi/store') }}",
             data: { username, image: imgData, lat, long },
-            timeout: 20000,
+            timeout: 25000,
             success: function(msg) {
                 setProgress(100);
                 matchedOverlay.classList.remove('show');
                 let text, icon;
                 switch (msg) {
-                    case 'masuk':       text = '✅ Absen Masuk Berhasil!';              icon = 'success'; break;
-                    case 'outlocation': text = '⚠️ Anda di luar radius kantor';          icon = 'warning'; break;
-                    case 'selesai':     text = 'ℹ️ Sudah absen masuk hari ini';          icon = 'info';    break;
-                    case 'noMs':        text = '⚠️ Shift belum diatur. Hubungi admin';   icon = 'warning'; break;
-                    default:            text = '❌ Data pengguna tidak ditemukan';       icon = 'error';
+                    case 'masuk':       text = `✅ Absen Masuk Berhasil!\nSelamat datang, ${username}!`; icon = 'success'; break;
+                    case 'outlocation': text = '⚠️ Anda di luar radius kantor. Absen DITOLAK.';          icon = 'warning'; break;
+                    case 'selesai':     text = `ℹ️ ${username} sudah absen masuk hari ini.`;               icon = 'info';    break;
+                    case 'noMs':        text = `⚠️ Shift ${username} belum diatur. Hubungi admin.`;        icon = 'warning'; break;
+                    default:            text = `❌ Data pengguna ${username} tidak ditemukan.`;             icon = 'error';
                 }
-                Swal.fire({ title: text, icon, confirmButtonColor: '#6366f1', timer: 3000, timerProgressBar: true })
-                    .then(() => { window.location.href = "{{ url('/') }}"; });
+                Swal.fire({
+                    title: text,
+                    icon,
+                    confirmButtonColor: '#10b981',
+                    timer: 4000,
+                    timerProgressBar: true
+                }).then(() => { window.location.href = "{{ url('/') }}"; });
             },
             error: function(xhr, status) {
                 isSubmitting    = false;
@@ -616,12 +680,13 @@
                 setLabel(status === 'timeout' ? '⚠️ Koneksi lambat. Coba lagi...' : '❌ Gagal menyimpan. Coba lagi...', '#f87171');
                 setProgress(0);
                 dot.className = 'scanning';
+                confirmedCount   = 0;
+                lastMatchedLabel = null;
                 setTimeout(detectLoop, 500);
             }
         });
     }
 
-    // Boot
     init().catch(e => { setLabel('❌ Error: ' + e.message, '#f87171'); });
 </script>
 @endpush
