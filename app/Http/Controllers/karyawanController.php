@@ -1192,13 +1192,84 @@ class karyawanController extends Controller
     {
         $user = auth()->user();
 
-        // Hanya dosen yang boleh simpan dari halaman ini
         if ($user->tipe_user !== 'dosen') {
             return response()->json(['error' => 'Tidak diizinkan'], 403);
         }
 
-        // Gunakan username dosen yang login, lalu delegate ke ajaxPhoto
         $request->merge(['path' => $user->username]);
         return $this->ajaxPhoto($request);
+    }
+
+    // ===== SELF-SERVICE REGISTRASI WAJAH KARYAWAN =====
+    public function pegawaiRegistrasiWajah()
+    {
+        $user = auth()->user();
+
+        if (!in_array($user->tipe_user, ['karyawan', 'pegawai', 'staff', 'admin', 'Super Admin', 'hrd', 'akademik'])) {
+            return redirect('/dashboard')->with('error', 'Halaman ini untuk karyawan. Dosen gunakan /dosen/registrasi-wajah.');
+        }
+
+        return view('karyawan.face', [
+            'title'           => 'Registrasi Wajah',
+            'karyawan'        => $user,
+            'self_register'   => true,
+            'self_register_type' => 'pegawai',
+        ]);
+    }
+
+    public function pegawaiSimpanWajah(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!in_array($user->tipe_user, ['karyawan', 'pegawai', 'staff', 'admin', 'Super Admin', 'hrd', 'akademik'])) {
+            return response()->json(['error' => 'Tidak diizinkan'], 403);
+        }
+
+        $request->merge(['path' => $user->username]);
+        return $this->ajaxPhoto($request);
+    }
+
+    public function selfServiceDescrip(Request $request)
+    {
+        $user = auth()->user();
+        $path = storage_path('app/neural.json');
+
+        if (!file_exists($path)) {
+            file_put_contents($path, '[]');
+            @chmod($path, 0664);
+        }
+        if (!is_writable($path)) {
+            return response()->json(['error' => 'neural.json tidak dapat ditulis. Hubungi admin.'], 500);
+        }
+
+        $myData = json_decode($request->myData, true);
+        if (!$myData || !isset($myData['label']) || !isset($myData['descriptors'])) {
+            return response()->json(['error' => 'Data descriptor tidak valid'], 400);
+        }
+
+        if ($myData['label'] !== $user->username) {
+            return response()->json(['error' => 'Label tidak cocok dengan akun Anda'], 403);
+        }
+
+        $neural   = File::get($path);
+        $dataface = json_decode($neural, true) ?? [];
+        $filterface = array_values(array_filter($dataface, function($item) use ($user) {
+            return $item['label'] !== $user->username;
+        }));
+
+        $descriptors = is_array($myData['descriptors']) ? $myData['descriptors'] : [];
+        if (empty($descriptors)) {
+            return response()->json(['error' => 'Descriptor wajah kosong'], 400);
+        }
+
+        $filterface[] = [
+            'label'       => $user->username,
+            'descriptors' => $descriptors,
+        ];
+
+        File::put($path, json_encode($filterface, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        @chmod($path, 0664);
+
+        return response()->json(['success' => true, 'label' => $user->username, 'total_samples' => count($descriptors)]);
     }
 }

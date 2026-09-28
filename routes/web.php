@@ -510,6 +510,11 @@ Route::prefix('dosen')->middleware(['auth', 'role:admin|Super Admin|hrd'])->grou
 Route::get('/dosen/registrasi-wajah', [karyawanController::class, 'dosenRegistrasiWajah'])->middleware('auth');
 Route::post('/dosen/registrasi-wajah/simpan', [karyawanController::class, 'dosenSimpanWajah'])->middleware('auth');
 
+// ===== REGISTRASI WAJAH KARYAWAN (Self-service, bisa diakses karyawan sendiri) =====
+Route::get('/karyawan/registrasi-wajah', [karyawanController::class, 'pegawaiRegistrasiWajah'])->middleware('auth');
+Route::post('/karyawan/registrasi-wajah/simpan', [karyawanController::class, 'pegawaiSimpanWajah'])->middleware('auth');
+Route::post('/self-service/ajaxDescrip', [karyawanController::class, 'selfServiceDescrip'])->middleware('auth');
+
 // ===== MODUL MATA KULIAH =====
 Route::prefix('mata-kuliah')->middleware(['auth', 'role:admin|Super Admin|hrd'])->group(function () {
     Route::get('/', [MataKuliahController::class, 'index']);

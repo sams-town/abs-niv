@@ -16,11 +16,26 @@
             <div class="card">
                 <div class="p-4">
                     @if(isset($self_register) && $self_register)
-                    <div class="alert alert-info d-flex align-items-center gap-2 mb-4" role="alert">
-                        <i class="fas fa-camera fa-lg me-2"></i>
+                        @php
+                            $tipe = $self_register_type ?? 'dosen';
+                            $labelPeran = $tipe === 'pegawai' ? 'Karyawan / Pegawai' : 'Dosen';
+                        @endphp
+                    <div class="alert alert-primary d-flex align-items-center gap-2 mb-4" role="alert">
+                        <i class="fas fa-user-cog fa-lg me-2"></i>
                         <div>
-                            <strong>Registrasi Wajah Wajib</strong> — Sebagai dosen, Anda perlu mendaftarkan wajah sekali sebelum bisa menggunakan sistem absensi.
-                            Pastikan wajah Anda terlihat jelas di kamera, lalu klik <strong>Capture Image</strong>.
+                            <strong>📸 Registrasi Wajah Mandiri (Self-Service)</strong>
+                            <span class="badge bg-secondary ms-2">{{ $labelPeran }}</span><br>
+                            Halo <strong>{{ $karyawan->name }}</strong>, Anda login sebagai <code>[{{ $karyawan->username }}]</code>.<br>
+                            Pastikan hanya <strong>wajah ANDA</strong> yang terlihat jelas di kamera (tanpa masker, helm, kacamata hitam).<br>
+                            Lalu klik tombol <strong>Capture Image</strong> di bawah untuk menyimpan data wajah Anda.<br>
+                            <small class="text-muted">⚠️ Data wajah Anda akan disimpan dengan label username yang sama dengan akun login, tidak bisa diubah manual.</small>
+                        </div>
+                    </div>
+                    @else
+                    <div class="alert alert-info d-flex align-items-center gap-2 mb-4" role="alert">
+                        <i class="fas fa-user-shield fa-lg me-2"></i>
+                        <div>
+                            <strong>Admin Mode</strong> — Mendaftarkan wajah untuk user: <strong>{{ $karyawan->name }}</strong> <code>[{{ $karyawan->username }}]</code>
                         </div>
                     </div>
                     @endif
@@ -28,8 +43,13 @@
                         <label for="name" class="float-left">Nama</label>
                         <input type="text" class="form-control" value="{{ $karyawan->name }}" disabled id="name">
                     </div>
-                    <input type="hidden" name="username" id="username" value="{{ $karyawan->username }}">
+                    <div class="form-group">
+                        <label for="username" class="float-left">Username (Label Data Wajah)</label>
+                        <input type="text" class="form-control fw-bold text-primary bg-light" value="{{ $karyawan->username }}" disabled id="username">
+                    </div>
+                    <input type="hidden" id="userId" value="{{ $karyawan->id }}">
                     <input type="hidden" id="selfRegister" value="{{ isset($self_register) && $self_register ? '1' : '0' }}">
+                    <input type="hidden" id="selfRegisterType" value="{{ $self_register_type ?? 'dosen' }}">
                     <video id="video" autoplay playsinline class="col-lg-12 col-md-12 col-sm-12 mx-auto"></video>
                     <br>
                     <center>
@@ -108,8 +128,30 @@
                         didOpen: () => { Swal.showLoading(); }
                     });
 
-                    var username = $('#username').val();
+                    var username       = $('#username').val();
+                    var userId         = $('#userId').val();
                     var isSelfRegister = $('#selfRegister').val() === '1';
+                    var selfRegType    = $('#selfRegisterType').val();
+
+                    // ========== DINAMIS ENDPOINT (Sesuai Admin / Self-Service Dosen / Self-Service Karyawan) ==========
+                    if (isSelfRegister) {
+                        if (selfRegType === 'pegawai') {
+                            var PHOTO_URL      = "{{ url('/karyawan/registrasi-wajah/simpan') }}";
+                            var DESCRIPTOR_URL = "{{ url('/self-service/ajaxDescrip') }}";
+                            var REDIRECT_OK    = "{{ url('/dashboard') }}";
+                            var MSG_SUCCESS    = 'Wajah Anda berhasil didaftarkan, ' + username + '! Absen langsung sekarang bisa dipakai.';
+                        } else {
+                            var PHOTO_URL      = "{{ url('/dosen/registrasi-wajah/simpan') }}";
+                            var DESCRIPTOR_URL = "{{ url('/self-service/ajaxDescrip') }}";
+                            var REDIRECT_OK    = "{{ url('/dashboard') }}";
+                            var MSG_SUCCESS    = 'Wajah Anda berhasil didaftarkan, ' + username + '! Absen langsung sekarang bisa dipakai.';
+                        }
+                    } else {
+                        var PHOTO_URL      = "{{ url('/pegawai/face/ajaxPhoto') }}";
+                        var DESCRIPTOR_URL = "{{ url('/pegawai/face/ajaxDescrip') }}";
+                        var REDIRECT_OK    = "{{ url('/pegawai') }}";
+                        var MSG_SUCCESS    = 'Wajah user ' + username + ' berhasil didaftarkan oleh Admin.';
+                    }
 
                     // Ambil frame dari video
                     var canvas = document.createElement('canvas');
@@ -122,10 +164,9 @@
                     img.src = canvas.toDataURL('image/png');
 
                     try {
-                        // inputSize 224 = balance antara kecepatan dan akurasi deteksi
                         const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 });
                         const detections = await faceapi.detectSingleFace(canvas, opts)
-                            .withFaceLandmarks(true)   // true = pakai tiny landmark
+                            .withFaceLandmarks(true)
                             .withFaceDescriptor();
 
                         if (!detections) {
@@ -138,40 +179,39 @@
                             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
                         });
 
-                        // Kirim foto
-                        var photoUrl = isSelfRegister
-                            ? "{{ url('/dosen/registrasi-wajah/simpan') }}"
-                            : "{{ url('/pegawai/face/ajaxPhoto') }}";
-
+                        // ── Kirim FOTO profil ──
                         $.ajax({
-                            type: 'POST', url: photoUrl,
+                            type: 'POST',
+                            url:  PHOTO_URL,
                             data: { image: img.src, path: username },
                             cache: false
                         });
 
-                        // Kirim descriptor wajah
-                        // Konversi Float32Array ke plain array agar bisa di-JSON.stringify dengan benar
+                        // ── Kirim DESCRIPTOR wajah ke neural.json ──
                         var plainDescriptor = Array.from(detections.descriptor);
                         var postData = {
                             label: username,
                             descriptors: [plainDescriptor]
                         };
+
+                        var descriptorPayload = isSelfRegister
+                            ? { myData: JSON.stringify(postData) }
+                            : { myData: JSON.stringify(postData), user_id: userId };
+
                         $.ajax({
                             type: 'POST',
-                            url: "{{ url('/pegawai/face/ajaxDescrip') }}",
-                            data: { myData: JSON.stringify(postData), user_id: {{ $karyawan->id }} },
+                            url:  DESCRIPTOR_URL,
+                            data: descriptorPayload,
                             cache: false,
                             success: function(resp) {
                                 Swal.fire({
-                                    title: 'Berhasil!',
-                                    text: isSelfRegister ? 'Wajah Anda berhasil didaftarkan.' : 'Wajah berhasil didaftarkan.',
-                                    icon: 'success',
-                                    timer: 2000,
+                                    title: '✅ Registrasi Berhasil!',
+                                    html:  MSG_SUCCESS + '<br><br><small class="text-muted">Redirect ke dashboard...</small>',
+                                    icon:  'success',
+                                    timer: 2500,
                                     showConfirmButton: false
                                 }).then(() => {
-                                    window.location.href = isSelfRegister
-                                        ? "{{ url('/dashboard') }}"
-                                        : "{{ url('/pegawai') }}";
+                                    window.location.href = REDIRECT_OK;
                                 });
                             },
                             error: function(xhr) {
@@ -180,7 +220,7 @@
                                     var resp = JSON.parse(xhr.responseText);
                                     if (resp.error) msg = resp.error;
                                 } catch(e) {}
-                                Swal.fire('Gagal Simpan', msg, 'error');
+                                Swal.fire('❌ Gagal Simpan', msg, 'error');
                                 $("#capture").prop('disabled', false);
                             }
                         });
