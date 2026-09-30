@@ -247,12 +247,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // ═══════════════════════════════════════════════════════════
-    // SECURITY CONSTANTS – SUPER KETAT MODE (CRITICAL FIX)
+    // SECURITY CONSTANTS – BALANCED MODE v2 (Aman + User-friendly)
     // ═══════════════════════════════════════════════════════════
-    const MATCH_THRESHOLD   = 0.28;   // SUPER KETAT: 0.28 ≈ jarak Euclidean <0.28
-    const MIN_CONFIDENCE    = 0.72;   // FLOOR: confidence minimal 72% (1 - 0.28)
-    const MIN_AVG_DISTANCE  = 0.30;   // Rata-rata distance 5 frame harus <0.30
-    const CONFIRM_FRAMES    = 7;      // SUPER KETAT: 7 frame berturut-turut cocok
+    const MATCH_THRESHOLD   = 0.32;   // BALANCED: 0.32 (default face-api 0.6, cukup ketat)
+    const MIN_CONFIDENCE    = 0.68;   // FLOOR: confidence minimal 68% (akomodasi lighting berbeda)
+    const MIN_AVG_DISTANCE  = 0.34;   // Rata-rata distance CONFIRM_FRAMES frame harus <0.34
+    const CONFIRM_FRAMES    = 6;      // BALANCED: 6 frame berturut-turut (~2.1 detik)
     const CSRF_TOKEN        = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
     // ═══════════════════════════════════════════════════════════
@@ -325,11 +325,18 @@
     setInterval(getLocation, 6000);
 
     // ═══════════════════════════════════════════════════════════
-    // OCCLUSION GUARD v2 – LEBIH KETAT
+    // OCCLUSION GUARD v3 – BALANCED (False Positive Reduction)
+    // Akomodasi: user jilbab/hijab, lighting indoor kantor, sudut HP miring
     // ═══════════════════════════════════════════════════════════
     function isFaceOccluded(landmarks, detectionScore) {
         try {
-            if (detectionScore < 0.7) return true;
+            // ⭐ BALANCED: Jika detection score SANGAT BAGUS (>0.85), AI sudah
+            // sangat yakin ada wajah → pakai LAX MODE (percaya AI).
+            // Jika score biasa (0.58-0.85) → pakai NORMAL MODE.
+            // Dibawah 0.58 → kualitas rendah → TOLAK (bisa blur/setengah wajah).
+            if (detectionScore < 0.58) return true;
+
+            const highQuality = detectionScore >= 0.85;
 
             const leftEye  = landmarks.getLeftEye();
             const rightEye = landmarks.getRightEye();
@@ -338,7 +345,10 @@
             const jaw      = landmarks.getJawOutline();
             const pts      = landmarks.positions;
 
-            if (!leftEye?.length || !rightEye?.length || !nose?.length || !mouth?.length || !jaw?.length) return true;
+            if (!leftEye?.length || !rightEye?.length || !nose?.length || !mouth?.length) return true;
+            // User pakai jilbab: jaw outline bisa tidak terdeteksi penuh tapi wajah valid.
+            // KALAU highQuality mode dan jaw tidak lengkap, TETAP LANJUT (percaya AI).
+            if (!jaw?.length && !highQuality) return true;
 
             const avgY = arr => arr.reduce((s, p) => s + p.y, 0) / arr.length;
             const avgX = arr => arr.reduce((s, p) => s + p.x, 0) / arr.length;
@@ -349,27 +359,45 @@
             const noseX  = avgX(nose);
             const mouthY = avgY(mouth);
             const mouthX = avgX(mouth);
-            const faceH  = pts[8].y - pts[19].y;
-            const faceW  = pts[16].x - pts[0].x;
+            let faceH, faceW;
+            if (pts?.length >= 20) {
+                faceH = pts[8].y - pts[19].y;
+                faceW = pts[16].x - pts[0].x;
+            } else {
+                // Fallback: hitung dari landmark yang tersedia
+                faceH = mouthY - eyeY + 30;
+                faceW = Math.abs(rightEye[0]?.x - leftEye[0]?.x) * 2.2;
+            }
 
-            if (faceH <= 20 || faceW <= 20) return true;
+            if (faceH <= 15 || faceW <= 15) return true;
 
             const eyeToNose   = (noseY  - eyeY)  / faceH;
             const noseToMouth = (mouthY - noseY)  / faceH;
             const faceAspect  = faceW / faceH;
 
-            if (eyeToNose < 0.08 || noseToMouth < 0.08) return true;
-            if (eyeToNose > 0.35 || noseToMouth > 0.35) return true;
+            // ⭐ BALANCED: Longgarkan range (tapi tetap tolak ekstrem = masker sungguhan)
+            // Masker sungguhan: noseToMouth biasanya < 0.03 atau eyeToNose > 0.50
+            if (eyeToNose < 0.05 || noseToMouth < 0.05) return true;
+            if (eyeToNose > (highQuality ? 0.48 : 0.42) || noseToMouth > (highQuality ? 0.48 : 0.42)) return true;
 
-            if (faceAspect < 0.55 || faceAspect > 1.25) return true;
+            // ⭐ User jilbab/hijab: jaw tidak penuh → faceW kecil → aspect ratio kecil.
+            // Longgarkan range + pengecualian highQuality mode.
+            const minAspect = highQuality ? 0.42 : 0.48;
+            const maxAspect = highQuality ? 1.50 : 1.40;
+            if (faceAspect < minAspect || faceAspect > maxAspect) return true;
 
-            const eyeNoseAlign = Math.abs(eyeX - noseX) / faceW;
+            // ⭐ Akomodasi kamera HP yang sudutnya miring / user tidak facing lurus.
+            const maxAlign = highQuality ? 0.22 : 0.18;
+            const eyeNoseAlign   = Math.abs(eyeX - noseX) / faceW;
             const noseMouthAlign = Math.abs(noseX - mouthX) / faceW;
-            if (eyeNoseAlign > 0.12 || noseMouthAlign > 0.12) return true;
+            if (eyeNoseAlign > maxAlign || noseMouthAlign > maxAlign) return true;
 
+            // Semua pengecekan lolos → wajah TIDAK terhalang
             return false;
         } catch (e) {
-            return true;
+            // Error hanya jika struktur landmark aneh → anggap TIDAK oklusi, biarkan lewat
+            // (FaceMatcher akan menentukan match/tidak nanti)
+            return false;
         }
     }
 
