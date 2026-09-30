@@ -137,10 +137,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // ═══════════════════════════════════════════════════════════
-    // SECURITY CONSTANTS – KETAT MODE
+    // SECURITY CONSTANTS – SUPER KETAT MODE (CRITICAL FIX)
     // ═══════════════════════════════════════════════════════════
-    const MATCH_THRESHOLD   = 0.35;   // LEBIH KETAT: 0.35 ≈ 90%+ confidence
-    const CONFIRM_FRAMES    = 5;      // LEBIH KETAT: 5 frame berturut-turut cocok
+    const MATCH_THRESHOLD   = 0.28;   // SUPER KETAT: 0.28 ≈ jarak Euclidean <0.28
+    const MIN_CONFIDENCE    = 0.72;   // FLOOR: confidence minimal 72% (1 - 0.28)
+    const MIN_AVG_DISTANCE  = 0.30;   // Rata-rata distance 5 frame harus <0.30
+    const CONFIRM_FRAMES    = 7;      // SUPER KETAT: 7 frame berturut-turut cocok
     const CSRF_TOKEN        = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
     // ═══════════════════════════════════════════════════════════
@@ -156,15 +158,16 @@
     const matchedOverlay = document.getElementById('matched-overlay');
 
     // ═══════════════════════════════════════════════════════════
-    // STATE – 1-to-MANY Identification Mode
+    // STATE – 1-to-MANY Identification Mode (SUPER KETAT)
     // ═══════════════════════════════════════════════════════════
-    let allDescriptors    = [];       // Array of LabeledFaceDescriptors
-    let faceMatcher       = null;     // faceapi FaceMatcher instance
+    let allDescriptors    = [];
+    let faceMatcher       = null;
     let isSubmitting      = false;
     let detectionActive   = false;
     let isDetecting       = false;
     let confirmedCount    = 0;
-    let lastMatchedLabel  = null;     // konsistensi label selama CONFIRM_FRAMES
+    let lastMatchedLabel  = null;
+    let confirmedDists    = [];
     let retryTimer        = null;
 
     // ═══════════════════════════════════════════════════════════
@@ -189,6 +192,7 @@
             detectionActive  = true;
             confirmedCount   = 0;
             lastMatchedLabel = null;
+            confirmedDists   = [];
             dot.className    = 'scanning';
             setLabel('✅ Koneksi kembali. Siap scan...');
             detectLoop();
@@ -416,6 +420,7 @@
         if (!detections || detections.length === 0) {
             confirmedCount   = 0;
             lastMatchedLabel = null;
+            confirmedDists   = [];
             setLabel('Wajah tidak terdeteksi. Pastikan pencahayaan cukup dan wajah jelas...');
             dot.className    = 'scanning';
 
@@ -423,6 +428,7 @@
         } else if (detections.length > 1) {
             confirmedCount   = 0;
             lastMatchedLabel = null;
+            confirmedDists   = [];
             setLabel('❌ DITOLAK: Terdeteksi ' + detections.length + ' wajah! Hanya 1 wajah diperbolehkan.', '#ef4444');
             dot.className    = 'scanning';
             const resAll = faceapi.resizeResults(detections, { width: canvas.width, height: canvas.height });
@@ -441,6 +447,7 @@
             if (box.width < 100 || box.height < 120) {
                 confirmedCount   = 0;
                 lastMatchedLabel = null;
+                confirmedDists   = [];
                 setLabel('⚠️ Dekatkan wajah Anda ke kamera.', '#fbbf24');
                 dot.className    = 'scanning';
                 isDetecting = false;
@@ -452,6 +459,7 @@
             if (isFaceOccluded(landmarks, detectionScore)) {
                 confirmedCount   = 0;
                 lastMatchedLabel = null;
+                confirmedDists   = [];
                 setLabel('❌ DITOLAK: Wajah terhalang! Lepaskan masker, helm, kacamata hitam.', '#ef4444');
                 dot.className = 'scanning';
                 ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
@@ -461,49 +469,71 @@
                 return;
             }
 
-            // ── Guard 4: FaceMatcher – 1-to-Many identification ──
+            // ── Guard 4: FaceMatcher – 1-to-Many identification (SUPER KETAT) ──
             if (!faceMatcher) {
                 setLabel('❌ Sistem belum siap. Memuat ulang...', '#f87171');
                 isDetecting = false; setTimeout(init, 1000); return;
             }
 
             const bestMatch = faceMatcher.findBestMatch(det.descriptor);
-            const isMatch   = bestMatch.label !== 'unknown';
             const dist      = bestMatch.distance;
             const confPct   = Math.round((1 - dist) * 100);
+            // ⭐ CRITICAL FIX: DUA layer pengecekan – label BUKAN 'unknown' DAN confidence >= MIN_CONFIDENCE (72%)
+            const isStrictMatch = (bestMatch.label !== 'unknown') && (confPct >= Math.round(MIN_CONFIDENCE * 100));
 
-            ctx.strokeStyle = isMatch ? '#f97316' : '#ef4444';
+            ctx.strokeStyle = isStrictMatch ? '#f97316' : '#ef4444';
             ctx.lineWidth   = 3;
             ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-            ctx.fillStyle = isMatch ? '#f97316' : '#ef4444';
+            ctx.fillStyle = isStrictMatch ? '#f97316' : '#ef4444';
             ctx.font      = 'bold 13px sans-serif';
-            const displayLabel = isMatch ? bestMatch.label : 'Tidak Dikenal';
-            const labelText    = isMatch
+            const displayLabel = isStrictMatch ? bestMatch.label : 'Tidak Dikenal';
+            const labelText    = isStrictMatch
                 ? `✓ ${displayLabel}  ${confPct}%`
                 : `✗ Tidak Dikenal  ${confPct}%`;
             ctx.fillText(labelText, box.x + 4, box.y > 22 ? box.y - 7 : box.y + box.height + 16);
 
-            if (isMatch && !isSubmitting) {
+            if (isStrictMatch && !isSubmitting) {
                 if (lastMatchedLabel !== bestMatch.label) {
                     confirmedCount    = 1;
                     lastMatchedLabel  = bestMatch.label;
+                    confirmedDists    = [dist];
                 } else {
                     confirmedCount++;
+                    confirmedDists.push(dist);
                 }
-                setLabel(`Verifikasi: ${bestMatch.label} (${confirmedCount}/${CONFIRM_FRAMES}) – ${confPct}%`);
+                const avgDist = (confirmedDists.reduce((a,b)=>a+b,0) / confirmedDists.length).toFixed(3);
+                setLabel(`Verifikasi: ${bestMatch.label} (${confirmedCount}/${CONFIRM_FRAMES}) – ${confPct}% [avg: ${avgDist}]`);
 
+                // ⭐ CRITICAL FIX: Setelah CONFIRM_FRAMES, cek RATA-RATA distance seluruh frame harus < MIN_AVG_DISTANCE
                 if (confirmedCount >= CONFIRM_FRAMES) {
+                    const totalDist = confirmedDists.reduce((a,b)=>a+b,0);
+                    const avgDistFinal = totalDist / confirmedDists.length;
+
                     confirmedCount   = 0;
                     lastMatchedLabel = null;
+                    confirmedDists   = [];
+
+                    if (avgDistFinal >= MIN_AVG_DISTANCE) {
+                        setLabel(`❌ VERIFIKASI GAGAL: Rata-rata kecocokan ${Math.round((1-avgDistFinal)*100)}% terlalu rendah. Coba lagi.`, '#ef4444');
+                        isDetecting = false;
+                        setTimeout(detectLoop, 800);
+                        return;
+                    }
+
                     isDetecting      = false;
                     submitAbsen(bestMatch.label);
                     return;
                 }
-            } else if (!isMatch) {
+            } else if (!isStrictMatch) {
                 confirmedCount   = 0;
                 lastMatchedLabel = null;
-                setLabel('❌ WAJAH TIDAK DAPAT DIBACA: Tidak terdaftar di database. Hubungi admin.', '#ef4444');
+                confirmedDists   = [];
+                if (confPct < Math.round(MIN_CONFIDENCE * 100)) {
+                    setLabel(`❌ KECERNAAN KURANG: Kecocokan ${confPct}% (minimal ${Math.round(MIN_CONFIDENCE*100)}%). Posisikan wajah dengan jelas.`, '#ef4444');
+                } else {
+                    setLabel('❌ WAJAH TIDAK DAPAT DIBACA: Tidak terdaftar di database. Hubungi admin.', '#ef4444');
+                }
             }
         }
 
@@ -543,25 +573,72 @@
         $.ajax({
             type: 'POST', url: "{{ url('/presensi-pulang/store') }}",
             data: { username, image: imgData, lat, long },
+            dataType: 'json',
             timeout: 25000,
-            success: function(msg) {
+            success: function(resp) {
                 setProgress(100);
                 matchedOverlay.classList.remove('show');
-                let text, icon;
-                switch (msg) {
-                    case 'pulang':      text = `✅ Absen Pulang Berhasil!\nSampai jumpa, ${username}!`; icon = 'success'; break;
-                    case 'outlocation': text = '⚠️ Anda di luar radius kantor. Absen DITOLAK.';          icon = 'warning'; break;
-                    case 'selesai':     text = `ℹ️ ${username} sudah absen pulang hari ini.`;              icon = 'info';    break;
-                    case 'noMs':        text = `⚠️ Shift ${username} belum diatur. Hubungi admin.`;        icon = 'warning'; break;
-                    default:            text = `❌ Data pengguna ${username} tidak ditemukan.`;             icon = 'error';
+                let text, icon, title;
+                const status = resp.status || 'error';
+                const nama   = resp.name   || username;
+                switch (status) {
+                    case 'pulang':
+                        title = '✅ Absen Pulang Berhasil';
+                        text  = `Terimakasih ${nama} telah absen keluar.`;
+                        icon  = 'success';
+                        break;
+                    case 'outlocation':
+                        title = '⚠️ Di Luar Radius';
+                        text  = `${nama}, Anda di luar radius kantor. Absen DITOLAK.`;
+                        icon  = 'warning';
+                        break;
+                    case 'belummasuk':
+                        title = '❌ Belum Absen Masuk';
+                        text  = `${nama} BELUM absen masuk hari ini. Tidak bisa absen pulang.`;
+                        icon  = 'error';
+                        break;
+                    case 'selesai':
+                        title = 'ℹ️ Sudah Absen';
+                        text  = `${nama} sudah absen pulang hari ini.`;
+                        icon  = 'info';
+                        break;
+                    case 'noMs':
+                        title = '⚠️ Shift Belum Diatur';
+                        text  = `Shift ${nama} belum diatur. Hubungi admin.`;
+                        icon  = 'warning';
+                        break;
+                    case 'noUser':
+                        title = '❌ Pengguna Tidak Ditemukan';
+                        text  = `Data ${username} tidak ditemukan.`;
+                        icon  = 'error';
+                        break;
+                    default:
+                        title = '❌ Error';
+                        text  = `Terjadi kesalahan. Hubungi admin.`;
+                        icon  = 'error';
                 }
                 Swal.fire({
-                    title: text,
+                    title: title,
+                    text:  text,
                     icon,
                     confirmButtonColor: '#f97316',
-                    timer: 4000,
-                    timerProgressBar: true
-                }).then(() => { window.location.href = "{{ url('/') }}"; });
+                    timer: 5000,
+                    timerProgressBar: true,
+                    allowOutsideClick: false
+                }).then(() => {
+                    if (status === 'pulang' || status === 'selesai') {
+                        window.location.href = "{{ url('/') }}";
+                    } else {
+                        isSubmitting    = false;
+                        detectionActive = true;
+                        setProgress(0);
+                        dot.className   = 'scanning';
+                        confirmedCount   = 0;
+                        lastMatchedLabel = null;
+                        confirmedDists   = [];
+                        setTimeout(detectLoop, 500);
+                    }
+                });
             },
             error: function(xhr, status) {
                 isSubmitting    = false;
@@ -572,6 +649,7 @@
                 dot.className = 'scanning';
                 confirmedCount   = 0;
                 lastMatchedLabel = null;
+                confirmedDists   = [];
                 setTimeout(detectLoop, 500);
             }
         });

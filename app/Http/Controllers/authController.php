@@ -183,6 +183,7 @@ class authController extends Controller
         $currentDate = date('Y-m-d');
         $user = User::where('username', $request['username'])->first();
         if ($user) {
+            $userName = $user->name ?? $user->username;
             $ms = MappingShift::where('user_id', $user->id)->where('tanggal', $currentDate)->first();
             if ($ms) {
                 if($ms->jam_absen == null) {
@@ -191,7 +192,7 @@ class authController extends Controller
                     $radius = $user->Lokasi->radius ?? null;
                     $jarak_masuk = $this->distance($request["lat"], $request["long"], $lat_kantor, $long_kantor, "K") * 1000;
                     if($jarak_masuk > $radius) {
-                        return response()->json('outlocation');
+                        return response()->json(['status' => 'outlocation', 'name' => $userName]);
                     } else {
                         $image = $request["image"];
 
@@ -274,16 +275,16 @@ class authController extends Controller
                             'jarak_masuk' => $jarak_masuk,
                             'status_absen' => $status_absen
                         ]);
-                        return response()->json('masuk');
+                        return response()->json(['status' => 'masuk', 'name' => $userName]);
                     }
                 } else {
-                    return response()->json('selesai');
+                    return response()->json(['status' => 'selesai', 'name' => $userName]);
                 }
             } else {
-                return response()->json('noMs');
+                return response()->json(['status' => 'noMs', 'name' => $userName]);
             }
         } else {
-            return response()->json('noUser');
+            return response()->json(['status' => 'noUser', 'name' => $request['username'] ?? 'User']);
         }
     }
 
@@ -293,15 +294,25 @@ class authController extends Controller
         $currentDate = date('Y-m-d');
         $user = User::where('username', $request['username'])->first();
         if ($user) {
+            $userName = $user->name ?? $user->username;
             $ms = MappingShift::where('user_id', $user->id)->where('tanggal', $currentDate)->first();
             if ($ms) {
+                // ═══════════════════════════════════════════════════════════════
+                // 🔐 CRITICAL SECURITY FIX – ABSEN PULANG HANYA BOLEH JIKA:
+                // 1. User yang SAMA SUDAH ABSEN MASUK hari ini (jam_absen != null)
+                //    Ini adalah LAST LINE OF DEFENSE jika salah match wajah di frontend
+                // ═══════════════════════════════════════════════════════════════
+                if ($ms->jam_absen == null) {
+                    return response()->json(['status' => 'belummasuk', 'name' => $userName]);
+                }
+
                 if($ms->jam_pulang == null) {
                     $lat_kantor = $user->Lokasi->lat_kantor ?? null;
                     $long_kantor = $user->Lokasi->long_kantor ?? null;
                     $radius = $user->Lokasi->radius ?? null;
                     $jarak_pulang = $this->distance($request["lat"], $request["long"], $lat_kantor, $long_kantor, "K") * 1000;
                     if($jarak_pulang > $radius) {
-                        return response()->json('outlocation');
+                        return response()->json(['status' => 'outlocation', 'name' => $userName]);
                     } else {
                         $image = $request["image"];
 
@@ -388,16 +399,16 @@ class authController extends Controller
                             'long_pulang' => $request["long"],
                             'jarak_pulang' => $jarak_pulang,
                         ]);
-                        return response()->json('pulang');
+                        return response()->json(['status' => 'pulang', 'name' => $userName]);
                     }
                 } else {
-                    return response()->json('selesai');
+                    return response()->json(['status' => 'selesai', 'name' => $userName]);
                 }
             } else {
-                return response()->json('noMs');
+                return response()->json(['status' => 'noMs', 'name' => $userName]);
             }
         } else {
-            return response()->json('noUser');
+            return response()->json(['status' => 'noUser', 'name' => $request['username'] ?? 'User']);
         }
     }
 
